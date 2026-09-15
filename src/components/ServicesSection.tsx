@@ -31,7 +31,7 @@ export function ServicesSection() {
         "Website Redesign",
         "Figma to Website",
       ],
-      buttonText: "Explore Web Design →",
+      buttonText: "Contact Now →",
       href: "#contact",
       icon: (
         <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -59,7 +59,7 @@ export function ServicesSection() {
         "API Integration",
         "Payment Integration",
       ],
-      buttonText: "Explore SaaS Development →",
+      buttonText: "Contact Now →",
       href: "#contact",
       icon: (
         <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -86,7 +86,7 @@ export function ServicesSection() {
         "Reports & Analytics",
         "Admin / Super Admin Panel",
       ],
-      buttonText: "Explore ERP Solutions →",
+      buttonText: "Contact Now →",
       href: "#contact",
       icon: (
         <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -114,7 +114,7 @@ export function ServicesSection() {
         "Customer Dashboard",
         "Seller Dashboard",
       ],
-      buttonText: "Explore E-Commerce →",
+      buttonText: "Contact Now →",
       href: "#contact",
       icon: (
         <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -141,7 +141,7 @@ export function ServicesSection() {
         "Dynamic Forms",
         "Admin Panel",
       ],
-      buttonText: "Explore Dynamic Websites →",
+      buttonText: "Contact Now →",
       href: "#contact",
       icon: (
         <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -168,7 +168,7 @@ export function ServicesSection() {
         "Payment Integration",
         "WhatsApp Integration",
       ],
-      buttonText: "Explore Custom Web Apps →",
+      buttonText: "Contact Now →",
       href: "#contact",
       icon: (
         <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -196,7 +196,7 @@ export function ServicesSection() {
         "Backup & Security",
         "Performance Optimization",
       ],
-      buttonText: "Explore Hosting →",
+      buttonText: "Contact Now →",
       href: "#contact",
       icon: (
         <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
