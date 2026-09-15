@@ -5,6 +5,7 @@ import { TrustBar } from "@/components/TrustBar";
 import { HomeAboutSection } from "@/components/HomeAboutSection";
 import { ServicesSection } from "@/components/ServicesSection";
 import { ProcessSection } from "@/components/ProcessSection";
+import { PortfolioSection } from "@/components/PortfolioSection";
 import { BottomBar } from "@/components/BottomBar";
 
 export default function Home() {
@@ -26,6 +27,7 @@ export default function Home() {
         <HomeAboutSection />
         <ServicesSection />
         <ProcessSection />
+        <PortfolioSection />
       </main>
 
       {/* Bottom Information & Action Bar */}
