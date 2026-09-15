@@ -4,6 +4,7 @@ import { Hero } from "@/components/Hero";
 import { TrustBar } from "@/components/TrustBar";
 import { HomeAboutSection } from "@/components/HomeAboutSection";
 import { ServicesSection } from "@/components/ServicesSection";
+import { ProcessSection } from "@/components/ProcessSection";
 import { BottomBar } from "@/components/BottomBar";
 
 export default function Home() {
@@ -24,6 +25,7 @@ export default function Home() {
         <TrustBar />
         <HomeAboutSection />
         <ServicesSection />
+        <ProcessSection />
       </main>
 
       {/* Bottom Information & Action Bar */}
