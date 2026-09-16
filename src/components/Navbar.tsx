@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -11,6 +11,7 @@ export function Navbar() {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [activeSection, setActiveSection] = useState<string>("home");
   const pathname = usePathname();
+  const router = useRouter();
 
   const isHome = pathname === "/" || pathname === "";
 
@@ -82,15 +83,45 @@ export function Navbar() {
   // Smooth scroll handler for anchor links
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     setMobileMenuOpen(false);
-    if (href.startsWith("/#") && isHome) {
+    if (href.startsWith("/#")) {
       const targetId = href.replace("/#", "");
-      const elem = document.getElementById(targetId);
-      if (elem) {
+      if (isHome) {
         e.preventDefault();
-        elem.scrollIntoView({ behavior: "smooth" });
-        window.history.pushState(null, "", href);
-        setActiveSection(targetId);
+        const elem = document.getElementById(targetId);
+        if (elem) {
+          const headerOffset = 85;
+          const elementPosition = elem.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          window.scrollTo({
+            top: Math.max(0, offsetPosition),
+            behavior: "smooth",
+          });
+          window.history.pushState(null, "", href);
+          setActiveSection(targetId);
+        }
+      } else {
+        // Navigating from /about-us, /portfolio, /careers, etc. to Home section
+        e.preventDefault();
+        try {
+          sessionStorage.setItem("scroll_target", targetId);
+        } catch {}
+        router.push(href);
       }
+      return;
+    }
+
+    if (href === "/" && isHome) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.history.pushState(null, "", "/");
+      setActiveSection("home");
+      return;
+    }
+
+    if (href === pathname) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
     }
   };
 
@@ -113,8 +144,8 @@ export function Navbar() {
           isVisible ? "translate-y-0" : "-translate-y-full"
         } ${
           isScrolled
-            ? "bg-white/95 backdrop-blur-xl shadow-md shadow-zinc-950/5 border-b border-zinc-200/80"
-            : "bg-white/80 backdrop-blur-md border-b border-transparent"
+            ? "bg-white shadow-md shadow-zinc-950/5 border-b border-zinc-200/80"
+            : "bg-white border-b border-zinc-100/80"
         }`}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 sm:h-24 flex items-center justify-between">
@@ -202,9 +233,9 @@ export function Navbar() {
           {/* Action Button & Mobile Hamburger */}
           <div className="flex items-center gap-3">
             <a
-              href="tel:+18005550199"
+              href="tel:+919920818481"
               className="hidden sm:inline-flex items-center gap-2 text-xs sm:text-sm font-semibold px-5 sm:px-6 py-2.5 rounded-full text-white bg-gradient-to-r from-[#10b981] to-[#059669] hover:from-[#059669] hover:to-[#047857] shadow-md shadow-emerald-500/25 hover:shadow-emerald-500/35 hover:-translate-y-0.5 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#10b981] active:scale-95"
-              aria-label="Call PixelForge directly at +1 (800) 555-0199"
+              aria-label="Call PixelForge directly at +91 99208 18481"
             >
               <svg
                 className="w-4 h-4 text-white"
@@ -252,7 +283,7 @@ export function Navbar() {
 
         {/* Mobile Menu Drawer */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-b border-zinc-200/80 bg-white/95 backdrop-blur-xl px-4 pt-2 pb-6 space-y-2">
+          <div className="md:hidden border-b border-zinc-200/80 bg-white shadow-lg px-4 pt-2 pb-6 space-y-2">
             <nav className="flex flex-col space-y-1">
               {navLinks.map((link) => (
                 <Link
@@ -273,7 +304,7 @@ export function Navbar() {
             </nav>
             <div className="pt-3 border-t border-zinc-100">
               <a
-                href="tel:+18005550199"
+                href="tel:+919920818481"
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-white bg-gradient-to-r from-[#10b981] to-[#059669] hover:from-[#059669] hover:to-[#047857] font-semibold text-sm shadow-md shadow-emerald-500/25"
               >
                 <svg
@@ -283,7 +314,7 @@ export function Navbar() {
                 >
                   <path d="M20.01 15.38c-1.23 0-2.42-.2-3.53-.56a.977.977 0 0 0-1.01.24l-1.57 1.97c-2.83-1.35-5.48-3.9-6.89-6.83l1.95-1.66c.27-.28.35-.67.24-1.02-.37-1.11-.56-2.3-.56-3.53 0-.54-.45-.99-.99-.99H4.19C3.65 3 3 3.24 3 3.99 3 13.28 10.73 21 20.01 21c.71 0 .99-.63.99-1.18v-3.45c0-.54-.45-.99-.99-.99z" />
                 </svg>
-                <span>Call Now (+1 800-555-0199)</span>
+                <span>Call Now (+91 99208 18481)</span>
               </a>
             </div>
           </div>

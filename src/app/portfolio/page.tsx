@@ -3,7 +3,8 @@
 import React, { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
-import { BottomBar } from "@/components/BottomBar";
+import { Footer } from "@/components/Footer";
+import { FloatingActions } from "@/components/FloatingActions";
 
 interface ProjectItem {
   id: string;
@@ -960,10 +961,11 @@ export default function PortfolioPage() {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full border-t border-zinc-100 bg-white">
-        <BottomBar />
-      </footer>
+      {/* Modern IT Software Company Footer */}
+      <Footer />
+
+      {/* Floating Actions: WhatsApp Chat & Back to Top Arrow */}
+      <FloatingActions />
     </div>
   );
 }

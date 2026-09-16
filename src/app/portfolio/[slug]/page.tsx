@@ -2,7 +2,8 @@ import React from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Navbar } from "@/components/Navbar";
-import { BottomBar } from "@/components/BottomBar";
+import { Footer } from "@/components/Footer";
+import { FloatingActions } from "@/components/FloatingActions";
 
 interface CaseStudyData {
   slug: string;
@@ -559,9 +560,11 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
         </section>
       </main>
 
-      <footer className="w-full border-t border-zinc-100 bg-white">
-        <BottomBar />
-      </footer>
+      {/* Modern IT Software Company Footer */}
+      <Footer />
+
+      {/* Floating Actions: WhatsApp Chat & Back to Top Arrow */}
+      <FloatingActions />
     </div>
   );
 }

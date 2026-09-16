@@ -7,7 +7,8 @@ import { InsidePixelForge } from "@/components/about/InsidePixelForge";
 import { FounderSection } from "@/components/about/FounderSection";
 import { WhyPixelForge } from "@/components/about/WhyPixelForge";
 import { AboutCTA } from "@/components/about/AboutCTA";
-import { BottomBar } from "@/components/BottomBar";
+import { Footer } from "@/components/Footer";
+import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
   title: "About Us | PixelForge — Building a Brighter Web",
@@ -47,10 +48,11 @@ export default function AboutUsPage() {
         <AboutCTA />
       </main>
 
-      {/* Reused Website Footer */}
-      <footer className="w-full border-t border-zinc-100 bg-white">
-        <BottomBar />
-      </footer>
+      {/* Modern IT Software Company Footer */}
+      <Footer />
+
+      {/* Floating Actions: WhatsApp Chat & Back to Top Arrow */}
+      <FloatingActions />
     </div>
   );
 }

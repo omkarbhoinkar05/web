@@ -39,6 +39,10 @@ export const metadata: Metadata = {
   },
 };
 
+import { HashScrollHandler } from "@/components/HashScrollHandler";
+import { ScheduleCallProvider } from "@/components/schedule/ScheduleCallContext";
+import { ScheduleCallModal } from "@/components/schedule/ScheduleCallModal";
+
 export default function RootLayout({
   children,
 }: {
@@ -51,7 +55,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${caveat.variable} h-full antialiased scroll-smooth`}
     >
       <body className="min-h-full flex flex-col bg-white text-zinc-900 selection:bg-[#10b981] selection:text-white">
-        {children}
+        <ScheduleCallProvider>
+          <HashScrollHandler />
+          {children}
+          <ScheduleCallModal />
+        </ScheduleCallProvider>
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useScheduleCall } from "@/components/schedule/ScheduleCallContext";
 
 interface FormState {
   fullName: string;
@@ -20,6 +21,7 @@ interface FormErrors {
 }
 
 export function ContactSection() {
+  const { openScheduleCall } = useScheduleCall();
   const [formData, setFormData] = useState<FormState>({
     fullName: "",
     service: "",
@@ -154,19 +156,11 @@ export function ContactSection() {
   return (
     <section
       id="contact"
-      className="relative py-20 sm:py-28 lg:py-32 overflow-hidden bg-white select-none border-t border-zinc-100 text-zinc-900"
+      className="relative py-20 sm:py-28 lg:py-32 overflow-hidden bg-white border-t border-zinc-100 text-zinc-900"
     >
       {/* Background Subtle Ambient Glow */}
       <div
-        className="absolute top-0 inset-x-0 h-[600px] bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(16,185,129,0.12),rgba(255,255,255,0))] pointer-events-none -z-0"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute bottom-10 left-0 w-[500px] h-[500px] bg-gradient-to-tr from-emerald-100/40 via-teal-50/25 to-transparent rounded-full blur-3xl pointer-events-none -z-0"
-        aria-hidden="true"
-      />
-      <div
-        className="absolute top-1/2 -right-20 w-[450px] h-[450px] bg-gradient-to-tl from-emerald-100/35 to-transparent rounded-full blur-3xl pointer-events-none -z-0"
+        className="absolute top-0 inset-x-0 h-[500px] bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.06),rgba(255,255,255,0))] pointer-events-none -z-0"
         aria-hidden="true"
       />
 
@@ -273,7 +267,7 @@ export function ContactSection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-4">
               {/* CARD 01 — CALL US */}
               <a
-                href="tel:+919876543210"
+                href="tel:+919920818481"
                 className="group p-4 rounded-2xl bg-white hover:bg-emerald-50/25 border border-zinc-200/90 hover:border-emerald-300 shadow-sm hover:shadow-md transition-all duration-200 flex items-start gap-3.5"
               >
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-110 transition-transform">
@@ -286,7 +280,7 @@ export function ContactSection() {
                     Call Us
                   </span>
                   <span className="text-xs sm:text-sm font-black text-zinc-900 group-hover:text-emerald-700 transition-colors block truncate mt-0.5">
-                    +91 98765 43210
+                    +91 99208 18481
                   </span>
                   <span className="text-[10px] text-zinc-500 block mt-0.5">
                     Mon – Sat, 9:00 AM – 7:00 PM
@@ -296,7 +290,7 @@ export function ContactSection() {
 
               {/* CARD 02 — EMAIL US */}
               <a
-                href="mailto:hello@pixelforge.io"
+                href="mailto:dev.omkar05@gmail.com"
                 className="group p-4 rounded-2xl bg-white hover:bg-emerald-50/25 border border-zinc-200/90 hover:border-emerald-300 shadow-sm hover:shadow-md transition-all duration-200 flex items-start gap-3.5"
               >
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 group-hover:scale-110 transition-transform">
@@ -310,7 +304,7 @@ export function ContactSection() {
                     Email Us
                   </span>
                   <span className="text-xs sm:text-sm font-black text-zinc-900 group-hover:text-emerald-700 transition-colors block truncate mt-0.5">
-                    hello@pixelforge.io
+                    dev.omkar05@gmail.com
                   </span>
                   <span className="text-[10px] text-zinc-500 block mt-0.5">
                     We reply within 24 hours
@@ -331,7 +325,7 @@ export function ContactSection() {
                     Our Location
                   </span>
                   <span className="text-xs sm:text-sm font-black text-zinc-900 block truncate mt-0.5">
-                    Tech Park, Sector 62, Noida
+                    Kharghar, Navi Mumbai
                   </span>
                   <span className="text-[10px] text-zinc-500 block mt-0.5">
                     Visit us at our office
@@ -341,7 +335,7 @@ export function ContactSection() {
 
               {/* CARD 04 — CHAT ON WHATSAPP */}
               <a
-                href="https://wa.me/919876543210"
+                href="https://wa.me/919920818481"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group p-4 rounded-2xl bg-white hover:bg-emerald-50/25 border border-zinc-200/90 hover:border-emerald-300 shadow-sm hover:shadow-md transition-all duration-200 flex items-start gap-3.5"
@@ -357,13 +351,44 @@ export function ContactSection() {
                     Chat on WhatsApp
                   </span>
                   <span className="text-xs sm:text-sm font-black text-zinc-900 group-hover:text-emerald-700 transition-colors block truncate mt-0.5">
-                    +91 98765 43210
+                    +91 99208 18481
                   </span>
                   <span className="text-[10px] text-zinc-500 block mt-0.5">
                     Get instant support
                   </span>
                 </div>
               </a>
+            </div>
+
+            {/* Direct Consultation / Schedule a Call Banner */}
+            <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/90 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3.5 shadow-2xs">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                    <line x1="16" x2="16" y1="2" y2="6" />
+                    <line x1="8" x2="8" y1="2" y2="6" />
+                    <line x1="3" x2="21" y1="10" y2="10" />
+                    <path d="m9 16 2 2 4-4" />
+                  </svg>
+                </div>
+                <div>
+                  <h4 className="text-xs sm:text-sm font-black text-zinc-900 leading-tight">
+                    Prefer a 1-on-1 Consultation?
+                  </h4>
+                  <p className="text-[11px] text-zinc-600 mt-0.5">
+                    Book a free 30-min discovery call directly with our team.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={(e) => openScheduleCall(e.currentTarget)}
+                className="w-full sm:w-auto px-4 py-2.5 rounded-full text-xs font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm shrink-0 transition-all cursor-pointer active:scale-95 text-center"
+              >
+                Schedule a Call →
+              </button>
             </div>
 
             {/* Social Media Links */}
@@ -634,7 +659,7 @@ export function ContactSection() {
                         value={formData.mobile}
                         onChange={handleChange}
                         onBlur={handleBlur}
-                        placeholder="e.g. +91 98765 43210"
+                        placeholder="e.g. +91 99208 18481"
                         className={`w-full pl-10 pr-4 py-3 rounded-2xl bg-zinc-50 border text-sm text-zinc-900 placeholder:text-zinc-400 focus:outline-none focus:bg-white focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all duration-200 ${
                           errors.mobile ? "border-rose-400 ring-2 ring-rose-400/20" : "border-zinc-200 hover:border-zinc-300"
                         }`}

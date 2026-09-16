@@ -2,16 +2,68 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useScheduleCall } from "@/components/schedule/ScheduleCallContext";
 
 export function Footer() {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterStatus, setNewsletterStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [newsletterError, setNewsletterError] = useState("");
 
+  const pathname = usePathname();
+  const router = useRouter();
+  const isHome = pathname === "/" || pathname === "";
+  const { openScheduleCall } = useScheduleCall();
+
   // Mobile accordion open states
   const [servicesOpen, setServicesOpen] = useState(false);
   const [quickLinksOpen, setQuickLinksOpen] = useState(false);
   const [legalOpen, setLegalOpen] = useState(false);
+
+  // Smart Link Click Handler for cross-page & same-page anchors
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    // 1. If it's a hash anchor on the home page (e.g. /#services, /#contact, /#process, etc.)
+    if (href.startsWith("/#")) {
+      const targetId = href.replace("/#", "");
+      if (isHome) {
+        e.preventDefault();
+        const element = document.getElementById(targetId);
+        if (element) {
+          const headerOffset = 85;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+          window.scrollTo({
+            top: Math.max(0, offsetPosition),
+            behavior: "smooth",
+          });
+          window.history.pushState(null, "", href);
+        }
+      } else {
+        // Navigating from /about-us, /portfolio, /careers, etc. to Home section
+        e.preventDefault();
+        try {
+          sessionStorage.setItem("scroll_target", targetId);
+        } catch {}
+        router.push(href);
+      }
+      return;
+    }
+
+    // 2. If it's link to Home and we are already on Home
+    if (href === "/" && isHome) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.history.pushState(null, "", "/");
+      return;
+    }
+
+    // 3. If clicking current page link (e.g. on /about-us and clicking /about-us)
+    if (href === pathname) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+  };
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -183,15 +235,17 @@ export function Footer() {
             <div className="flex flex-col sm:flex-row items-center gap-4 shrink-0 relative">
               <Link
                 href="/#contact"
+                onClick={(e) => handleLinkClick(e, "/#contact")}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-3.5 rounded-full text-sm font-extrabold text-white bg-gradient-to-r from-emerald-500 via-emerald-600 to-teal-600 hover:from-emerald-600 hover:to-teal-700 shadow-md shadow-emerald-500/20 active:scale-95 transition-all duration-300 group/cta cursor-pointer"
               >
                 <span>Start Your Project</span>
                 <span className="transition-transform duration-200 group-hover/cta:translate-x-1">→</span>
               </Link>
 
-              <a
-                href="tel:+919876543210"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-zinc-800 bg-white hover:bg-zinc-50 border border-zinc-200 shadow-2xs active:scale-95 transition-all duration-300"
+              <button
+                type="button"
+                onClick={(e) => openScheduleCall(e.currentTarget)}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-bold text-zinc-800 bg-white hover:bg-zinc-50 border border-zinc-200 shadow-2xs active:scale-95 transition-all duration-300 cursor-pointer"
               >
                 <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect width="18" height="18" x="3" y="4" rx="2" />
@@ -200,7 +254,7 @@ export function Footer() {
                   <line x1="3" x2="21" y1="10" y2="10" />
                 </svg>
                 <span>Schedule a Call</span>
-              </a>
+              </button>
 
               {/* Handwritten text on the far right */}
               <div className="hidden xl:flex items-center gap-1.5 absolute -right-44 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -221,7 +275,12 @@ export function Footer() {
           {/* COLUMN 01 — BRAND (lg:col-span-4) */}
           <div className="lg:col-span-4 space-y-5">
             {/* Real Project Logo */}
-            <Link href="/" className="inline-flex items-center gap-3 group focus:outline-none" aria-label="PixelForge Homepage">
+            <Link
+              href="/"
+              onClick={(e) => handleLinkClick(e, "/")}
+              className="inline-flex items-center gap-3 group focus:outline-none"
+              aria-label="PixelForge Homepage"
+            >
               <div className="w-10 h-10 flex items-center justify-center shrink-0">
                 <svg className="w-9 h-9" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect width="40" height="40" rx="10" fill="transparent" />
@@ -286,6 +345,7 @@ export function Footer() {
                 <li key={idx}>
                   <Link
                     href={item.href}
+                    onClick={(e) => handleLinkClick(e, item.href)}
                     className="group inline-flex items-center gap-1.5 text-zinc-600 hover:text-emerald-700 transition-all duration-200 hover:translate-x-1"
                   >
                     <span className="text-emerald-500 text-xs transition-transform duration-200 group-hover:translate-x-0.5">→</span>
@@ -313,6 +373,7 @@ export function Footer() {
                 <li key={idx}>
                   <Link
                     href={item.href}
+                    onClick={(e) => handleLinkClick(e, item.href)}
                     className="group inline-flex items-center gap-1.5 text-zinc-600 hover:text-emerald-700 transition-all duration-200 hover:translate-x-1"
                   >
                     <span className="text-emerald-500 text-xs transition-transform duration-200 group-hover:translate-x-0.5">→</span>
@@ -340,6 +401,7 @@ export function Footer() {
                 <li key={idx}>
                   <Link
                     href={item.href}
+                    onClick={(e) => handleLinkClick(e, item.href)}
                     className="group inline-flex items-center gap-1.5 text-zinc-600 hover:text-emerald-700 transition-all duration-200 hover:translate-x-1"
                   >
                     <span className="text-emerald-500 text-xs transition-transform duration-200 group-hover:translate-x-0.5">→</span>
@@ -358,20 +420,20 @@ export function Footer() {
 
             <div className="space-y-3 text-xs sm:text-sm">
               {/* Phone */}
-              <a href="tel:+919876543210" className="flex items-start gap-2.5 text-zinc-600 hover:text-emerald-700 group">
+              <a href="tel:+919920818481" className="flex items-start gap-2.5 text-zinc-600 hover:text-emerald-700 group">
                 <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 group-hover:bg-emerald-100 transition-colors">
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
                   </svg>
                 </div>
                 <div className="leading-tight">
-                  <span className="font-bold text-zinc-900 group-hover:text-emerald-700 block">+91 98765 43210</span>
+                  <span className="font-bold text-zinc-900 group-hover:text-emerald-700 block">+91 99208 18481</span>
                   <span className="text-[10px] text-zinc-500">Mon – Sat, 9am – 7pm</span>
                 </div>
               </a>
 
               {/* Email */}
-              <a href="mailto:hello@pixelforge.io" className="flex items-start gap-2.5 text-zinc-600 hover:text-emerald-700 group">
+              <a href="mailto:dev.omkar05@gmail.com" className="flex items-start gap-2.5 text-zinc-600 hover:text-emerald-700 group">
                 <div className="w-7 h-7 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 group-hover:bg-emerald-100 transition-colors">
                   <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect width="20" height="16" x="2" y="4" rx="2" />
@@ -379,7 +441,7 @@ export function Footer() {
                   </svg>
                 </div>
                 <div className="leading-tight">
-                  <span className="font-bold text-zinc-900 group-hover:text-emerald-700 block truncate">hello@pixelforge.io</span>
+                  <span className="font-bold text-zinc-900 group-hover:text-emerald-700 block truncate">dev.omkar05@gmail.com</span>
                   <span className="text-[10px] text-zinc-500">24-hr turnaround</span>
                 </div>
               </a>
@@ -393,14 +455,14 @@ export function Footer() {
                   </svg>
                 </div>
                 <div className="leading-tight">
-                  <span className="font-bold text-zinc-900 block">Tech Park, Sector 62</span>
-                  <span className="text-[10px] text-zinc-500">Noida, India</span>
+                  <span className="font-bold text-zinc-900 block">Kharghar</span>
+                  <span className="text-[10px] text-zinc-500">Navi Mumbai, India</span>
                 </div>
               </div>
 
               {/* WhatsApp */}
               <a
-                href="https://wa.me/919876543210"
+                href="https://wa.me/919920818481"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-start gap-2.5 text-zinc-600 hover:text-emerald-700 group"

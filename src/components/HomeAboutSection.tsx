@@ -132,7 +132,7 @@ export function HomeAboutSection() {
   return (
     <section
       id="about"
-      className="relative py-16 sm:py-24 lg:py-32 overflow-hidden bg-white select-none scroll-mt-20 sm:scroll-mt-24"
+      className="relative pt-12 sm:pt-16 lg:pt-20 pb-16 sm:pb-24 lg:pb-32 overflow-hidden bg-white select-none scroll-mt-20 sm:scroll-mt-24 border-t border-zinc-100"
     >
       {/* Ambient background glow orbs */}
       <div
@@ -236,10 +236,26 @@ export function HomeAboutSection() {
                 </svg>
               </Link>
 
-              {/* Secondary CTA */}
+              {/* Secondary CTA — Scrolls to Our Process section */}
               <Link
-                href="/about-us#journey"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 sm:px-6 py-3 sm:py-3 rounded-full text-zinc-800 font-bold text-xs sm:text-sm bg-white hover:bg-zinc-50 border border-zinc-200 shadow-xs hover:border-zinc-300 hover:-translate-y-0.5 transition-all duration-200 group text-center"
+                href="/#process"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const elem = document.getElementById("process");
+                  if (elem) {
+                    const headerOffset = 85;
+                    const elementPosition = elem.getBoundingClientRect().top;
+                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+                    window.scrollTo({
+                      top: Math.max(0, offsetPosition),
+                      behavior: "smooth",
+                    });
+                    window.history.pushState(null, "", "/#process");
+                  } else {
+                    window.location.href = "/#process";
+                  }
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 sm:px-6 py-3 sm:py-3 rounded-full text-zinc-800 font-bold text-xs sm:text-sm bg-white hover:bg-zinc-50 border border-zinc-200 shadow-xs hover:border-zinc-300 hover:-translate-y-0.5 transition-all duration-200 group text-center cursor-pointer"
               >
                 <span className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center justify-center shrink-0">
                   <svg className="w-2 h-2 sm:w-2.5 sm:h-2.5 translate-x-0.5 fill-current" viewBox="0 0 24 24">

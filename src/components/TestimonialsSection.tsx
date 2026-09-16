@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import Link from "next/link";
 
 interface TestimonialItem {
   id: string;
@@ -125,15 +124,6 @@ export function TestimonialsSection() {
   };
 
   const visibleCards = getVisibleCards();
-
-  const trustedBrands = [
-    { name: "EduLearn", category: "EdTech" },
-    { name: "ShopKart", category: "E-Commerce" },
-    { name: "TaskPro", category: "SaaS" },
-    { name: "BizERP", category: "Enterprise" },
-    { name: "HealthPulse", category: "HealthTech" },
-    { name: "PropNest", category: "RealEstate" },
-  ];
 
   return (
     <section
@@ -432,120 +422,6 @@ export function TestimonialsSection() {
                 />
               );
             })}
-          </div>
-        </div>
-
-        {/* 18. TRUST STATISTICS BAR & 19. CTA AREA */}
-        <div className="mt-16 sm:mt-24 p-6 sm:p-8 lg:p-10 rounded-3xl bg-gradient-to-br from-emerald-50/60 via-white to-teal-50/60 border border-emerald-100/80 shadow-xl shadow-emerald-950/5">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            {/* 4 Statistics Columns (lg:col-span-8) */}
-            <div className="lg:col-span-8 grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
-              {/* Stat 1: Happy Clients */}
-              <div className="flex flex-col items-center">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-100 border border-emerald-200/80 flex items-center justify-center mb-2.5 text-emerald-700 shadow-xs">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
-                </div>
-                <span className="text-3xl sm:text-4xl font-black text-zinc-900 tracking-tight">
-                  250+
-                </span>
-                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mt-0.5">
-                  Happy Clients
-                </span>
-              </div>
-
-              {/* Stat 2: Projects Delivered */}
-              <div className="flex flex-col items-center border-l-0 sm:border-l border-zinc-200/80">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-100 border border-emerald-200/80 flex items-center justify-center mb-2.5 text-emerald-700 shadow-xs">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z" />
-                    <path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65" />
-                    <path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65" />
-                  </svg>
-                </div>
-                <span className="text-3xl sm:text-4xl font-black text-zinc-900 tracking-tight">
-                  500+
-                </span>
-                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mt-0.5">
-                  Projects Delivered
-                </span>
-              </div>
-
-              {/* Stat 3: Client Satisfaction */}
-              <div className="flex flex-col items-center border-l-0 sm:border-l border-zinc-200/80">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-100 border border-emerald-200/80 flex items-center justify-center mb-2.5 text-emerald-700 shadow-xs">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                    <path d="m9 12 2 2 4-4" />
-                  </svg>
-                </div>
-                <span className="text-3xl sm:text-4xl font-black text-zinc-900 tracking-tight">
-                  99%
-                </span>
-                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mt-0.5">
-                  Satisfaction
-                </span>
-              </div>
-
-              {/* Stat 4: Years of Experience */}
-              <div className="flex flex-col items-center border-l-0 sm:border-l border-zinc-200/80">
-                <div className="w-11 h-11 rounded-2xl bg-emerald-100 border border-emerald-200/80 flex items-center justify-center mb-2.5 text-emerald-700 shadow-xs">
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-                    <polyline points="17 6 23 6 23 12" />
-                  </svg>
-                </div>
-                <span className="text-3xl sm:text-4xl font-black text-zinc-900 tracking-tight">
-                  5+
-                </span>
-                <span className="text-xs font-bold text-zinc-500 uppercase tracking-wider mt-0.5">
-                  Years Experience
-                </span>
-              </div>
-            </div>
-
-            {/* Compact CTA (lg:col-span-4) */}
-            <div className="lg:col-span-4 flex flex-col sm:flex-row lg:flex-col items-center lg:items-end justify-center gap-3.5 border-t lg:border-t-0 lg:border-l border-zinc-200/80 pt-6 lg:pt-0 lg:pl-8 text-center lg:text-right">
-              <div>
-                <span className="text-lg sm:text-xl font-black text-zinc-900 leading-snug block">
-                  Join Our Happy Clients and Start Your Success Story!
-                </span>
-                <span className="text-xs text-zinc-600 font-medium block mt-1">
-                  Ready to turn your technical vision into reality?
-                </span>
-              </div>
-              <Link
-                href="/#contact"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-xs sm:text-sm font-extrabold text-white bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/25 active:scale-95 transition-all duration-300 shrink-0 group/cta"
-              >
-                <span>Get a Free Consultation</span>
-                <span className="transition-transform duration-200 group-hover/cta:translate-x-1">→</span>
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* 20. TRUSTED CLIENTS / PROJECTS AREA */}
-        <div className="mt-14 sm:mt-18 text-center">
-          <span className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500 block mb-6">
-            Trusted by Businesses Across Industries
-          </span>
-
-          <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
-            {trustedBrands.map((brand, idx) => (
-              <div
-                key={idx}
-                className="px-5 py-2.5 rounded-2xl bg-white hover:bg-emerald-50/60 border border-zinc-200/80 hover:border-emerald-300 shadow-xs text-zinc-800 font-extrabold text-sm sm:text-base tracking-tight flex items-center gap-2 transition-all hover:scale-105"
-              >
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span>{brand.name}</span>
-                <span className="text-[10px] font-mono text-emerald-700 font-normal ml-1">({brand.category})</span>
-              </div>
-            ))}
           </div>
         </div>
       </div>
