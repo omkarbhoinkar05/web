@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
+import { createCareerApplication } from "@/lib/admin/db";
 
 function sanitizeText(str: string): string {
   return str.replace(/[<>]/g, "").trim();
@@ -80,18 +83,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, errors }, { status: 400 });
     }
 
-    const applicationId = `PF-CAREER-${Math.floor(100000 + Math.random() * 900000)}`;
+    // Securely persist resume file to non-public data/resumes directory
+    const resumesDir = path.join(process.cwd(), "data", "resumes");
+    if (!fs.existsSync(resumesDir)) {
+      fs.mkdirSync(resumesDir, { recursive: true });
+    }
+
+    const safeName = sanitizeFilename(resumeFile!.name);
+    const storageFileName = `${Date.now()}-${safeName}`;
+    const storageFilePath = path.join(resumesDir, storageFileName);
+
+    const arrayBuffer = await resumeFile!.arrayBuffer();
+    fs.writeFileSync(storageFilePath, Buffer.from(arrayBuffer));
+
+    // Save into HighTechBirds Admin Database
+    const appRecord = await createCareerApplication({
+      applicantName: fullName,
+      email,
+      mobile,
+      resumeFileName: safeName,
+      resumeFilePath: storageFilePath,
+      resumeSizeBytes: resumeFile!.size,
+      resumeMimeType: resumeFile!.type || "application/pdf",
+      message,
+    });
 
     return NextResponse.json(
       {
         success: true,
-        applicationId,
+        applicationId: appRecord.applicationId,
         message: "Your application has been received successfully! Our talent acquisition team will review your profile.",
         candidate: {
           fullName,
           email,
           mobile,
-          resumeFileName: sanitizeFilename(resumeFile!.name),
+          resumeFileName: safeName,
           resumeSizeBytes: resumeFile!.size,
         },
       },

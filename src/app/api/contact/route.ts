@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createContactEnquiry } from "@/lib/admin/db";
 
 interface ContactPayload {
   fullName?: string;
@@ -59,13 +60,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: false, errors }, { status: 400 });
     }
 
-    // In a full production system, forward to CRM / SendGrid / WhatsApp webhook here.
-    const inquiryId = `INQ-${Math.floor(100000 + Math.random() * 900000)}`;
+    // Auto-save to HighTechBirds CRM & Admin store
+    const { enquiry, lead } = await createContactEnquiry({
+      fullName,
+      email,
+      mobile,
+      service,
+      budget: budget || "Not specified",
+      message,
+      source: "Website Contact Form",
+    });
 
     return NextResponse.json(
       {
         success: true,
-        inquiryId,
+        inquiryId: enquiry.enquiryId,
+        leadId: lead.leadId,
         message: "Thank you! Your inquiry has been received. Our team will get in touch within 24 hours.",
         data: {
           fullName,

@@ -6,6 +6,7 @@ import {
   generateOutlookCalendarUrl,
   generateIcsFileContent,
 } from "@/lib/bookingUtils";
+import { createScheduledCall } from "@/lib/admin/db";
 
 export async function POST(request: Request) {
   try {
@@ -65,9 +66,23 @@ export async function POST(request: Request) {
       icsData: generateIcsFileContent(confirmedBooking),
     };
 
+    // Auto-save to HighTechBirds CRM & Admin store
+    const { call, lead } = await createScheduledCall({
+      fullName: confirmedBooking.fullName,
+      email: confirmedBooking.email,
+      mobile: confirmedBooking.mobileNumber,
+      service: confirmedBooking.meetingType || "Web Consultation",
+      date: confirmedBooking.date,
+      time: confirmedBooking.time,
+      timezone: confirmedBooking.timezone,
+      notes: confirmedBooking.message,
+    });
+
     return NextResponse.json(
       {
         success: true,
+        callId: call.callId,
+        leadId: lead.leadId,
         message: "Call scheduled successfully",
         booking: confirmedBooking,
       },
