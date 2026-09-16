@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface TestimonialItem {
   id: string;
@@ -78,22 +78,22 @@ export function TestimonialsSection() {
 
   const total = testimonials.length;
 
-  const handleNext = useCallback(() => {
+  const handleNext = () => {
     setCurrentIndex((prev) => (prev + 1) % total);
-  }, [total]);
+  };
 
-  const handlePrev = useCallback(() => {
+  const handlePrev = () => {
     setCurrentIndex((prev) => (prev - 1 + total) % total);
-  }, [total]);
+  };
 
   // Subtle Autoplay
   useEffect(() => {
     if (isPaused) return;
     const interval = setInterval(() => {
-      handleNext();
+      setCurrentIndex((prev) => (prev + 1) % total);
     }, 5500);
     return () => clearInterval(interval);
-  }, [isPaused, handleNext]);
+  }, [isPaused, total]);
 
   // Touch Swipe Handlers for mobile
   const handleTouchStart = (e: React.TouchEvent) => {

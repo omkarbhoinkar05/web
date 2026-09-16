@@ -129,7 +129,22 @@ export function ContactSection() {
     setStatus("loading");
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.errors) {
+          setErrors(data.errors);
+        }
+        throw new Error(data.error || "Failed to submit inquiry");
+      }
 
       setStatus("success");
       setFormData({
@@ -144,9 +159,10 @@ export function ContactSection() {
       setTimeout(() => {
         setStatus("idle");
       }, 5000);
-    } catch {
+    } catch (err: unknown) {
       setStatus("error");
-      setErrorMessage("Something went wrong. Please try again or reach us via WhatsApp.");
+      const msg = err instanceof Error ? err.message : "Something went wrong. Please try again or reach us via WhatsApp.";
+      setErrorMessage(msg);
       setTimeout(() => {
         setStatus("idle");
       }, 4000);

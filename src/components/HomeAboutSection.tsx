@@ -240,9 +240,9 @@ export function HomeAboutSection() {
               <Link
                 href="/#process"
                 onClick={(e) => {
-                  e.preventDefault();
                   const elem = document.getElementById("process");
                   if (elem) {
+                    e.preventDefault();
                     const headerOffset = 85;
                     const elementPosition = elem.getBoundingClientRect().top;
                     const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
@@ -251,8 +251,6 @@ export function HomeAboutSection() {
                       behavior: "smooth",
                     });
                     window.history.pushState(null, "", "/#process");
-                  } else {
-                    window.location.href = "/#process";
                   }
                 }}
                 className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-5 sm:px-6 py-3 sm:py-3 rounded-full text-zinc-800 font-bold text-xs sm:text-sm bg-white hover:bg-zinc-50 border border-zinc-200 shadow-xs hover:border-zinc-300 hover:-translate-y-0.5 transition-all duration-200 group text-center cursor-pointer"
@@ -564,7 +562,7 @@ export function HomeAboutSection() {
 
                       {/* Mini Code Editor Visual */}
                       <div className="my-1.5 sm:my-2 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-black/60 border border-zinc-800 font-mono text-[9px] sm:text-[11px] leading-relaxed text-zinc-300 overflow-x-auto scrollbar-none">
-                        <div className="text-zinc-500">// Turbo Server Component</div>
+                        <div className="text-zinc-500">{"// Turbo Server Component"}</div>
                         <div>
                           <span className="text-pink-400">export default async function</span>{" "}
                           <span className="text-emerald-400">App</span>() &#123;
@@ -572,7 +570,7 @@ export function HomeAboutSection() {
                         <div className="pl-3 sm:pl-4">
                           <span className="text-pink-400">return</span> &lt;
                           <span className="text-cyan-400">Engine</span> speed=&#123;
-                          <span className="text-amber-300">"100/100"</span>&#125; /&gt;;
+                          <span className="text-amber-300">&quot;100/100&quot;</span>&#125; /&gt;;
                         </div>
                         <div>&#125;</div>
                       </div>

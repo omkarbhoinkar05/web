@@ -1,7 +1,94 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Safe Production Security Headers
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "origin-when-cross-origin",
+          },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+    ];
+  },
+
+  // Aliases and Clean Navigation Redirects
+  async redirects() {
+    return [
+      {
+        source: "/about",
+        destination: "/about-us",
+        permanent: true,
+      },
+      {
+        source: "/career",
+        destination: "/careers",
+        permanent: true,
+      },
+      {
+        source: "/our-work",
+        destination: "/portfolio",
+        permanent: true,
+      },
+      {
+        source: "/services",
+        destination: "/#services",
+        permanent: false,
+      },
+      {
+        source: "/service",
+        destination: "/#services",
+        permanent: false,
+      },
+      {
+        source: "/process",
+        destination: "/#process",
+        permanent: false,
+      },
+      {
+        source: "/contact",
+        destination: "/#contact",
+        permanent: false,
+      },
+      {
+        source: "/contact-us",
+        destination: "/#contact",
+        permanent: false,
+      },
+      {
+        source: "/team",
+        destination: "/about-us",
+        permanent: false,
+      },
+      {
+        source: "/portfolio/coreerp",
+        destination: "/portfolio/bizerp",
+        permanent: true,
+      },
+      {
+        source: "/portfolio/propstream",
+        destination: "/portfolio/propnest",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;
+

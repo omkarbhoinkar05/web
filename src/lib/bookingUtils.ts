@@ -76,7 +76,8 @@ export function formatDisplayDate(isoDate: string): string {
  */
 function parseTime12to24(timeStr: string): { hour: number; minute: number } {
   const [timePart, modifier] = timeStr.split(" ");
-  let [hours, minutes] = timePart.split(":").map(Number);
+  const [rawHours, minutes] = timePart.split(":").map(Number);
+  let hours = rawHours;
 
   if (modifier === "PM" && hours < 12) {
     hours += 12;

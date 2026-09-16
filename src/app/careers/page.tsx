@@ -122,8 +122,28 @@ export default function CareersPage() {
     setErrorMessage("");
 
     try {
-      // Simulate API call for candidates' submissions (or hook to existing backend)
-      await new Promise((resolve) => setTimeout(resolve, 1400));
+      const data = new FormData();
+      data.append("fullName", fullName);
+      data.append("mobile", mobile);
+      data.append("email", email);
+      data.append("message", message);
+      if (resumeFile) {
+        data.append("resume", resumeFile);
+      }
+
+      const response = await fetch("/api/careers", {
+        method: "POST",
+        body: data,
+      });
+
+      const resJson = await response.json();
+
+      if (!response.ok) {
+        if (resJson.errors) {
+          setErrors(resJson.errors);
+        }
+        throw new Error(resJson.error || "Failed to submit application");
+      }
 
       setIsSuccess(true);
       setIsSubmitting(false);
@@ -136,9 +156,10 @@ export default function CareersPage() {
       setMessage("");
       if (fileInputRef.current) fileInputRef.current.value = "";
       setErrors({});
-    } catch {
+    } catch (err: unknown) {
       setIsSubmitting(false);
-      setErrorMessage("Something went wrong. Please try again.");
+      const msg = err instanceof Error ? err.message : "Something went wrong. Please try again.";
+      setErrorMessage(msg);
     }
   };
 
@@ -282,6 +303,7 @@ export default function CareersPage() {
                       alt="PixelForge team of software engineers and designers collaborating in office"
                       fill
                       priority
+                      sizes="(max-width: 768px) 100vw, 50vw"
                       className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
                     />
                     {/* Subtle Emerald / Dark Overlay */}

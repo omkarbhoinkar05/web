@@ -21,6 +21,481 @@ interface ProjectItem {
   mockup: React.ReactNode;
 }
 
+const filterCategories = [
+  "All Projects",
+  "Web Design",
+  "SaaS App",
+  "ERP Software",
+  "E-Commerce",
+  "Web App",
+  "Dynamic Website",
+];
+
+const projects: ProjectItem[] = [
+  {
+    id: "edulearn",
+    slug: "edulearn",
+    name: "EduLearn",
+    category: "Education",
+    type: "Online Learning Platform",
+    description:
+      "A modern e-learning platform with live video classes, interactive course modules, student progress dashboard and secure payment gateway.",
+    features: ["Live Classes", "Payment Integration", "Student LMS", "Admin Analytics"],
+    techStack: ["Next.js 16", "WebRTC", "PostgreSQL", "Tailwind CSS"],
+    impactMetric: "+310%",
+    impactLabel: "Student Enrollment",
+    tags: ["All Projects", "Web App", "Dynamic Website", "Web Design"],
+    mockup: (
+      <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
+          </div>
+          <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
+            edulearn.io/live-class
+          </span>
+          <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            LIVE
+          </span>
+        </div>
+
+        {/* Interactive Lesson Preview */}
+        <div className="my-auto py-1 space-y-2">
+          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
+                <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <polygon points="5 3 19 12 5 21 5 3" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <div className="text-xs font-bold text-white leading-tight">Next.js 16 Masterclass</div>
+                <div className="text-[10px] text-zinc-400">Lesson #04 • Full-Stack Architecture</div>
+              </div>
+            </div>
+            <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
+              1,240 Enrolled
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            <div className="flex items-center justify-between text-[10px] text-zinc-400">
+              <span>Curriculum Progress</span>
+              <span className="text-emerald-400 font-bold">88%</span>
+            </div>
+            <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+              <div className="h-full w-[88%] bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
+          <span>⚡ Ultra-low Latency</span>
+          <span className="text-emerald-300 font-semibold">Stripe Checkout Ready</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "shopkart",
+    slug: "shopkart",
+    name: "ShopKart",
+    category: "E-Commerce",
+    type: "Multi-Vendor Marketplace",
+    description:
+      "A feature-packed multi-vendor marketplace with automated seller onboarding, split escrow payments, order management and real-time tracking.",
+    features: ["Multi-Vendor", "Split Escrow", "Dynamic Filter", "Seller Portal"],
+    techStack: ["Next.js 16", "Redis", "Stripe Connect", "Prisma ORM"],
+    impactMetric: "$2.4M+",
+    impactLabel: "Annual GMV",
+    tags: ["All Projects", "E-Commerce", "Web App", "Web Design"],
+    mockup: (
+      <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
+          </div>
+          <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
+            shopkart.store/marketplace
+          </span>
+          <span className="text-[10px] font-mono text-emerald-400 font-bold">CART (3)</span>
+        </div>
+
+        <div className="my-auto py-1 grid grid-cols-2 gap-2">
+          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-col text-left">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[9px] font-bold text-emerald-400">FEATURED</span>
+              <span className="text-[9px] text-amber-300">★ 4.9</span>
+            </div>
+            <span className="text-xs font-bold text-white truncate">Smart Tech Bundle</span>
+            <span className="text-xs font-mono font-extrabold text-emerald-300 mt-1">$249.00</span>
+          </div>
+          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-col text-left">
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[9px] font-bold text-teal-400">BESTSELLER</span>
+              <span className="text-[9px] text-amber-300">★ 5.0</span>
+            </div>
+            <span className="text-xs font-bold text-white truncate">Pro Studio Audio</span>
+            <span className="text-xs font-mono font-extrabold text-emerald-300 mt-1">$189.50</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
+          <span>🛡️ Automated Escrow</span>
+          <span className="text-emerald-400 font-mono font-semibold">Instant Dispatch</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "taskpro",
+    slug: "taskpro",
+    name: "TaskPro",
+    category: "SaaS App",
+    type: "Project Management SaaS",
+    description:
+      "A collaborative SaaS platform to manage agile projects, sprint velocity, automated workflows, and team productivity with real-time sync.",
+    features: ["Kanban Sprints", "Gantt Timelines", "Team Analytics", "Automations"],
+    techStack: ["React 19", "Node.js", "WebSockets", "Tailwind CSS"],
+    impactMetric: "+45%",
+    impactLabel: "Team Productivity",
+    tags: ["All Projects", "SaaS App", "Web App", "Web Design"],
+    mockup: (
+      <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
+          </div>
+          <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
+            app.taskpro.io/kanban
+          </span>
+          <span className="text-[10px] font-mono text-emerald-400 font-bold">SPRINT #12</span>
+        </div>
+
+        <div className="my-auto py-1 grid grid-cols-2 gap-2">
+          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-emerald-500/30 flex flex-col text-left">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] text-emerald-400 font-bold">IN PROGRESS</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
+            <span className="text-xs font-bold text-white mt-1">API Integrations</span>
+            <div className="flex items-center justify-between mt-2 pt-1 border-t border-zinc-800 text-[9px] text-zinc-400">
+              <span>3 Subtasks</span>
+              <span className="text-emerald-300 font-mono">Today</span>
+            </div>
+          </div>
+          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-col text-left">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] text-zinc-400 font-bold">DONE</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            </div>
+            <span className="text-xs font-bold text-white mt-1">UX Design Sprint</span>
+            <div className="flex items-center justify-between mt-2 pt-1 border-t border-zinc-800 text-[9px] text-zinc-400">
+              <span>100% Passed</span>
+              <span className="text-emerald-400 font-mono">✓ Ready</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
+          <span>Team Velocity: <strong className="text-white">94.2 pts</strong></span>
+          <span className="text-emerald-400 font-mono font-semibold">+18% Efficiency</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "bizerp",
+    slug: "bizerp",
+    name: "BizERP",
+    category: "ERP Software",
+    type: "Complete Business Management",
+    description:
+      "An enterprise Cloud ERP unifying inventory, supply chain, automated invoicing, human resources, and real-time financial reporting.",
+    features: ["Inventory Control", "Automated Payroll", "Tax Compliance", "Audit Trail"],
+    techStack: ["Next.js", "GraphQL", "PostgreSQL", "Tailwind CSS"],
+    impactMetric: "-62%",
+    impactLabel: "Operational Overhead",
+    tags: ["All Projects", "ERP Software", "Web App", "Dynamic Website"],
+    mockup: (
+      <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
+          </div>
+          <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
+            bizerp.cloud/analytics
+          </span>
+          <span className="text-[10px] font-mono text-emerald-400 font-bold">ENTERPRISE</span>
+        </div>
+
+        <div className="my-auto py-1 space-y-1.5">
+          <div className="flex items-center justify-between px-1">
+            <div>
+              <span className="text-[9px] text-zinc-400 uppercase tracking-wider block">Total Pipeline Revenue</span>
+              <span className="text-sm font-mono font-black text-white">$482,900.00</span>
+            </div>
+            <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-mono text-emerald-400 font-bold">
+              +38.4% YoY
+            </span>
+          </div>
+
+          <svg className="w-full h-8" viewBox="0 0 200 30" fill="none">
+            <path
+              d="M 0 25 Q 30 20, 60 18 T 120 10 T 170 14 T 200 4"
+              stroke="#10B981"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            />
+            <circle cx="200" cy="4" r="3" fill="#10B981" className="animate-pulse" />
+          </svg>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
+          <span>Inventory: <strong className="text-emerald-300">99.8% Optimal</strong></span>
+          <span className="text-emerald-400 font-mono font-semibold">Audit Ready</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "healthpulse",
+    slug: "healthpulse",
+    name: "HealthPulse",
+    category: "Healthcare",
+    type: "Telemedicine & EHR Portal",
+    description:
+      "HIPAA-compliant telehealth platform with secure video appointments, electronic health record vault, and digital prescription routing.",
+    features: ["Video Consultations", "EHR Records", "Prescription Routing", "Doctor Calendar"],
+    techStack: ["Next.js 16", "WebRTC", "HIPAA Cloud", "Tailwind CSS"],
+    impactMetric: "40K+",
+    impactLabel: "Monthly Consultations",
+    tags: ["All Projects", "Web App", "SaaS App", "Dynamic Website"],
+    mockup: (
+      <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
+          </div>
+          <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
+            healthpulse.med/telehealth
+          </span>
+          <span className="text-[10px] font-mono text-emerald-400 font-bold flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+            HIPAA SECURE
+          </span>
+        </div>
+
+        <div className="my-auto py-1 space-y-2">
+          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+                </svg>
+              </div>
+              <div className="text-left">
+                <span className="text-xs font-bold text-white block">Dr. Sarah Jenkins, MD</span>
+                <span className="text-[10px] text-zinc-400">Cardiology • Tele-Session #12</span>
+              </div>
+            </div>
+            <span className="text-[10px] font-mono font-bold text-emerald-400">Connected</span>
+          </div>
+
+          <div className="flex items-center justify-between px-1 text-[10px] text-zinc-400">
+            <span>Patient Vitals: <strong className="text-white">Normal (98 bpm)</strong></span>
+            <span className="text-emerald-400 font-mono">Encrypted E2E</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
+          <span>Prescription Sync: <strong className="text-emerald-300">Active</strong></span>
+          <span className="text-emerald-400 font-mono font-semibold">256-bit AES</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "propnest",
+    slug: "propnest",
+    name: "PropNest",
+    category: "Real Estate",
+    type: "Property Discovery Engine",
+    description:
+      "High-conversion luxury property portal featuring automated MLS feed sync, dynamic map exploration, 3D tours, and lead CRM.",
+    features: ["MLS Feed Sync", "Interactive Maps", "Virtual 3D Tours", "Mortgage Calculator"],
+    techStack: ["Next.js 16", "Mapbox GL", "Node.js", "Tailwind CSS"],
+    impactMetric: "8.4x",
+    impactLabel: "Qualified Inquiries",
+    tags: ["All Projects", "Dynamic Website", "Web Design", "Web App"],
+    mockup: (
+      <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
+          </div>
+          <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
+            propnest.estate/villas
+          </span>
+          <span className="text-[10px] font-mono text-emerald-400 font-bold">MAP VIEW</span>
+        </div>
+
+        <div className="my-auto py-1 grid grid-cols-2 gap-2">
+          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-col text-left">
+            <span className="text-[9px] font-bold text-emerald-400 mb-0.5">EXCLUSIVE VILLA</span>
+            <span className="text-xs font-bold text-white truncate">The Azure Bayfront</span>
+            <span className="text-xs font-mono font-black text-emerald-300 mt-1">$1,850,000</span>
+            <span className="text-[9px] text-zinc-400 mt-1">4 Beds • 3.5 Baths</span>
+          </div>
+          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-emerald-500/20 flex flex-col justify-center items-center text-center">
+            <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 mb-1">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <polygon points="10 8 16 12 10 16 10 8" />
+              </svg>
+            </div>
+            <span className="text-[10px] font-bold text-white">3D Virtual Tour</span>
+            <span className="text-[8px] text-emerald-400">4K Walkthrough</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
+          <span>MLS Status: <strong className="text-emerald-300">Live Feed</strong></span>
+          <span className="text-emerald-400 font-mono font-semibold">Verified Title</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "finedge",
+    slug: "finedge",
+    name: "FinEdge",
+    category: "FinTech",
+    type: "Wealth & Portfolio Tracker",
+    description:
+      "Institutional-grade portfolio management and wealth dashboard with real-time market data, risk models, and automated tax reporting.",
+    features: ["Live Market Stream", "Asset Allocation", "Risk Analytics", "Tax Optimization"],
+    techStack: ["Next.js", "FastAPI", "WebSockets", "Tailwind CSS"],
+    impactMetric: "$120M+",
+    impactLabel: "Assets Tracked",
+    tags: ["All Projects", "SaaS App", "Web App", "ERP Software"],
+    mockup: (
+      <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
+          </div>
+          <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
+            finedge.capital/terminal
+          </span>
+          <span className="text-[10px] font-mono text-emerald-400 font-bold">PORTFOLIO</span>
+        </div>
+
+        <div className="my-auto py-1 space-y-1.5">
+          <div className="flex items-center justify-between px-1">
+            <div>
+              <span className="text-[9px] text-zinc-400 uppercase tracking-wider block">Net Portfolio Value</span>
+              <span className="text-sm font-mono font-black text-white">$1,248,390.20</span>
+            </div>
+            <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-mono text-emerald-400 font-bold">
+              +24.6% All-Time
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-1.5 text-center">
+            <div className="p-1 rounded bg-zinc-900 border border-zinc-800">
+              <span className="text-[8px] text-zinc-400 block">Equities</span>
+              <span className="text-[10px] font-mono font-bold text-white">58%</span>
+            </div>
+            <div className="p-1 rounded bg-zinc-900 border border-zinc-800">
+              <span className="text-[8px] text-zinc-400 block">Bonds</span>
+              <span className="text-[10px] font-mono font-bold text-emerald-400">24%</span>
+            </div>
+            <div className="p-1 rounded bg-zinc-900 border border-zinc-800">
+              <span className="text-[8px] text-zinc-400 block">Yield</span>
+              <span className="text-[10px] font-mono font-bold text-teal-400">18%</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
+          <span>Risk Score: <strong className="text-emerald-300">Moderate (1.12β)</strong></span>
+          <span className="text-emerald-400 font-mono font-semibold">SEC Compliant</span>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: "dineflow",
+    slug: "dineflow",
+    name: "DineFlow",
+    category: "Hospitality",
+    type: "Restaurant Cloud POS & KDS",
+    description:
+      "End-to-end restaurant automation suite with contactless QR menus, kitchen display system (KDS), delivery aggregator sync, and table inventory.",
+    features: ["QR Menu & Pay", "Kitchen Display (KDS)", "Table Turnover", "Delivery Sync"],
+    techStack: ["Next.js 16", "Socket.io", "Stripe Terminal", "Tailwind CSS"],
+    impactMetric: "3.2x",
+    impactLabel: "Faster Table Turns",
+    tags: ["All Projects", "Web App", "E-Commerce", "Dynamic Website"],
+    mockup: (
+      <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
+        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
+          <div className="flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
+          </div>
+          <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
+            dineflow.pos/kitchen-kds
+          </span>
+          <span className="text-[10px] font-mono text-emerald-400 font-bold">KITCHEN LIVE</span>
+        </div>
+
+        <div className="my-auto py-1 grid grid-cols-2 gap-2">
+          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-emerald-500/30 flex flex-col text-left">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-bold text-emerald-400">TABLE 08</span>
+              <span className="text-[9px] font-mono text-zinc-400">04:12 min</span>
+            </div>
+            <span className="text-xs font-bold text-white mt-1 truncate">2x Truffle Burger</span>
+            <span className="text-[9px] text-zinc-400">Extra sauce • Medium</span>
+          </div>
+          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-col text-left">
+            <div className="flex items-center justify-between">
+              <span className="text-[9px] font-bold text-teal-400">DELIVERY #402</span>
+              <span className="text-[9px] font-mono text-zinc-400">01:45 min</span>
+            </div>
+            <span className="text-xs font-bold text-white mt-1 truncate">1x Artisan Pizza</span>
+            <span className="text-[9px] text-zinc-400">Packaged • DoorDash</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
+          <span>Avg Prep Time: <strong className="text-emerald-300">7.5 mins</strong></span>
+          <span className="text-emerald-400 font-mono font-semibold">Cloud Sync</span>
+        </div>
+      </div>
+    ),
+  },
+];
+
 export default function PortfolioPage() {
   const [activeFilter, setActiveFilter] = useState("All Projects");
   const [searchQuery, setSearchQuery] = useState("");
@@ -53,480 +528,7 @@ export default function PortfolioPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
-  const filterCategories = [
-    "All Projects",
-    "Web Design",
-    "SaaS App",
-    "ERP Software",
-    "E-Commerce",
-    "Web App",
-    "Dynamic Website",
-  ];
 
-  const projects: ProjectItem[] = [
-    {
-      id: "edulearn",
-      slug: "edulearn",
-      name: "EduLearn",
-      category: "Education",
-      type: "Online Learning Platform",
-      description:
-        "A modern e-learning platform with live video classes, interactive course modules, student progress dashboard and secure payment gateway.",
-      features: ["Live Classes", "Payment Integration", "Student LMS", "Admin Analytics"],
-      techStack: ["Next.js 16", "WebRTC", "PostgreSQL", "Tailwind CSS"],
-      impactMetric: "+310%",
-      impactLabel: "Student Enrollment",
-      tags: ["All Projects", "Web App", "Dynamic Website", "Web Design"],
-      mockup: (
-        <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
-          {/* Header */}
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
-            </div>
-            <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
-              edulearn.io/live-class
-            </span>
-            <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              LIVE
-            </span>
-          </div>
-
-          {/* Interactive Lesson Preview */}
-          <div className="my-auto py-1 space-y-2">
-            <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <div className="text-xs font-bold text-white leading-tight">Next.js 16 Masterclass</div>
-                  <div className="text-[10px] text-zinc-400">Lesson #04 • Full-Stack Architecture</div>
-                </div>
-              </div>
-              <span className="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-500/30">
-                1,240 Enrolled
-              </span>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-between text-[10px] text-zinc-400">
-                <span>Curriculum Progress</span>
-                <span className="text-emerald-400 font-bold">88%</span>
-              </div>
-              <div className="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
-                <div className="h-full w-[88%] bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full" />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
-            <span>⚡ Ultra-low Latency</span>
-            <span className="text-emerald-300 font-semibold">Stripe Checkout Ready</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "shopkart",
-      slug: "shopkart",
-      name: "ShopKart",
-      category: "E-Commerce",
-      type: "Multi-Vendor Marketplace",
-      description:
-        "A feature-packed multi-vendor marketplace with automated seller onboarding, split escrow payments, order management and real-time tracking.",
-      features: ["Multi-Vendor", "Split Escrow", "Dynamic Filter", "Seller Portal"],
-      techStack: ["Next.js 16", "Redis", "Stripe Connect", "Prisma ORM"],
-      impactMetric: "$2.4M+",
-      impactLabel: "Annual GMV",
-      tags: ["All Projects", "E-Commerce", "Web App", "Web Design"],
-      mockup: (
-        <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
-            </div>
-            <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
-              shopkart.store/marketplace
-            </span>
-            <span className="text-[10px] font-mono text-emerald-400 font-bold">CART (3)</span>
-          </div>
-
-          <div className="my-auto py-1 grid grid-cols-2 gap-2">
-            <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-col text-left">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[9px] font-bold text-emerald-400">FEATURED</span>
-                <span className="text-[9px] text-amber-300">★ 4.9</span>
-              </div>
-              <span className="text-xs font-bold text-white truncate">Smart Tech Bundle</span>
-              <span className="text-xs font-mono font-extrabold text-emerald-300 mt-1">$249.00</span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-col text-left">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-[9px] font-bold text-teal-400">BESTSELLER</span>
-                <span className="text-[9px] text-amber-300">★ 5.0</span>
-              </div>
-              <span className="text-xs font-bold text-white truncate">Pro Studio Audio</span>
-              <span className="text-xs font-mono font-extrabold text-emerald-300 mt-1">$189.50</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
-            <span>🛡️ Automated Escrow</span>
-            <span className="text-emerald-400 font-mono font-semibold">Instant Dispatch</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "taskpro",
-      slug: "taskpro",
-      name: "TaskPro",
-      category: "SaaS App",
-      type: "Project Management SaaS",
-      description:
-        "A collaborative SaaS platform to manage agile projects, sprint velocity, automated workflows, and team productivity with real-time sync.",
-      features: ["Kanban Sprints", "Gantt Timelines", "Team Analytics", "Automations"],
-      techStack: ["React 19", "Node.js", "WebSockets", "Tailwind CSS"],
-      impactMetric: "+45%",
-      impactLabel: "Team Productivity",
-      tags: ["All Projects", "SaaS App", "Web App", "Web Design"],
-      mockup: (
-        <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
-            </div>
-            <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
-              app.taskpro.io/kanban
-            </span>
-            <span className="text-[10px] font-mono text-emerald-400 font-bold">SPRINT #12</span>
-          </div>
-
-          <div className="my-auto py-1 grid grid-cols-2 gap-2">
-            <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-emerald-500/30 flex flex-col text-left">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] text-emerald-400 font-bold">IN PROGRESS</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              </div>
-              <span className="text-xs font-bold text-white mt-1">API Integrations</span>
-              <div className="flex items-center justify-between mt-2 pt-1 border-t border-zinc-800 text-[9px] text-zinc-400">
-                <span>3 Subtasks</span>
-                <span className="text-emerald-300 font-mono">Today</span>
-              </div>
-            </div>
-            <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-col text-left">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] text-zinc-400 font-bold">DONE</span>
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              </div>
-              <span className="text-xs font-bold text-white mt-1">UX Design Sprint</span>
-              <div className="flex items-center justify-between mt-2 pt-1 border-t border-zinc-800 text-[9px] text-zinc-400">
-                <span>100% Passed</span>
-                <span className="text-emerald-400 font-mono">✓ Ready</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
-            <span>Team Velocity: <strong className="text-white">94.2 pts</strong></span>
-            <span className="text-emerald-400 font-mono font-semibold">+18% Efficiency</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "bizerp",
-      slug: "bizerp",
-      name: "BizERP",
-      category: "ERP Software",
-      type: "Complete Business Management",
-      description:
-        "An enterprise Cloud ERP unifying inventory, supply chain, automated invoicing, human resources, and real-time financial reporting.",
-      features: ["Inventory Control", "Automated Payroll", "Tax Compliance", "Audit Trail"],
-      techStack: ["Next.js", "GraphQL", "PostgreSQL", "Tailwind CSS"],
-      impactMetric: "-62%",
-      impactLabel: "Operational Overhead",
-      tags: ["All Projects", "ERP Software", "Web App", "Dynamic Website"],
-      mockup: (
-        <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
-            </div>
-            <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
-              bizerp.cloud/analytics
-            </span>
-            <span className="text-[10px] font-mono text-emerald-400 font-bold">ENTERPRISE</span>
-          </div>
-
-          <div className="my-auto py-1 space-y-1.5">
-            <div className="flex items-center justify-between px-1">
-              <div>
-                <span className="text-[9px] text-zinc-400 uppercase tracking-wider block">Total Pipeline Revenue</span>
-                <span className="text-sm font-mono font-black text-white">$482,900.00</span>
-              </div>
-              <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-mono text-emerald-400 font-bold">
-                +38.4% YoY
-              </span>
-            </div>
-
-            <svg className="w-full h-8" viewBox="0 0 200 30" fill="none">
-              <path
-                d="M 0 25 Q 30 20, 60 18 T 120 10 T 170 14 T 200 4"
-                stroke="#10B981"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              />
-              <circle cx="200" cy="4" r="3" fill="#10B981" className="animate-pulse" />
-            </svg>
-          </div>
-
-          <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
-            <span>Inventory: <strong className="text-emerald-300">99.8% Optimal</strong></span>
-            <span className="text-emerald-400 font-mono font-semibold">Audit Ready</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "healthpulse",
-      slug: "healthpulse",
-      name: "HealthPulse",
-      category: "Healthcare",
-      type: "Telemedicine & EHR Portal",
-      description:
-        "HIPAA-compliant telehealth platform with secure video appointments, electronic health record vault, and digital prescription routing.",
-      features: ["Video Consultations", "EHR Records", "Prescription Routing", "Doctor Calendar"],
-      techStack: ["Next.js 16", "WebRTC", "HIPAA Cloud", "Tailwind CSS"],
-      impactMetric: "40K+",
-      impactLabel: "Monthly Consultations",
-      tags: ["All Projects", "Web App", "SaaS App", "Dynamic Website"],
-      mockup: (
-        <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
-            </div>
-            <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
-              healthpulse.med/telehealth
-            </span>
-            <span className="text-[10px] font-mono text-emerald-400 font-bold flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              HIPAA SECURE
-            </span>
-          </div>
-
-          <div className="my-auto py-1 space-y-2">
-            <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-                  </svg>
-                </div>
-                <div className="text-left">
-                  <span className="text-xs font-bold text-white block">Dr. Sarah Jenkins, MD</span>
-                  <span className="text-[10px] text-zinc-400">Cardiology • Tele-Session #12</span>
-                </div>
-              </div>
-              <span className="text-[10px] font-mono font-bold text-emerald-400">Connected</span>
-            </div>
-
-            <div className="flex items-center justify-between px-1 text-[10px] text-zinc-400">
-              <span>Patient Vitals: <strong className="text-white">Normal (98 bpm)</strong></span>
-              <span className="text-emerald-400 font-mono">Encrypted E2E</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
-            <span>Prescription Sync: <strong className="text-emerald-300">Active</strong></span>
-            <span className="text-emerald-400 font-mono font-semibold">256-bit AES</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "propnest",
-      slug: "propnest",
-      name: "PropNest",
-      category: "Real Estate",
-      type: "Property Discovery Engine",
-      description:
-        "High-conversion luxury property portal featuring automated MLS feed sync, dynamic map exploration, 3D tours, and lead CRM.",
-      features: ["MLS Feed Sync", "Interactive Maps", "Virtual 3D Tours", "Mortgage Calculator"],
-      techStack: ["Next.js 16", "Mapbox GL", "Node.js", "Tailwind CSS"],
-      impactMetric: "8.4x",
-      impactLabel: "Qualified Inquiries",
-      tags: ["All Projects", "Dynamic Website", "Web Design", "Web App"],
-      mockup: (
-        <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
-            </div>
-            <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
-              propnest.estate/villas
-            </span>
-            <span className="text-[10px] font-mono text-emerald-400 font-bold">MAP VIEW</span>
-          </div>
-
-          <div className="my-auto py-1 grid grid-cols-2 gap-2">
-            <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-col text-left">
-              <span className="text-[9px] font-bold text-emerald-400 mb-0.5">EXCLUSIVE VILLA</span>
-              <span className="text-xs font-bold text-white truncate">The Azure Bayfront</span>
-              <span className="text-xs font-mono font-black text-emerald-300 mt-1">$1,850,000</span>
-              <span className="text-[9px] text-zinc-400 mt-1">4 Beds • 3.5 Baths</span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-emerald-500/20 flex flex-col justify-center items-center text-center">
-              <div className="w-7 h-7 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 mb-1">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10" />
-                  <polygon points="10 8 16 12 10 16 10 8" />
-                </svg>
-              </div>
-              <span className="text-[10px] font-bold text-white">3D Virtual Tour</span>
-              <span className="text-[8px] text-emerald-400">4K Walkthrough</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
-            <span>MLS Status: <strong className="text-emerald-300">Live Feed</strong></span>
-            <span className="text-emerald-400 font-mono font-semibold">Verified Title</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "finedge",
-      slug: "finedge",
-      name: "FinEdge",
-      category: "FinTech",
-      type: "Wealth & Portfolio Tracker",
-      description:
-        "Institutional-grade portfolio management and wealth dashboard with real-time market data, risk models, and automated tax reporting.",
-      features: ["Live Market Stream", "Asset Allocation", "Risk Analytics", "Tax Optimization"],
-      techStack: ["Next.js", "FastAPI", "WebSockets", "Tailwind CSS"],
-      impactMetric: "$120M+",
-      impactLabel: "Assets Tracked",
-      tags: ["All Projects", "SaaS App", "Web App", "ERP Software"],
-      mockup: (
-        <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
-            </div>
-            <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
-              finedge.capital/terminal
-            </span>
-            <span className="text-[10px] font-mono text-emerald-400 font-bold">PORTFOLIO</span>
-          </div>
-
-          <div className="my-auto py-1 space-y-1.5">
-            <div className="flex items-center justify-between px-1">
-              <div>
-                <span className="text-[9px] text-zinc-400 uppercase tracking-wider block">Net Portfolio Value</span>
-                <span className="text-sm font-mono font-black text-white">$1,248,390.20</span>
-              </div>
-              <span className="px-2 py-0.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-[10px] font-mono text-emerald-400 font-bold">
-                +24.6% All-Time
-              </span>
-            </div>
-
-            <div className="grid grid-cols-3 gap-1.5 text-center">
-              <div className="p-1 rounded bg-zinc-900 border border-zinc-800">
-                <span className="text-[8px] text-zinc-400 block">Equities</span>
-                <span className="text-[10px] font-mono font-bold text-white">58%</span>
-              </div>
-              <div className="p-1 rounded bg-zinc-900 border border-zinc-800">
-                <span className="text-[8px] text-zinc-400 block">Bonds</span>
-                <span className="text-[10px] font-mono font-bold text-emerald-400">24%</span>
-              </div>
-              <div className="p-1 rounded bg-zinc-900 border border-zinc-800">
-                <span className="text-[8px] text-zinc-400 block">Yield</span>
-                <span className="text-[10px] font-mono font-bold text-teal-400">18%</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
-            <span>Risk Score: <strong className="text-emerald-300">Moderate (1.12β)</strong></span>
-            <span className="text-emerald-400 font-mono font-semibold">SEC Compliant</span>
-          </div>
-        </div>
-      ),
-    },
-    {
-      id: "dineflow",
-      slug: "dineflow",
-      name: "DineFlow",
-      category: "Hospitality",
-      type: "Restaurant Cloud POS & KDS",
-      description:
-        "End-to-end restaurant automation suite with contactless QR menus, kitchen display system (KDS), delivery aggregator sync, and table inventory.",
-      features: ["QR Menu & Pay", "Kitchen Display (KDS)", "Table Turnover", "Delivery Sync"],
-      techStack: ["Next.js 16", "Socket.io", "Stripe Terminal", "Tailwind CSS"],
-      impactMetric: "3.2x",
-      impactLabel: "Faster Table Turns",
-      tags: ["All Projects", "Web App", "E-Commerce", "Dynamic Website"],
-      mockup: (
-        <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
-          <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
-            <div className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
-              <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
-            </div>
-            <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
-              dineflow.pos/kitchen-kds
-            </span>
-            <span className="text-[10px] font-mono text-emerald-400 font-bold">KITCHEN LIVE</span>
-          </div>
-
-          <div className="my-auto py-1 grid grid-cols-2 gap-2">
-            <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-emerald-500/30 flex flex-col text-left">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold text-emerald-400">TABLE 08</span>
-                <span className="text-[9px] font-mono text-zinc-400">04:12 min</span>
-              </div>
-              <span className="text-xs font-bold text-white mt-1 truncate">2x Truffle Burger</span>
-              <span className="text-[9px] text-zinc-400">Extra sauce • Medium</span>
-            </div>
-            <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-col text-left">
-              <div className="flex items-center justify-between">
-                <span className="text-[9px] font-bold text-teal-400">DELIVERY #402</span>
-                <span className="text-[9px] font-mono text-zinc-400">01:45 min</span>
-              </div>
-              <span className="text-xs font-bold text-white mt-1 truncate">1x Artisan Pizza</span>
-              <span className="text-[9px] text-zinc-400">Packaged • DoorDash</span>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
-            <span>Avg Prep Time: <strong className="text-emerald-300">7.5 mins</strong></span>
-            <span className="text-emerald-400 font-mono font-semibold">Cloud Sync</span>
-          </div>
-        </div>
-      ),
-    },
-  ];
 
   // Filtering + Searching logic
   const filteredProjects = useMemo(() => {

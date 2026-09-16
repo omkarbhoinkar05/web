@@ -96,6 +96,7 @@ export function JourneyTimeline() {
               alt="PixelForge Journey Landscape with Mountain Peaks and Emerald Valley"
               fill
               priority
+              sizes="100vw"
               className="object-cover object-bottom opacity-85"
             />
             {/* Soft Top & Bottom Gradient Fades */}

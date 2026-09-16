@@ -325,6 +325,12 @@ interface CaseStudyPageProps {
   params: Promise<{ slug: string }>;
 }
 
+export function generateStaticParams() {
+  return Object.keys(caseStudies).map((slug) => ({
+    slug,
+  }));
+}
+
 export async function generateMetadata({ params }: CaseStudyPageProps) {
   const { slug } = await params;
   const project = caseStudies[slug.toLowerCase()];

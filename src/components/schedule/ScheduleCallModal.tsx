@@ -1,7 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useSyncExternalStore } from "react";
 import { useScheduleCall } from "./ScheduleCallContext";
+
+const emptySubscribe = () => () => {};
 import { BookingStepper } from "./BookingStepper";
 import { DatePicker } from "./DatePicker";
 import { TimeSlotPicker } from "./TimeSlotPicker";
@@ -26,11 +28,6 @@ export function ScheduleCallModal() {
   } = useScheduleCall();
 
   const modalRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   // Keyboard accessibility: ESC to close & Focus trapping
   useEffect(() => {
@@ -69,7 +66,9 @@ export function ScheduleCallModal() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, closeScheduleCall]);
 
-  if (!mounted || !isOpen) return null;
+  const isClient = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  if (!isClient || !isOpen) return null;
 
   const handleStep1Continue = () => {
     if (validateStep1()) {

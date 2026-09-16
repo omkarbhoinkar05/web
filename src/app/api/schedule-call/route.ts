@@ -65,16 +65,6 @@ export async function POST(request: Request) {
       icsData: generateIcsFileContent(confirmedBooking),
     };
 
-    // Log confirmed appointment for operations
-    console.log("[PixelForge Appointment Confirmed]:", {
-      bookingId,
-      date: confirmedBooking.date,
-      time: confirmedBooking.time,
-      name: confirmedBooking.fullName,
-      mobile: confirmedBooking.mobileNumber,
-      email: confirmedBooking.email,
-    });
-
     return NextResponse.json(
       {
         success: true,
