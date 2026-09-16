@@ -9,18 +9,18 @@ export function Navbar() {
   const [isVisible, setIsVisible] = useState(true);
   const [isScrolled, setIsScrolled] = useState(false);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const [activeSection, setActiveSection] = useState<string>("home");
   const pathname = usePathname();
 
-  const isAbout = pathname === "/about-us";
   const isHome = pathname === "/" || pathname === "";
 
   const navLinks = [
-    { name: "Home", href: "/", active: isHome },
-    { name: "About Us", href: "/about-us", active: isAbout },
-    { name: "Services", href: "/#services", active: false },
-    { name: "Our Process", href: "/#process", active: false },
-    { name: "Portfolio", href: "/#portfolio", active: false },
-    { name: "Contact Us", href: "/#contact", active: false },
+    { name: "Home", href: "/", active: isHome && activeSection === "home" },
+    { name: "About Us", href: "/#about", active: isHome && activeSection === "about" },
+    { name: "Services", href: "/#services", active: isHome && activeSection === "services" },
+    { name: "Our Process", href: "/#process", active: isHome && activeSection === "process" },
+    { name: "Portfolio", href: "/#portfolio", active: isHome && activeSection === "portfolio" },
+    { name: "Contact Us", href: "/#contact", active: isHome && activeSection === "contact" },
   ];
 
   // Smart Scroll: Hide when scrolling down, show when scrolling up
@@ -51,6 +51,60 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [lastScrollY]);
 
+  // Scroll Spy for active section highlight on Home Page
+  useEffect(() => {
+    if (!isHome) return;
+
+    const sectionIds = ["contact", "testimonials", "portfolio", "process", "services", "about"];
+    const handleScrollSpy = () => {
+      const scrollY = window.scrollY;
+      if (scrollY < 250) {
+        setActiveSection("home");
+        return;
+      }
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (el) {
+          const rect = el.getBoundingClientRect();
+          if (rect.top <= 200 && rect.bottom >= 100) {
+            setActiveSection(id);
+            return;
+          }
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScrollSpy, { passive: true });
+    handleScrollSpy();
+    return () => window.removeEventListener("scroll", handleScrollSpy);
+  }, [isHome]);
+
+  // Smooth scroll handler for anchor links
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    setMobileMenuOpen(false);
+    if (href.startsWith("/#") && isHome) {
+      const targetId = href.replace("/#", "");
+      const elem = document.getElementById(targetId);
+      if (elem) {
+        e.preventDefault();
+        elem.scrollIntoView({ behavior: "smooth" });
+        window.history.pushState(null, "", href);
+        setActiveSection(targetId);
+      }
+    }
+  };
+
+  // Home link click handler
+  const handleHomeClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    setMobileMenuOpen(false);
+    if (isHome) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      window.history.pushState(null, "", "/");
+      setActiveSection("home");
+    }
+  };
+
   return (
     <>
       {/* Fixed Smart Header */}
@@ -67,6 +121,7 @@ export function Navbar() {
           {/* Brand Logo & Tagline */}
           <Link
             href="/"
+            onClick={handleHomeClick}
             className="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#10b981] rounded-lg"
             aria-label="PixelForge Homepage"
           >
@@ -122,6 +177,9 @@ export function Navbar() {
               <div key={link.name} className="relative py-2 flex flex-col items-center">
                 <Link
                   href={link.href}
+                  onClick={(e) =>
+                    link.href === "/" ? handleHomeClick(e) : handleNavClick(e, link.href)
+                  }
                   className={`text-sm transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#10b981] rounded-md px-1 ${
                     link.active
                       ? "text-[#059669] font-semibold"
@@ -200,7 +258,9 @@ export function Navbar() {
                 <Link
                   key={link.name}
                   href={link.href}
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) =>
+                    link.href === "/" ? handleHomeClick(e) : handleNavClick(e, link.href)
+                  }
                   className={`px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                     link.active
                       ? "bg-emerald-50 text-[#059669] font-semibold"

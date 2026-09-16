@@ -132,7 +132,7 @@ export function HomeAboutSection() {
   return (
     <section
       id="about"
-      className="relative py-16 sm:py-24 lg:py-32 overflow-hidden bg-white select-none"
+      className="relative py-16 sm:py-24 lg:py-32 overflow-hidden bg-white select-none scroll-mt-20 sm:scroll-mt-24"
     >
       {/* Ambient background glow orbs */}
       <div

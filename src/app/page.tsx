@@ -6,7 +6,9 @@ import { HomeAboutSection } from "@/components/HomeAboutSection";
 import { ServicesSection } from "@/components/ServicesSection";
 import { ProcessSection } from "@/components/ProcessSection";
 import { PortfolioSection } from "@/components/PortfolioSection";
-import { BottomBar } from "@/components/BottomBar";
+import { TestimonialsSection } from "@/components/TestimonialsSection";
+import { ContactSection } from "@/components/ContactSection";
+import { Footer } from "@/components/Footer";
 
 export default function Home() {
   return (
@@ -28,12 +30,12 @@ export default function Home() {
         <ServicesSection />
         <ProcessSection />
         <PortfolioSection />
+        <TestimonialsSection />
+        <ContactSection />
       </main>
 
-      {/* Bottom Information & Action Bar */}
-      <footer className="w-full border-t border-zinc-100 bg-white">
-        <BottomBar />
-      </footer>
+      {/* Modern IT Software Company Footer */}
+      <Footer />
     </div>
   );
 }

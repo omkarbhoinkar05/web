@@ -274,7 +274,7 @@ export function PortfolioSection() {
   return (
     <section
       id="portfolio"
-      className="relative py-20 sm:py-28 lg:py-32 overflow-hidden bg-white select-none border-t border-zinc-100"
+      className="relative py-20 sm:py-28 lg:py-32 overflow-hidden bg-white select-none border-t border-zinc-100 scroll-mt-20 sm:scroll-mt-24"
     >
       {/* Subtle Ambient Glow Background */}
       <div
