@@ -39,7 +39,8 @@ export async function POST(request: Request) {
         role: user.role,
       },
     });
-  } catch {
+  } catch (error) {
+    console.error("Login route error:", error);
     return NextResponse.json(
       { success: false, error: "Internal server error during authentication." },
       { status: 500 }

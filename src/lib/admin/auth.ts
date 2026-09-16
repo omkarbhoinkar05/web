@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { TeamMember, AdminRole } from "./types";
-import { getTeam } from "./db";
+import { getTeam, getUserPassword } from "./db";
 
 const COOKIE_NAME = "htb_admin_session";
 const SESSION_SECRET = "htb_super_secret_session_token_2026";
@@ -55,31 +55,36 @@ export async function clearAdminSession(): Promise<void> {
   cookieStore.delete(COOKIE_NAME);
 }
 
+export async function verifyUserPassword(email: string, pass: string): Promise<boolean> {
+  const expectedPassword = await getUserPassword(email);
+  return pass === expectedPassword;
+}
+
 export async function validateCredentials(email: string, pass: string): Promise<TeamMember | null> {
   const team = await getTeam();
   const normalizedEmail = email.toLowerCase().trim();
+  const expectedPassword = await getUserPassword(normalizedEmail);
 
-  // Master credentials or team member credentials
-  if (
-    (normalizedEmail === "admin@hightechbirds.com" || normalizedEmail === "dev.omkar05@gmail.com") &&
-    pass === "Admin@123"
-  ) {
-    return (
-      team.find((t) => t.email.toLowerCase() === normalizedEmail) || {
-        id: "team-super",
-        name: "Omkar Bhoir",
-        email: "admin@hightechbirds.com",
-        role: "Super Admin",
-        status: "Active",
-        phone: "+91 99208 18481",
-        createdAt: new Date().toISOString(),
-      }
-    );
+  if (pass !== expectedPassword) {
+    return null;
   }
 
   const found = team.find((t) => t.email.toLowerCase() === normalizedEmail);
-  if (found && pass === "Admin@123") {
+  if (found) {
     return found;
+  }
+
+  // Master credentials fallback if not yet in team list
+  if (normalizedEmail === "admin@hightechbirds.com" || normalizedEmail === "dev.omkar05@gmail.com") {
+    return {
+      id: "team-super",
+      name: "Omkar Bhoinkar",
+      email: normalizedEmail,
+      role: "Super Admin",
+      status: "Active",
+      phone: "+91 99208 18481",
+      createdAt: new Date().toISOString(),
+    };
   }
 
   return null;

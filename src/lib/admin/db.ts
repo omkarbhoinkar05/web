@@ -14,7 +14,9 @@ import {
   DashboardStats,
   LeadStatus,
   LeadSource,
+  PasswordResetRecord,
 } from "./types";
+import { query, execute, isMySqlAvailable } from "../mysql";
 
 interface DatabaseSchema {
   leads: Lead[];
@@ -27,6 +29,7 @@ interface DatabaseSchema {
   notifications: Notification[];
   team: TeamMember[];
   settings: Settings;
+  passwordResets?: PasswordResetRecord[];
 }
 
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -98,523 +101,212 @@ const INITIAL_SETTINGS: Settings = {
   },
 };
 
-function getSeedData(): DatabaseSchema {
-  const now = new Date();
-  const todayStr = now.toISOString().split("T")[0];
-
-  const leads: Lead[] = [
-    {
-      id: "lead-1",
-      leadId: "HTB-001",
-      fullName: "Rahul Sharma",
-      email: "rahul.sharma@innovatetech.in",
-      mobile: "9920818481",
-      service: "SaaS App Development",
-      budget: "₹2,00,000 – ₹5,00,000",
-      source: "Website",
-      status: "FOLLOW-UP",
-      priority: "High",
-      assignedTo: "Omkar Bhoir (Admin)",
-      notes: "Looking to build a multi-tenant B2B inventory tracking dashboard.",
-      lastContact: `${todayStr} 11:30 AM`,
-      nextFollowUp: `${todayStr} 05:00 PM`,
-      createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-      updatedAt: now.toISOString(),
-    },
-    {
-      id: "lead-2",
-      leadId: "HTB-002",
-      fullName: "Amit Patil",
-      email: "amit.patil@logisticsprime.com",
-      mobile: "9820123456",
-      service: "ERP Software",
-      budget: "₹5,00,000+",
-      source: "Schedule Call",
-      status: "REQUIREMENT DISCUSSED",
-      priority: "Urgent",
-      assignedTo: "Sales Desk",
-      notes: "Custom ERP for 3 warehouse hubs in Navi Mumbai.",
-      lastContact: `${todayStr} 10:00 AM`,
-      nextFollowUp: `${todayStr} 02:00 PM`,
-      createdAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-      updatedAt: now.toISOString(),
-    },
-    {
-      id: "lead-3",
-      leadId: "HTB-003",
-      fullName: "Neha Shah",
-      email: "neha.shah@luxurydesign.in",
-      mobile: "9833445566",
-      service: "Web Design",
-      budget: "₹1,00,000 – ₹2,00,000",
-      source: "Contact Form",
-      status: "QUOTATION SENT",
-      priority: "Medium",
-      assignedTo: "Omkar Bhoir (Admin)",
-      notes: "Modern portfolio redesign for architecture studio.",
-      lastContact: `${todayStr} 09:15 AM`,
-      nextFollowUp: `${todayStr} 04:00 PM`,
-      createdAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
-      updatedAt: now.toISOString(),
-    },
-    {
-      id: "lead-4",
-      leadId: "HTB-004",
-      fullName: "Karan Mehta",
-      email: "karan@urbanmart.co",
-      mobile: "9711223344",
-      service: "E-Commerce",
-      budget: "₹2,00,000 – ₹5,00,000",
-      source: "WhatsApp",
-      status: "NEGOTIATION",
-      priority: "High",
-      assignedTo: "Sales Desk",
-      notes: "Multi-vendor grocery store with instant local delivery app.",
-      lastContact: `${todayStr} 12:00 PM`,
-      nextFollowUp: `${todayStr} 06:30 PM`,
-      createdAt: new Date(Date.now() - 5 * 24 * 3600 * 1000).toISOString(),
-      updatedAt: now.toISOString(),
-    },
-    {
-      id: "lead-5",
-      leadId: "HTB-005",
-      fullName: "Dr. Arvind Rao",
-      email: "arvind@cardiopulse.org",
-      mobile: "9988776655",
-      service: "Custom Web App",
-      budget: "₹5,00,000+",
-      source: "Referral",
-      status: "WON",
-      priority: "High",
-      assignedTo: "Omkar Bhoir (Admin)",
-      notes: "Telemedicine consultation suite with encrypted EHR records.",
-      closingNote: "Contract signed, 30% advance received, sprint 1 kick-off scheduled.",
-      createdAt: new Date(Date.now() - 10 * 24 * 3600 * 1000).toISOString(),
-      updatedAt: now.toISOString(),
-    },
-    {
-      id: "lead-6",
-      leadId: "HTB-006",
-      fullName: "Suresh Gupta",
-      email: "suresh@guptatraders.in",
-      mobile: "9822110099",
-      service: "Dynamic Website",
-      budget: "₹25,000 – ₹50,000",
-      source: "Direct Inbound",
-      status: "LOST",
-      priority: "Low",
-      assignedTo: "Sales Desk",
-      notes: "Wanted generic static template at low budget.",
-      lostReason: "Budget",
-      createdAt: new Date(Date.now() - 8 * 24 * 3600 * 1000).toISOString(),
-      updatedAt: now.toISOString(),
-    },
-    {
-      id: "lead-7",
-      leadId: "HTB-007",
-      fullName: "Priya Verma",
-      email: "priya@finscale.ai",
-      mobile: "9819998877",
-      service: "SaaS App Development",
-      budget: "₹2,00,000 – ₹5,00,000",
-      source: "LinkedIn",
-      status: "QUALIFIED",
-      priority: "High",
-      assignedTo: "Omkar Bhoir (Admin)",
-      notes: "Fintech analytics dashboard for wealth managers.",
-      createdAt: new Date(Date.now() - 1 * 24 * 3600 * 1000).toISOString(),
-      updatedAt: now.toISOString(),
-    },
-    {
-      id: "lead-8",
-      leadId: "HTB-008",
-      fullName: "Vikram Singhania",
-      email: "vikram@propmatrix.in",
-      mobile: "9930441122",
-      service: "Web Design",
-      budget: "₹50,000 – ₹1,00,000",
-      source: "Website",
-      status: "NEW",
-      priority: "Medium",
-      assignedTo: "Unassigned",
-      notes: "Real estate listing landing page with interactive map.",
-      createdAt: now.toISOString(),
-      updatedAt: now.toISOString(),
-    },
-  ];
-
-  const contactEnquiries: ContactEnquiry[] = [
-    {
-      id: "enq-1",
-      enquiryId: "ENQ-001",
-      fullName: "Neha Shah",
-      email: "neha.shah@luxurydesign.in",
-      mobile: "9833445566",
-      service: "Web Design",
-      budget: "₹1,00,000 – ₹2,00,000",
-      message: "We need an ultra-minimalist brand website with 3D showcases.",
-      source: "Website Contact Form",
-      status: "Converted",
-      assignedTo: "Omkar Bhoir (Admin)",
-      leadId: "HTB-003",
-      createdAt: new Date(Date.now() - 3 * 24 * 3600 * 1000).toISOString(),
-    },
-    {
-      id: "enq-2",
-      enquiryId: "ENQ-002",
-      fullName: "Vikram Singhania",
-      email: "vikram@propmatrix.in",
-      mobile: "9930441122",
-      service: "Web Design",
-      budget: "₹50,000 – ₹1,00,000",
-      message: "Interested in getting a high-converting web presence for property launches.",
-      source: "Website Contact Form",
-      status: "New",
-      assignedTo: "Unassigned",
-      leadId: "HTB-008",
-      createdAt: now.toISOString(),
-    },
-  ];
-
-  const scheduledCalls: ScheduledCall[] = [
-    {
-      id: "call-1",
-      callId: "CALL-001",
-      fullName: "Rahul Sharma",
-      email: "rahul.sharma@innovatetech.in",
-      mobile: "9920818481",
-      service: "SaaS App Development",
-      date: todayStr,
-      time: "10:00 AM",
-      timezone: "IST (GMT+5:30)",
-      status: "Confirmed",
-      notes: "Review micro-frontend requirements and data schema.",
-      assignedTo: "Omkar Bhoir (Admin)",
-      leadId: "HTB-001",
-      createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-    },
-    {
-      id: "call-2",
-      callId: "CALL-002",
-      fullName: "Amit Patil",
-      email: "amit.patil@logisticsprime.com",
-      mobile: "9820123456",
-      service: "ERP Software",
-      date: todayStr,
-      time: "12:30 PM",
-      timezone: "IST (GMT+5:30)",
-      status: "Pending",
-      notes: "Discuss warehouse inventory barcode integration.",
-      assignedTo: "Sales Desk",
-      leadId: "HTB-002",
-      createdAt: new Date(Date.now() - 12 * 3600 * 1000).toISOString(),
-    },
-    {
-      id: "call-3",
-      callId: "CALL-003",
-      fullName: "Neha Shah",
-      email: "neha.shah@luxurydesign.in",
-      mobile: "9833445566",
-      service: "Web Design",
-      date: todayStr,
-      time: "04:00 PM",
-      timezone: "IST (GMT+5:30)",
-      status: "Confirmed",
-      notes: "Quotation review and typography preferences.",
-      assignedTo: "Omkar Bhoir (Admin)",
-      leadId: "HTB-003",
-      createdAt: new Date(Date.now() - 8 * 3600 * 1000).toISOString(),
-    },
-    {
-      id: "call-4",
-      callId: "CALL-004",
-      fullName: "Karan Mehta",
-      email: "karan@urbanmart.co",
-      mobile: "9711223344",
-      service: "E-Commerce",
-      date: todayStr,
-      time: "05:30 PM",
-      timezone: "IST (GMT+5:30)",
-      status: "Pending",
-      notes: "Payment gateway and merchant payout escrow architecture.",
-      assignedTo: "Sales Desk",
-      leadId: "HTB-004",
-      createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
-    },
-  ];
-
-  const followUps: FollowUp[] = [
-    {
-      id: "flp-1",
-      followUpId: "FLP-001",
-      leadId: "HTB-001",
-      leadName: "Rahul Sharma",
-      leadMobile: "9920818481",
-      date: todayStr,
-      time: "05:00 PM",
-      type: "Call",
-      assignedTo: "Omkar Bhoir (Admin)",
-      status: "Today",
-      notes: "Confirm tech stack decisions and timeline expectations.",
-      createdAt: now.toISOString(),
-    },
-    {
-      id: "flp-2",
-      followUpId: "FLP-002",
-      leadId: "HTB-003",
-      leadName: "Neha Shah",
-      leadMobile: "9833445566",
-      date: todayStr,
-      time: "04:00 PM",
-      type: "Quotation",
-      assignedTo: "Omkar Bhoir (Admin)",
-      status: "Today",
-      notes: "Follow up on the sent quotation and milestone timeline.",
-      createdAt: now.toISOString(),
-    },
-    {
-      id: "flp-3",
-      followUpId: "FLP-003",
-      leadId: "HTB-004",
-      leadName: "Karan Mehta",
-      leadMobile: "9711223344",
-      date: todayStr,
-      time: "06:30 PM",
-      type: "WhatsApp",
-      assignedTo: "Sales Desk",
-      status: "Today",
-      notes: "Send updated payment gateway comparison PDF via WhatsApp.",
-      createdAt: now.toISOString(),
-    },
-    {
-      id: "flp-4",
-      followUpId: "FLP-004",
-      leadId: "HTB-007",
-      leadName: "Priya Verma",
-      leadMobile: "9819998877",
-      date: new Date(Date.now() + 24 * 3600 * 1000).toISOString().split("T")[0],
-      time: "11:00 AM",
-      type: "Meeting",
-      assignedTo: "Omkar Bhoir (Admin)",
-      status: "Upcoming",
-      notes: "Video demo of similar FinTech terminal built previously.",
-      createdAt: now.toISOString(),
-    },
-  ];
-
-  const careerApplications: CareerApplication[] = [
-    {
-      id: "app-1",
-      applicationId: "APP-001",
-      applicantName: "Tanmay Shinde",
-      email: "tanmay.shinde@gmail.com",
-      mobile: "9820011223",
-      resumeFileName: "Tanmay_Shinde_FullStack_Resume.pdf",
-      resumeFilePath: "data/resumes/Tanmay_Shinde_FullStack_Resume.pdf",
-      resumeSizeBytes: 345000,
-      resumeMimeType: "application/pdf",
-      message: "Frontend specialist with 3 years React/Next.js and Tailwind CSS experience.",
-      status: "Shortlisted",
-      assignedTo: "HR Desk",
-      appliedDate: `${todayStr}`,
-      createdAt: new Date(Date.now() - 24 * 3600 * 1000).toISOString(),
-    },
-    {
-      id: "app-2",
-      applicationId: "APP-002",
-      applicantName: "Rohan Deshmukh",
-      email: "rohan.d@outlook.com",
-      mobile: "9921122334",
-      resumeFileName: "Rohan_Deshmukh_Backend_Resume.pdf",
-      resumeFilePath: "data/resumes/Rohan_Deshmukh_Backend_Resume.pdf",
-      resumeSizeBytes: 420000,
-      resumeMimeType: "application/pdf",
-      message: "Node.js & PostgreSQL developer experienced in microservices.",
-      status: "Under Review",
-      assignedTo: "HR Desk",
-      appliedDate: `${todayStr}`,
-      createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
-    },
-  ];
-
-  const activities: LeadActivity[] = [
-    {
-      id: "act-1",
-      leadId: "HTB-008",
-      leadName: "Vikram Singhania",
-      type: "Contact Enquiry",
-      description: "New contact enquiry received for Web Design.",
-      actor: "System",
-      date: todayStr,
-      time: "10 mins ago",
-      createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    },
-    {
-      id: "act-2",
-      leadId: "HTB-003",
-      leadName: "Neha Shah",
-      type: "Follow-up Completed",
-      description: "Follow-up completed: Sent design proposal & quotation.",
-      actor: "Omkar Bhoir (Admin)",
-      date: todayStr,
-      time: "1 hour ago",
-      createdAt: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-    },
-    {
-      id: "act-3",
-      leadId: "HTB-002",
-      leadName: "Amit Patil",
-      type: "Call Scheduled",
-      description: "Call scheduled for ERP Software at 12:30 PM.",
-      actor: "System",
-      date: todayStr,
-      time: "2 hours ago",
-      createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    },
-    {
-      id: "act-4",
-      leadId: "APP-002",
-      leadName: "Rohan Deshmukh",
-      type: "Career Application",
-      description: "Application received for Full-Stack Developer position.",
-      actor: "System",
-      date: todayStr,
-      time: "3 hours ago",
-      createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
-    },
-    {
-      id: "act-5",
-      leadId: "HTB-004",
-      leadName: "Karan Mehta",
-      type: "Status Changed",
-      previousStatus: "QUOTATION SENT",
-      newStatus: "NEGOTIATION",
-      description: "Lead status changed: Quotation Sent → Negotiation.",
-      actor: "Sales Desk",
-      date: todayStr,
-      time: "4 hours ago",
-      createdAt: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
-    },
-  ];
-
-  const notes: LeadNote[] = [
-    {
-      id: "note-1",
-      leadId: "HTB-001",
-      note: "Client emphasized need for clean multi-tenant role isolation and sub-second inventory search.",
-      actor: "Omkar Bhoir (Admin)",
-      createdAt: new Date(Date.now() - 18 * 3600 * 1000).toISOString(),
-    },
-  ];
-
-  const notifications: Notification[] = [
-    {
-      id: "notif-1",
-      title: "New Contact Enquiry",
-      message: "Vikram Singhania submitted a web design inquiry.",
-      type: "enquiry",
-      read: false,
-      link: "/admin/contact-enquiries",
-      createdAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-    },
-    {
-      id: "notif-2",
-      title: "Upcoming Scheduled Call",
-      message: "Call with Amit Patil (ERP Software) scheduled at 12:30 PM.",
-      type: "call",
-      read: false,
-      link: "/admin/scheduled-calls",
-      createdAt: new Date(Date.now() - 2 * 3600 * 1000).toISOString(),
-    },
-    {
-      id: "notif-3",
-      title: "New Career Application",
-      message: "Rohan Deshmukh applied with resume attached.",
-      type: "career",
-      read: false,
-      link: "/admin/career-applications",
-      createdAt: new Date(Date.now() - 3 * 3600 * 1000).toISOString(),
-    },
-  ];
-
-  const team: TeamMember[] = [
-    {
-      id: "team-1",
-      name: "Omkar Bhoir",
-      email: "admin@hightechbirds.com",
-      role: "Super Admin",
-      status: "Active",
-      phone: "+91 99208 18481",
-      lastLogin: `${todayStr} 09:00 AM`,
-      createdAt: "2026-01-01T00:00:00.000Z",
-    },
-    {
-      id: "team-2",
-      name: "Siddharth Shinde",
-      email: "siddharth@hightechbirds.com",
-      role: "Admin",
-      status: "Active",
-      phone: "+91 9820012345",
-      lastLogin: `${todayStr} 09:30 AM`,
-      createdAt: "2026-02-01T00:00:00.000Z",
-    },
-    {
-      id: "team-3",
-      name: "Anjali Dave",
-      email: "anjali@hightechbirds.com",
-      role: "Sales",
-      status: "Active",
-      phone: "+91 9833112233",
-      lastLogin: `${todayStr} 10:15 AM`,
-      createdAt: "2026-03-01T00:00:00.000Z",
-    },
-    {
-      id: "team-4",
-      name: "Pooja Hegde",
-      email: "pooja@hightechbirds.com",
-      role: "HR",
-      status: "Active",
-      phone: "+91 9711556677",
-      lastLogin: `${todayStr} 09:45 AM`,
-      createdAt: "2026-04-01T00:00:00.000Z",
-    },
-  ];
-
-  return {
-    leads,
-    contactEnquiries,
-    scheduledCalls,
-    careerApplications,
-    followUps,
-    activities,
-    notes,
-    notifications,
-    team,
-    settings: INITIAL_SETTINGS,
-  };
-}
-
+/* ----------------------------------------------------
+   Fallback JSON File Helper (Used for backup/safety)
+---------------------------------------------------- */
 export function readDb(): DatabaseSchema {
   ensureDirectories();
   if (!fs.existsSync(DB_FILE)) {
-    const seed = getSeedData();
+    const seed = {
+      leads: [],
+      contactEnquiries: [],
+      scheduledCalls: [],
+      careerApplications: [],
+      followUps: [],
+      activities: [],
+      notes: [],
+      notifications: [],
+      team: [],
+      settings: INITIAL_SETTINGS,
+      passwordResets: [],
+    };
     fs.writeFileSync(DB_FILE, JSON.stringify(seed, null, 2), "utf8");
     return seed;
   }
 
   try {
     const raw = fs.readFileSync(DB_FILE, "utf8");
-    return JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!parsed.passwordResets) parsed.passwordResets = [];
+    return parsed;
   } catch {
-    const seed = getSeedData();
-    fs.writeFileSync(DB_FILE, JSON.stringify(seed, null, 2), "utf8");
-    return seed;
+    return {
+      leads: [],
+      contactEnquiries: [],
+      scheduledCalls: [],
+      careerApplications: [],
+      followUps: [],
+      activities: [],
+      notes: [],
+      notifications: [],
+      team: [],
+      settings: INITIAL_SETTINGS,
+      passwordResets: [],
+    };
   }
 }
 
 export function writeDb(data: DatabaseSchema): void {
-  ensureDirectories();
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf8");
+  try {
+    ensureDirectories();
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf8");
+  } catch (err) {
+    console.error("Backup file write warning:", err);
+  }
+}
+
+/* ----------------------------------------------------
+   Row Mappers (MySQL snake_case -> TypeScript camelCase)
+---------------------------------------------------- */
+function mapLead(row: any): Lead {
+  return {
+    id: row.id,
+    leadId: row.lead_id,
+    fullName: row.full_name,
+    email: row.email,
+    mobile: row.mobile,
+    service: row.service,
+    budget: row.budget || undefined,
+    source: row.source,
+    status: row.status,
+    priority: row.priority,
+    assignedTo: row.assigned_to,
+    notes: row.notes || undefined,
+    lastContact: row.last_contact || undefined,
+    nextFollowUp: row.next_follow_up || undefined,
+    closingNote: row.closing_note || undefined,
+    lostReason: row.lost_reason || undefined,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapEnquiry(row: any): ContactEnquiry {
+  return {
+    id: row.id,
+    enquiryId: row.enquiry_id,
+    fullName: row.full_name,
+    email: row.email,
+    mobile: row.mobile,
+    service: row.service,
+    budget: row.budget || undefined,
+    message: row.message,
+    source: row.source,
+    status: row.status,
+    assignedTo: row.assigned_to,
+    leadId: row.lead_id || undefined,
+    createdAt: row.created_at,
+  };
+}
+
+function mapScheduledCall(row: any): ScheduledCall {
+  return {
+    id: row.id,
+    callId: row.call_id,
+    fullName: row.full_name,
+    email: row.email,
+    mobile: row.mobile,
+    service: row.service,
+    date: row.date,
+    time: row.time,
+    timezone: row.timezone,
+    status: row.status,
+    notes: row.notes || undefined,
+    assignedTo: row.assigned_to,
+    leadId: row.lead_id || undefined,
+    createdAt: row.created_at,
+  };
+}
+
+function mapCareer(row: any): CareerApplication {
+  return {
+    id: row.id,
+    applicationId: row.application_id,
+    applicantName: row.applicant_name,
+    email: row.email,
+    mobile: row.mobile,
+    resumeFileName: row.resume_file_name,
+    resumeFilePath: row.resume_file_path,
+    resumeSizeBytes: row.resume_size_bytes,
+    resumeMimeType: row.resume_mime_type,
+    message: row.message,
+    status: row.status,
+    assignedTo: row.assigned_to,
+    notes: row.notes || undefined,
+    appliedDate: row.applied_date,
+    createdAt: row.created_at,
+  };
+}
+
+function mapFollowUp(row: any): FollowUp {
+  return {
+    id: row.id,
+    followUpId: row.follow_up_id,
+    leadId: row.lead_id,
+    leadName: row.lead_name,
+    leadMobile: row.lead_mobile,
+    date: row.date,
+    time: row.time,
+    type: row.type,
+    assignedTo: row.assigned_to,
+    status: row.status,
+    notes: row.notes,
+    completedAt: row.completed_at || undefined,
+    createdAt: row.created_at,
+  };
+}
+
+function mapActivity(row: any): LeadActivity {
+  return {
+    id: row.id,
+    leadId: row.lead_id || undefined,
+    leadName: row.lead_name || undefined,
+    type: row.type,
+    description: row.description,
+    actor: row.actor,
+    previousStatus: row.previous_status || undefined,
+    newStatus: row.new_status || undefined,
+    date: row.date,
+    time: row.time,
+    createdAt: row.created_at,
+  };
+}
+
+function mapNote(row: any): LeadNote {
+  return {
+    id: row.id,
+    leadId: row.lead_id,
+    note: row.note,
+    actor: row.actor,
+    createdAt: row.created_at,
+  };
+}
+
+function mapNotification(row: any): Notification {
+  return {
+    id: row.id,
+    title: row.title,
+    message: row.message,
+    type: row.type,
+    read: Boolean(row.is_read),
+    link: row.link,
+    createdAt: row.created_at,
+  };
+}
+
+function mapTeamMember(row: any): TeamMember {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    role: row.role,
+    password: row.password || "Admin@123",
+    avatar: row.avatar || undefined,
+    status: row.status,
+    phone: row.phone,
+    lastLogin: row.last_login || undefined,
+    createdAt: row.created_at,
+  };
 }
 
 /* ----------------------------------------------------
@@ -629,24 +321,54 @@ export async function getLeads(filters?: {
   assignedTo?: string;
   sort?: string;
 }): Promise<Lead[]> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      let sql = "SELECT * FROM `htb_leads` WHERE 1=1";
+      const params: any[] = [];
+
+      if (filters?.status && filters.status !== "All") {
+        sql += " AND `status` = ?";
+        params.push(filters.status);
+      }
+      if (filters?.priority && filters.priority !== "All") {
+        sql += " AND `priority` = ?";
+        params.push(filters.priority);
+      }
+      if (filters?.service && filters.service !== "All") {
+        sql += " AND `service` = ?";
+        params.push(filters.service);
+      }
+      if (filters?.source && filters.source !== "All") {
+        sql += " AND `source` = ?";
+        params.push(filters.source);
+      }
+      if (filters?.assignedTo && filters.assignedTo !== "All") {
+        sql += " AND `assigned_to` = ?";
+        params.push(filters.assignedTo);
+      }
+      if (filters?.search) {
+        const q = `%${filters.search.toLowerCase().trim()}%`;
+        sql += " AND (LOWER(`full_name`) LIKE ? OR LOWER(`email`) LIKE ? OR `mobile` LIKE ? OR LOWER(`lead_id`) LIKE ?)";
+        params.push(q, q, q, q);
+      }
+
+      sql += " ORDER BY `created_at` DESC";
+      const rows = await query<any[]>(sql, params);
+      return rows.map(mapLead);
+    } catch (err) {
+      console.error("MySQL getLeads error:", err);
+    }
+  }
+
+  // Fallback to JSON
   const db = readDb();
   let results = [...db.leads];
-
-  if (filters?.status && filters.status !== "All") {
-    results = results.filter((l) => l.status === filters.status);
-  }
-  if (filters?.priority && filters.priority !== "All") {
-    results = results.filter((l) => l.priority === filters.priority);
-  }
-  if (filters?.service && filters.service !== "All") {
-    results = results.filter((l) => l.service === filters.service);
-  }
-  if (filters?.source && filters.source !== "All") {
-    results = results.filter((l) => l.source === filters.source);
-  }
-  if (filters?.assignedTo && filters.assignedTo !== "All") {
-    results = results.filter((l) => l.assignedTo === filters.assignedTo);
-  }
+  if (filters?.status && filters.status !== "All") results = results.filter((l) => l.status === filters.status);
+  if (filters?.priority && filters.priority !== "All") results = results.filter((l) => l.priority === filters.priority);
+  if (filters?.service && filters.service !== "All") results = results.filter((l) => l.service === filters.service);
+  if (filters?.source && filters.source !== "All") results = results.filter((l) => l.source === filters.source);
+  if (filters?.assignedTo && filters.assignedTo !== "All") results = results.filter((l) => l.assignedTo === filters.assignedTo);
   if (filters?.search) {
     const q = filters.search.toLowerCase().trim();
     results = results.filter(
@@ -654,395 +376,589 @@ export async function getLeads(filters?: {
         l.fullName.toLowerCase().includes(q) ||
         l.email.toLowerCase().includes(q) ||
         l.mobile.includes(q) ||
-        l.leadId.toLowerCase().includes(q) ||
-        l.service.toLowerCase().includes(q)
+        l.leadId.toLowerCase().includes(q)
     );
   }
-
-  // Sort
-  if (filters?.sort === "oldest") {
-    results.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  } else {
-    results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
   return results;
 }
 
 export async function getLeadById(id: string): Promise<Lead | null> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>(
+        "SELECT * FROM `htb_leads` WHERE `id` = ? OR `lead_id` = ? LIMIT 1",
+        [id, id]
+      );
+      if (rows.length > 0) return mapLead(rows[0]);
+      return null;
+    } catch (err) {
+      console.error("MySQL getLeadById error:", err);
+    }
+  }
+
   const db = readDb();
   return db.leads.find((l) => l.id === id || l.leadId === id) || null;
 }
 
-export async function createLead(
-  data: Omit<Lead, "id" | "leadId" | "createdAt" | "updatedAt">
-): Promise<Lead> {
-  const db = readDb();
-  const nextNum = db.leads.length + 1;
-  const leadId = `HTB-${String(nextNum).padStart(3, "0")}`;
+export async function createLead(data: Omit<Lead, "id" | "leadId" | "createdAt" | "updatedAt">): Promise<Lead> {
   const now = new Date().toISOString();
+  const id = `lead-${Date.now()}`;
+  let leadId = "HTB-001";
 
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const [countRow] = await query<any[]>("SELECT COUNT(*) AS total FROM `htb_leads`");
+      const nextNum = (countRow?.total || 0) + 1;
+      leadId = `HTB-${String(nextNum).padStart(3, "0")}`;
+
+      await execute(
+        "INSERT INTO `htb_leads` (id, lead_id, full_name, email, mobile, service, budget, source, status, priority, assigned_to, notes, last_contact, next_follow_up, closing_note, lost_reason, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          id,
+          leadId,
+          data.fullName,
+          data.email,
+          data.mobile,
+          data.service,
+          data.budget || null,
+          data.source,
+          data.status,
+          data.priority,
+          data.assignedTo,
+          data.notes || null,
+          data.lastContact || null,
+          data.nextFollowUp || null,
+          data.closingNote || null,
+          data.lostReason || null,
+          now,
+          now,
+        ]
+      );
+
+      // Add Lead Created Activity
+      await execute(
+        "INSERT INTO `htb_activities` (id, lead_id, lead_name, type, description, actor, created_at, date, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          `act-${Date.now()}`,
+          leadId,
+          data.fullName,
+          "Lead Created",
+          `New lead created for ${data.service} via ${data.source}.`,
+          data.assignedTo || "System",
+          now,
+          now.split("T")[0],
+          "Just now",
+        ]
+      );
+
+      return {
+        ...data,
+        id,
+        leadId,
+        createdAt: now,
+        updatedAt: now,
+      };
+    } catch (err) {
+      console.error("MySQL createLead error:", err);
+    }
+  }
+
+  // Fallback JSON
+  const db = readDb();
+  leadId = `HTB-${String(db.leads.length + 1).padStart(3, "0")}`;
   const newLead: Lead = {
     ...data,
-    id: `lead-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    id,
     leadId,
     createdAt: now,
     updatedAt: now,
   };
-
   db.leads.unshift(newLead);
-
-  // Log activity
-  db.activities.unshift({
-    id: `act-${Date.now()}`,
-    leadId: newLead.leadId,
-    leadName: newLead.fullName,
-    type: "Lead Created",
-    description: `New lead created: ${newLead.fullName} for ${newLead.service}.`,
-    actor: newLead.assignedTo || "Admin",
-    date: now.split("T")[0],
-    time: "Just now",
-    createdAt: now,
-  });
-
   writeDb(db);
   return newLead;
 }
 
 export async function updateLead(id: string, updates: Partial<Lead>, actor = "Admin"): Promise<Lead | null> {
+  const now = new Date().toISOString();
+  const mysqlUp = await isMySqlAvailable();
+
+  if (mysqlUp) {
+    try {
+      const existing = await getLeadById(id);
+      if (!existing) return null;
+
+      const merged = { ...existing, ...updates, updatedAt: now };
+
+      await execute(
+        "UPDATE `htb_leads` SET `full_name`=?, `email`=?, `mobile`=?, `service`=?, `budget`=?, `source`=?, `status`=?, `priority`=?, `assigned_to`=?, `notes`=?, `last_contact`=?, `next_follow_up`=?, `closing_note`=?, `lost_reason`=?, `updated_at`=? WHERE `id`=? OR `lead_id`=?",
+        [
+          merged.fullName,
+          merged.email,
+          merged.mobile,
+          merged.service,
+          merged.budget || null,
+          merged.source,
+          merged.status,
+          merged.priority,
+          merged.assignedTo,
+          merged.notes || null,
+          merged.lastContact || null,
+          merged.nextFollowUp || null,
+          merged.closingNote || null,
+          merged.lostReason || null,
+          now,
+          id,
+          id,
+        ]
+      );
+
+      // If status changed, record activity
+      if (updates.status && updates.status !== existing.status) {
+        await execute(
+          "INSERT INTO `htb_activities` (id, lead_id, lead_name, type, description, actor, previous_status, new_status, date, time, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          [
+            `act-${Date.now()}`,
+            existing.leadId,
+            existing.fullName,
+            "Status Changed",
+            `Status updated: ${existing.status} → ${updates.status}`,
+            actor,
+            existing.status,
+            updates.status,
+            now.split("T")[0],
+            "Just now",
+            now,
+          ]
+        );
+      }
+
+      return merged;
+    } catch (err) {
+      console.error("MySQL updateLead error:", err);
+    }
+  }
+
+  // Fallback JSON
   const db = readDb();
   const index = db.leads.findIndex((l) => l.id === id || l.leadId === id);
   if (index === -1) return null;
-
-  const current = db.leads[index];
-  const previousStatus = current.status;
-  const now = new Date().toISOString();
-
-  const updated: Lead = {
-    ...current,
-    ...updates,
-    updatedAt: now,
-  };
-
-  db.leads[index] = updated;
-
-  // Track status change activity
-  if (updates.status && updates.status !== previousStatus) {
-    let activityDesc = `Lead status changed from ${previousStatus} → ${updates.status}.`;
-    if (updates.status === "WON" && updates.closingNote) {
-      activityDesc += ` Closing Note: "${updates.closingNote}"`;
-    } else if (updates.status === "LOST" && updates.lostReason) {
-      activityDesc += ` Lost Reason: ${updates.lostReason}.`;
-    }
-
-    db.activities.unshift({
-      id: `act-${Date.now()}`,
-      leadId: updated.leadId,
-      leadName: updated.fullName,
-      type: updates.status === "WON" ? "Lead Won" : updates.status === "LOST" ? "Lead Lost" : "Status Changed",
-      description: activityDesc,
-      previousStatus,
-      newStatus: updates.status,
-      actor,
-      date: now.split("T")[0],
-      time: "Just now",
-      createdAt: now,
-    });
-  }
-
+  db.leads[index] = { ...db.leads[index], ...updates, updatedAt: now };
   writeDb(db);
-  return updated;
+  return db.leads[index];
 }
 
 export async function deleteLead(id: string): Promise<boolean> {
-  const db = readDb();
-  const initialLen = db.leads.length;
-  db.leads = db.leads.filter((l) => l.id !== id && l.leadId !== id);
-  if (db.leads.length !== initialLen) {
-    writeDb(db);
-    return true;
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      await execute("DELETE FROM `htb_leads` WHERE `id` = ? OR `lead_id` = ?", [id, id]);
+      return true;
+    } catch (err) {
+      console.error("MySQL deleteLead error:", err);
+    }
   }
-  return false;
+
+  const db = readDb();
+  const initial = db.leads.length;
+  db.leads = db.leads.filter((l) => l.id !== id && l.leadId !== id);
+  writeDb(db);
+  return db.leads.length < initial;
 }
 
 /* ----------------------------------------------------
    Contact Enquiries API Methods
 ---------------------------------------------------- */
-export async function getContactEnquiries(search?: string): Promise<ContactEnquiry[]> {
-  const db = readDb();
-  let results = [...db.contactEnquiries];
-  if (search) {
-    const q = search.toLowerCase().trim();
-    results = results.filter(
-      (e) =>
-        e.fullName.toLowerCase().includes(q) ||
-        e.email.toLowerCase().includes(q) ||
-        e.mobile.includes(q) ||
-        e.enquiryId.toLowerCase().includes(q)
-    );
+export async function getContactEnquiries(): Promise<ContactEnquiry[]> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>("SELECT * FROM `htb_contact_enquiries` ORDER BY `created_at` DESC");
+      return rows.map(mapEnquiry);
+    } catch (err) {
+      console.error("MySQL getContactEnquiries error:", err);
+    }
   }
-  return results.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const db = readDb();
+  return db.contactEnquiries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-export async function createContactEnquiry(data: {
-  fullName: string;
-  email: string;
-  mobile: string;
-  service: string;
-  budget?: string;
-  message: string;
-  source?: string;
-}): Promise<{ enquiry: ContactEnquiry; lead: Lead }> {
-  const db = readDb();
-  const nextEnqNum = db.contactEnquiries.length + 1;
-  const enquiryId = `ENQ-${String(nextEnqNum).padStart(3, "0")}`;
-  const now = new Date().toISOString();
-
-  // 1. Auto-create or link Lead
-  const nextLeadNum = db.leads.length + 1;
-  const leadId = `HTB-${String(nextLeadNum).padStart(3, "0")}`;
-
-  const newLead: Lead = {
-    id: `lead-${Date.now()}`,
-    leadId,
+export async function createContactEnquiry(
+  data: Omit<ContactEnquiry, "id" | "enquiryId" | "createdAt" | "status" | "assignedTo">
+): Promise<ContactEnquiry & { enquiry: ContactEnquiry; lead: Lead }> {
+  // Create corresponding CRM Lead so it immediately shows up in pipeline
+  const lead = await createLead({
     fullName: data.fullName,
     email: data.email,
     mobile: data.mobile,
     service: data.service,
-    budget: data.budget || "Not Specified",
-    source: "Contact Form",
+    budget: data.budget || "Not specified",
+    source: (data.source as any) || "Contact Form",
     status: "NEW",
     priority: "Medium",
-    assignedTo: "Omkar Bhoir (Admin)",
+    assignedTo: "Unassigned",
     notes: data.message,
-    createdAt: now,
-    updatedAt: now,
-  };
-  db.leads.unshift(newLead);
-
-  // 2. Create Enquiry
-  const newEnquiry: ContactEnquiry = {
-    id: `enq-${Date.now()}`,
-    enquiryId,
-    fullName: data.fullName,
-    email: data.email,
-    mobile: data.mobile,
-    service: data.service,
-    budget: data.budget,
-    message: data.message,
-    source: data.source || "Website Contact Form",
-    status: "New",
-    assignedTo: "Omkar Bhoir (Admin)",
-    leadId,
-    createdAt: now,
-  };
-  db.contactEnquiries.unshift(newEnquiry);
-
-  // 3. Log Activity & Notification
-  db.activities.unshift({
-    id: `act-${Date.now()}`,
-    leadId,
-    leadName: data.fullName,
-    type: "Contact Enquiry",
-    description: `New contact enquiry received from ${data.fullName} for ${data.service}.`,
-    actor: "System",
-    date: now.split("T")[0],
-    time: "Just now",
-    createdAt: now,
   });
 
-  db.notifications.unshift({
-    id: `notif-${Date.now()}`,
-    title: "New Contact Enquiry",
-    message: `${data.fullName} submitted an enquiry for ${data.service}.`,
-    type: "enquiry",
-    read: false,
-    link: "/admin/contact-enquiries",
-    createdAt: now,
-  });
+  const now = new Date().toISOString();
+  const id = `enq-${Date.now()}`;
+  let enquiryId = "ENQ-001";
 
-  writeDb(db);
-  return { enquiry: newEnquiry, lead: newLead };
-}
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const [countRow] = await query<any[]>("SELECT COUNT(*) AS total FROM `htb_contact_enquiries`");
+      const nextNum = (countRow?.total || 0) + 1;
+      enquiryId = `ENQ-${String(nextNum).padStart(3, "0")}`;
 
-export async function updateEnquiryStatus(
-  id: string,
-  status: ContactEnquiry["status"]
-): Promise<ContactEnquiry | null> {
+      await execute(
+        "INSERT INTO `htb_contact_enquiries` (id, enquiry_id, full_name, email, mobile, service, budget, message, source, status, assigned_to, lead_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          id,
+          enquiryId,
+          data.fullName,
+          data.email,
+          data.mobile,
+          data.service,
+          data.budget || null,
+          data.message,
+          data.source,
+          "New",
+          "Unassigned",
+          lead.id,
+          now,
+        ]
+      );
+
+      // Notification
+      await execute(
+        "INSERT INTO `htb_notifications` (id, title, message, type, is_read, link, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          `notif-${Date.now()}`,
+          "New Contact Enquiry",
+          `${data.fullName} submitted an enquiry for ${data.service}.`,
+          "enquiry",
+          0,
+          "/admin/contact-enquiries",
+          now,
+        ]
+      );
+
+      const enquiry: ContactEnquiry = {
+        ...data,
+        id,
+        enquiryId,
+        status: "New",
+        assignedTo: "Unassigned",
+        leadId: lead.id,
+        createdAt: now,
+      };
+
+      return Object.assign(enquiry, { enquiry, lead });
+    } catch (err) {
+      console.error("MySQL createContactEnquiry error:", err);
+    }
+  }
+
+  // Fallback JSON
   const db = readDb();
-  const item = db.contactEnquiries.find((e) => e.id === id || e.enquiryId === id);
-  if (!item) return null;
-  item.status = status;
+  enquiryId = `ENQ-${String(db.contactEnquiries.length + 1).padStart(3, "0")}`;
+  const newEnq: ContactEnquiry = {
+    ...data,
+    id,
+    enquiryId,
+    status: "New",
+    assignedTo: "Unassigned",
+    leadId: lead.id,
+    createdAt: now,
+  };
+  db.contactEnquiries.unshift(newEnq);
   writeDb(db);
-  return item;
+  return Object.assign(newEnq, { enquiry: newEnq, lead });
 }
+
+export async function updateContactEnquiryStatus(
+  id: string,
+  status: "New" | "Contacted" | "Converted" | "Archived",
+  assignedTo?: string
+): Promise<ContactEnquiry | null> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      if (assignedTo) {
+        await execute(
+          "UPDATE `htb_contact_enquiries` SET `status` = ?, `assigned_to` = ? WHERE `id` = ? OR `enquiry_id` = ?",
+          [status, assignedTo, id, id]
+        );
+      } else {
+        await execute(
+          "UPDATE `htb_contact_enquiries` SET `status` = ? WHERE `id` = ? OR `enquiry_id` = ?",
+          [status, id, id]
+        );
+      }
+      const rows = await query<any[]>("SELECT * FROM `htb_contact_enquiries` WHERE `id` = ? OR `enquiry_id` = ? LIMIT 1", [id, id]);
+      if (rows.length > 0) return mapEnquiry(rows[0]);
+      return null;
+    } catch (err) {
+      console.error("MySQL updateContactEnquiryStatus error:", err);
+    }
+  }
+
+  const db = readDb();
+  const index = db.contactEnquiries.findIndex((e) => e.id === id || e.enquiryId === id);
+  if (index === -1) return null;
+  db.contactEnquiries[index].status = status;
+  if (assignedTo) db.contactEnquiries[index].assignedTo = assignedTo;
+  writeDb(db);
+  return db.contactEnquiries[index];
+}
+
+export const updateEnquiryStatus = updateContactEnquiryStatus;
 
 /* ----------------------------------------------------
    Scheduled Calls API Methods
 ---------------------------------------------------- */
 export async function getScheduledCalls(): Promise<ScheduledCall[]> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>("SELECT * FROM `htb_scheduled_calls` ORDER BY `created_at` DESC");
+      return rows.map(mapScheduledCall);
+    } catch (err) {
+      console.error("MySQL getScheduledCalls error:", err);
+    }
+  }
   const db = readDb();
-  return db.scheduledCalls.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  return db.scheduledCalls.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-export async function createScheduledCall(data: {
-  fullName: string;
-  email: string;
-  mobile: string;
-  service: string;
-  date: string;
-  time: string;
-  timezone?: string;
-  notes?: string;
-}): Promise<{ call: ScheduledCall; lead: Lead }> {
-  const db = readDb();
-  const nextCallNum = db.scheduledCalls.length + 1;
-  const callId = `CALL-${String(nextCallNum).padStart(3, "0")}`;
-  const now = new Date().toISOString();
-
-  // Find existing lead by email or mobile, or create new
-  let lead = db.leads.find((l) => l.email === data.email || l.mobile === data.mobile);
-  if (!lead) {
-    const nextLeadNum = db.leads.length + 1;
-    lead = {
-      id: `lead-${Date.now()}`,
-      leadId: `HTB-${String(nextLeadNum).padStart(3, "0")}`,
-      fullName: data.fullName,
-      email: data.email,
-      mobile: data.mobile,
-      service: data.service,
-      source: "Schedule Call",
-      status: "REQUIREMENT DISCUSSED",
-      priority: "High",
-      assignedTo: "Omkar Bhoir (Admin)",
-      notes: data.notes || "Booked call via website calendar",
-      createdAt: now,
-      updatedAt: now,
-    };
-    db.leads.unshift(lead);
-  } else {
-    lead.status = "REQUIREMENT DISCUSSED";
-    lead.updatedAt = now;
-  }
-
-  const newCall: ScheduledCall = {
-    id: `call-${Date.now()}`,
-    callId,
+export async function createScheduledCall(
+  data: Omit<ScheduledCall, "id" | "callId" | "createdAt" | "status" | "assignedTo">
+): Promise<ScheduledCall & { call: ScheduledCall; lead: Lead }> {
+  // Create corresponding CRM Lead for the call
+  const lead = await createLead({
     fullName: data.fullName,
     email: data.email,
     mobile: data.mobile,
     service: data.service,
-    date: data.date,
-    time: data.time,
-    timezone: data.timezone || "IST (GMT+5:30)",
-    status: "Confirmed",
-    notes: data.notes,
-    assignedTo: "Omkar Bhoir (Admin)",
-    leadId: lead.leadId,
+    source: "Schedule Call",
+    status: "REQUIREMENT DISCUSSED",
+    priority: "High",
+    assignedTo: "Unassigned",
+    notes: data.notes || `Scheduled consultation on ${data.date} at ${data.time}`,
+  });
+
+  const now = new Date().toISOString();
+  const id = `call-${Date.now()}`;
+  let callId = "CALL-001";
+
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const [countRow] = await query<any[]>("SELECT COUNT(*) AS total FROM `htb_scheduled_calls`");
+      const nextNum = (countRow?.total || 0) + 1;
+      callId = `CALL-${String(nextNum).padStart(3, "0")}`;
+
+      await execute(
+        "INSERT INTO `htb_scheduled_calls` (id, call_id, full_name, email, mobile, service, date, time, timezone, status, notes, assigned_to, lead_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          id,
+          callId,
+          data.fullName,
+          data.email,
+          data.mobile,
+          data.service,
+          data.date,
+          data.time,
+          data.timezone,
+          "Pending",
+          data.notes || null,
+          "Unassigned",
+          lead.id,
+          now,
+        ]
+      );
+
+      // Notification
+      await execute(
+        "INSERT INTO `htb_notifications` (id, title, message, type, is_read, link, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          `notif-${Date.now()}`,
+          "New Call Booked",
+          `Consultation booked by ${data.fullName} for ${data.date} at ${data.time}.`,
+          "call",
+          0,
+          "/admin/scheduled-calls",
+          now,
+        ]
+      );
+
+      const call: ScheduledCall = {
+        ...data,
+        id,
+        callId,
+        status: "Pending",
+        assignedTo: "Unassigned",
+        leadId: lead.id,
+        createdAt: now,
+      };
+
+      return Object.assign(call, { call, lead });
+    } catch (err) {
+      console.error("MySQL createScheduledCall error:", err);
+    }
+  }
+
+  // Fallback JSON
+  const db = readDb();
+  callId = `CALL-${String(db.scheduledCalls.length + 1).padStart(3, "0")}`;
+  const newCall: ScheduledCall = {
+    ...data,
+    id,
+    callId,
+    status: "Pending",
+    assignedTo: "Unassigned",
+    leadId: lead.id,
     createdAt: now,
   };
   db.scheduledCalls.unshift(newCall);
-
-  db.activities.unshift({
-    id: `act-${Date.now()}`,
-    leadId: lead.leadId,
-    leadName: data.fullName,
-    type: "Call Scheduled",
-    description: `Call scheduled for ${data.date} at ${data.time} (${data.service}).`,
-    actor: "System",
-    date: now.split("T")[0],
-    time: "Just now",
-    createdAt: now,
-  });
-
-  db.notifications.unshift({
-    id: `notif-${Date.now()}`,
-    title: "Call Scheduled",
-    message: `${data.fullName} scheduled a call on ${data.date} at ${data.time}.`,
-    type: "call",
-    read: false,
-    link: "/admin/scheduled-calls",
-    createdAt: now,
-  });
-
   writeDb(db);
-  return { call: newCall, lead };
+  return Object.assign(newCall, { call: newCall, lead });
 }
 
 export async function updateScheduledCallStatus(
   id: string,
-  status: ScheduledCall["status"]
+  status: ScheduledCall["status"],
+  notes?: string
 ): Promise<ScheduledCall | null> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      if (notes !== undefined) {
+        await execute(
+          "UPDATE `htb_scheduled_calls` SET `status` = ?, `notes` = ? WHERE `id` = ? OR `call_id` = ?",
+          [status, notes, id, id]
+        );
+      } else {
+        await execute(
+          "UPDATE `htb_scheduled_calls` SET `status` = ? WHERE `id` = ? OR `call_id` = ?",
+          [status, id, id]
+        );
+      }
+      const rows = await query<any[]>("SELECT * FROM `htb_scheduled_calls` WHERE `id` = ? OR `call_id` = ? LIMIT 1", [id, id]);
+      if (rows.length > 0) return mapScheduledCall(rows[0]);
+      return null;
+    } catch (err) {
+      console.error("MySQL updateScheduledCallStatus error:", err);
+    }
+  }
+
   const db = readDb();
-  const item = db.scheduledCalls.find((c) => c.id === id || c.callId === id);
-  if (!item) return null;
-  item.status = status;
+  const index = db.scheduledCalls.findIndex((c) => c.id === id || c.callId === id);
+  if (index === -1) return null;
+  db.scheduledCalls[index].status = status;
+  if (notes !== undefined) db.scheduledCalls[index].notes = notes;
   writeDb(db);
-  return item;
+  return db.scheduledCalls[index];
 }
 
 /* ----------------------------------------------------
    Career Applications API Methods
 ---------------------------------------------------- */
 export async function getCareerApplications(): Promise<CareerApplication[]> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>("SELECT * FROM `htb_career_applications` ORDER BY `created_at` DESC");
+      return rows.map(mapCareer);
+    } catch (err) {
+      console.error("MySQL getCareerApplications error:", err);
+    }
+  }
   const db = readDb();
-  return db.careerApplications.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  return db.careerApplications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
-export async function createCareerApplication(data: {
-  applicantName: string;
-  email: string;
-  mobile: string;
-  resumeFileName: string;
-  resumeFilePath: string;
-  resumeSizeBytes: number;
-  resumeMimeType: string;
-  message: string;
-}): Promise<CareerApplication> {
-  const db = readDb();
-  const nextAppNum = db.careerApplications.length + 1;
-  const applicationId = `APP-${String(nextAppNum).padStart(3, "0")}`;
+export async function createCareerApplication(
+  data: Omit<CareerApplication, "id" | "applicationId" | "createdAt" | "status" | "assignedTo" | "appliedDate">
+): Promise<CareerApplication> {
   const now = new Date().toISOString();
+  const todayStr = now.split("T")[0];
+  const id = `app-${Date.now()}`;
+  let applicationId = "APP-001";
 
-  const application: CareerApplication = {
-    id: `app-${Date.now()}`,
-    applicationId,
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const [countRow] = await query<any[]>("SELECT COUNT(*) AS total FROM `htb_career_applications`");
+      const nextNum = (countRow?.total || 0) + 1;
+      applicationId = `APP-${String(nextNum).padStart(3, "0")}`;
+
+      await execute(
+        "INSERT INTO `htb_career_applications` (id, application_id, applicant_name, email, mobile, resume_file_name, resume_file_path, resume_size_bytes, resume_mime_type, message, status, assigned_to, notes, applied_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          id,
+          applicationId,
+          data.applicantName,
+          data.email,
+          data.mobile,
+          data.resumeFileName,
+          data.resumeFilePath,
+          data.resumeSizeBytes,
+          data.resumeMimeType,
+          data.message,
+          "New",
+          "HR Desk",
+          null,
+          todayStr,
+          now,
+        ]
+      );
+
+      // Notification
+      await execute(
+        "INSERT INTO `htb_notifications` (id, title, message, type, is_read, link, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          `notif-${Date.now()}`,
+          "New Career Application",
+          `${data.applicantName} submitted their resume application.`,
+          "career",
+          0,
+          "/admin/career-applications",
+          now,
+        ]
+      );
+
+      return {
+        ...data,
+        id,
+        applicationId,
+        status: "New",
+        assignedTo: "HR Desk",
+        appliedDate: todayStr,
+        createdAt: now,
+      };
+    } catch (err) {
+      console.error("MySQL createCareerApplication error:", err);
+    }
+  }
+
+  // Fallback JSON
+  const db = readDb();
+  applicationId = `APP-${String(db.careerApplications.length + 1).padStart(3, "0")}`;
+  const newApp: CareerApplication = {
     ...data,
+    id,
+    applicationId,
     status: "New",
     assignedTo: "HR Desk",
-    appliedDate: now.split("T")[0],
+    appliedDate: todayStr,
     createdAt: now,
   };
-  db.careerApplications.unshift(application);
-
-  db.activities.unshift({
-    id: `act-${Date.now()}`,
-    leadId: applicationId,
-    leadName: data.applicantName,
-    type: "Career Application",
-    description: `New career application from ${data.applicantName}. Resume: ${data.resumeFileName}.`,
-    actor: "System",
-    date: now.split("T")[0],
-    time: "Just now",
-    createdAt: now,
-  });
-
-  db.notifications.unshift({
-    id: `notif-${Date.now()}`,
-    title: "New Career Application",
-    message: `${data.applicantName} applied with resume attached.`,
-    type: "career",
-    read: false,
-    link: "/admin/career-applications",
-    createdAt: now,
-  });
-
+  db.careerApplications.unshift(newApp);
   writeDb(db);
-  return application;
+  return newApp;
 }
 
 export async function updateCareerApplicationStatus(
@@ -1050,145 +966,255 @@ export async function updateCareerApplicationStatus(
   status: CareerApplication["status"],
   notes?: string
 ): Promise<CareerApplication | null> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      if (notes !== undefined) {
+        await execute(
+          "UPDATE `htb_career_applications` SET `status` = ?, `notes` = ? WHERE `id` = ? OR `application_id` = ?",
+          [status, notes, id, id]
+        );
+      } else {
+        await execute(
+          "UPDATE `htb_career_applications` SET `status` = ? WHERE `id` = ? OR `application_id` = ?",
+          [status, id, id]
+        );
+      }
+      const rows = await query<any[]>("SELECT * FROM `htb_career_applications` WHERE `id` = ? OR `application_id` = ? LIMIT 1", [id, id]);
+      if (rows.length > 0) return mapCareer(rows[0]);
+      return null;
+    } catch (err) {
+      console.error("MySQL updateCareerApplicationStatus error:", err);
+    }
+  }
+
   const db = readDb();
-  const item = db.careerApplications.find((a) => a.id === id || a.applicationId === id);
-  if (!item) return null;
-  item.status = status;
-  if (notes) item.notes = notes;
+  const index = db.careerApplications.findIndex((a) => a.id === id || a.applicationId === id);
+  if (index === -1) return null;
+  db.careerApplications[index].status = status;
+  if (notes !== undefined) db.careerApplications[index].notes = notes;
   writeDb(db);
-  return item;
+  return db.careerApplications[index];
 }
 
 /* ----------------------------------------------------
    Follow-ups API Methods
 ---------------------------------------------------- */
-export async function getFollowUps(tab?: "all" | "overdue" | "today" | "upcoming" | "completed"): Promise<FollowUp[]> {
-  const db = readDb();
-  const todayStr = new Date().toISOString().split("T")[0];
-
-  let list = [...db.followUps];
-
-  if (tab === "overdue") {
-    list = list.filter((f) => f.status !== "Completed" && f.date < todayStr);
-  } else if (tab === "today") {
-    list = list.filter((f) => f.status !== "Completed" && f.date === todayStr);
-  } else if (tab === "upcoming") {
-    list = list.filter((f) => f.status !== "Completed" && f.date > todayStr);
-  } else if (tab === "completed") {
-    list = list.filter((f) => f.status === "Completed");
+export async function getFollowUps(): Promise<FollowUp[]> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>("SELECT * FROM `htb_follow_ups` ORDER BY `date` ASC, `time` ASC");
+      return rows.map(mapFollowUp);
+    } catch (err) {
+      console.error("MySQL getFollowUps error:", err);
+    }
   }
-
-  return list.sort((a, b) => new Date(a.date + " " + a.time).getTime() - new Date(b.date + " " + b.time).getTime());
+  const db = readDb();
+  return db.followUps.sort((a, b) => new Date(a.date + " " + a.time).getTime() - new Date(b.date + " " + b.time).getTime());
 }
 
-export async function createFollowUp(data: Omit<FollowUp, "id" | "followUpId" | "createdAt">): Promise<FollowUp> {
-  const db = readDb();
-  const nextNum = db.followUps.length + 1;
-  const followUpId = `FLP-${String(nextNum).padStart(3, "0")}`;
+export async function createFollowUp(
+  data: Omit<FollowUp, "id" | "followUpId" | "createdAt" | "status">
+): Promise<FollowUp> {
   const now = new Date().toISOString();
+  const id = `flp-${Date.now()}`;
+  let followUpId = "FLP-001";
 
-  const newFollowUp: FollowUp = {
-    ...data,
-    id: `flp-${Date.now()}`,
-    followUpId,
-    createdAt: now,
-  };
-  db.followUps.unshift(newFollowUp);
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const [countRow] = await query<any[]>("SELECT COUNT(*) AS total FROM `htb_follow_ups`");
+      const nextNum = (countRow?.total || 0) + 1;
+      followUpId = `FLP-${String(nextNum).padStart(3, "0")}`;
 
-  // Update lead's nextFollowUp field
-  const lead = db.leads.find((l) => l.leadId === data.leadId || l.id === data.leadId);
-  if (lead) {
-    lead.nextFollowUp = `${data.date} ${data.time}`;
-    lead.updatedAt = now;
+      await execute(
+        "INSERT INTO `htb_follow_ups` (id, follow_up_id, lead_id, lead_name, lead_mobile, date, time, type, assigned_to, status, notes, completed_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          id,
+          followUpId,
+          data.leadId,
+          data.leadName,
+          data.leadMobile,
+          data.date,
+          data.time,
+          data.type,
+          data.assignedTo,
+          "Upcoming",
+          data.notes,
+          null,
+          now,
+        ]
+      );
+
+      return {
+        ...data,
+        id,
+        followUpId,
+        status: "Upcoming",
+        createdAt: now,
+      };
+    } catch (err) {
+      console.error("MySQL createFollowUp error:", err);
+    }
   }
 
-  db.activities.unshift({
-    id: `act-${Date.now()}`,
-    leadId: data.leadId,
-    leadName: data.leadName,
-    type: "Follow-up Scheduled",
-    description: `Follow-up scheduled (${data.type}) for ${data.date} at ${data.time}.`,
-    actor: data.assignedTo || "Admin",
-    date: now.split("T")[0],
-    time: "Just now",
+  // Fallback JSON
+  const db = readDb();
+  followUpId = `FLP-${String(db.followUps.length + 1).padStart(3, "0")}`;
+  const newFollowUp: FollowUp = {
+    ...data,
+    id,
+    followUpId,
+    status: "Upcoming",
     createdAt: now,
-  });
-
+  };
+  db.followUps.push(newFollowUp);
   writeDb(db);
   return newFollowUp;
 }
 
-export async function completeFollowUp(id: string): Promise<FollowUp | null> {
+export async function completeFollowUp(id: string, notes?: string): Promise<FollowUp | null> {
+  const now = new Date().toISOString();
+  const mysqlUp = await isMySqlAvailable();
+
+  if (mysqlUp) {
+    try {
+      if (notes) {
+        await execute(
+          "UPDATE `htb_follow_ups` SET `status` = 'Completed', `completed_at` = ?, `notes` = ? WHERE `id` = ? OR `follow_up_id` = ?",
+          [now, notes, id, id]
+        );
+      } else {
+        await execute(
+          "UPDATE `htb_follow_ups` SET `status` = 'Completed', `completed_at` = ? WHERE `id` = ? OR `follow_up_id` = ?",
+          [now, id, id]
+        );
+      }
+      const rows = await query<any[]>("SELECT * FROM `htb_follow_ups` WHERE `id` = ? OR `follow_up_id` = ? LIMIT 1", [id, id]);
+      if (rows.length > 0) return mapFollowUp(rows[0]);
+      return null;
+    } catch (err) {
+      console.error("MySQL completeFollowUp error:", err);
+    }
+  }
+
   const db = readDb();
-  const item = db.followUps.find((f) => f.id === id || f.followUpId === id);
-  if (!item) return null;
-
-  item.status = "Completed";
-  item.completedAt = new Date().toISOString();
-
-  db.activities.unshift({
-    id: `act-${Date.now()}`,
-    leadId: item.leadId,
-    leadName: item.leadName,
-    type: "Follow-up Completed",
-    description: `Follow-up completed: ${item.notes || item.type}`,
-    actor: item.assignedTo || "Admin",
-    date: new Date().toISOString().split("T")[0],
-    time: "Just now",
-    createdAt: new Date().toISOString(),
-  });
-
+  const index = db.followUps.findIndex((f) => f.id === id || f.followUpId === id);
+  if (index === -1) return null;
+  db.followUps[index].status = "Completed";
+  db.followUps[index].completedAt = now;
+  if (notes) db.followUps[index].notes = notes;
   writeDb(db);
-  return item;
+  return db.followUps[index];
 }
 
 /* ----------------------------------------------------
-   Activities, Notes & Notifications
+   Activities & Notes Methods
 ---------------------------------------------------- */
 export async function getActivities(limit = 20): Promise<LeadActivity[]> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>(
+        "SELECT * FROM `htb_activities` ORDER BY `created_at` DESC LIMIT ?",
+        [limit]
+      );
+      return rows.map(mapActivity);
+    } catch (err) {
+      console.error("MySQL getActivities error:", err);
+    }
+  }
   const db = readDb();
   return db.activities.slice(0, limit);
 }
 
 export async function getLeadNotes(leadId: string): Promise<LeadNote[]> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>(
+        "SELECT * FROM `htb_notes` WHERE `lead_id` = ? ORDER BY `created_at` DESC",
+        [leadId]
+      );
+      return rows.map(mapNote);
+    } catch (err) {
+      console.error("MySQL getLeadNotes error:", err);
+    }
+  }
   const db = readDb();
   return db.notes.filter((n) => n.leadId === leadId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function addLeadNote(leadId: string, note: string, actor = "Admin"): Promise<LeadNote> {
+  const now = new Date().toISOString();
+  const id = `note-${Date.now()}`;
+
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      await execute(
+        "INSERT INTO `htb_notes` (id, lead_id, note, actor, created_at) VALUES (?, ?, ?, ?, ?)",
+        [id, leadId, note, actor, now]
+      );
+
+      const lead = await getLeadById(leadId);
+      await execute(
+        "INSERT INTO `htb_activities` (id, lead_id, lead_name, type, description, actor, date, time, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          `act-${Date.now()}`,
+          leadId,
+          lead?.fullName || null,
+          "Note Added",
+          `Added note: "${note.substring(0, 60)}${note.length > 60 ? "..." : ""}"`,
+          actor,
+          now.split("T")[0],
+          "Just now",
+          now,
+        ]
+      );
+
+      return { id, leadId, note, actor, createdAt: now };
+    } catch (err) {
+      console.error("MySQL addLeadNote error:", err);
+    }
+  }
+
+  // Fallback JSON
   const db = readDb();
-  const newNote: LeadNote = {
-    id: `note-${Date.now()}`,
-    leadId,
-    note,
-    actor,
-    createdAt: new Date().toISOString(),
-  };
+  const newNote: LeadNote = { id, leadId, note, actor, createdAt: now };
   db.notes.unshift(newNote);
-
-  const lead = db.leads.find((l) => l.leadId === leadId || l.id === leadId);
-  db.activities.unshift({
-    id: `act-${Date.now()}`,
-    leadId,
-    leadName: lead?.fullName,
-    type: "Note Added",
-    description: `Added note: "${note.substring(0, 60)}${note.length > 60 ? "..." : ""}"`,
-    actor,
-    date: new Date().toISOString().split("T")[0],
-    time: "Just now",
-    createdAt: new Date().toISOString(),
-  });
-
   writeDb(db);
   return newNote;
 }
 
+/* ----------------------------------------------------
+   Notifications API Methods
+---------------------------------------------------- */
 export async function getNotifications(): Promise<Notification[]> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>("SELECT * FROM `htb_notifications` ORDER BY `created_at` DESC");
+      return rows.map(mapNotification);
+    } catch (err) {
+      console.error("MySQL getNotifications error:", err);
+    }
+  }
   const db = readDb();
   return db.notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
 
 export async function markNotificationRead(id: string): Promise<boolean> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      await execute("UPDATE `htb_notifications` SET `is_read` = 1 WHERE `id` = ?", [id]);
+      return true;
+    } catch (err) {
+      console.error("MySQL markNotificationRead error:", err);
+    }
+  }
   const db = readDb();
   const notif = db.notifications.find((n) => n.id === id);
   if (notif) {
@@ -1200,32 +1226,101 @@ export async function markNotificationRead(id: string): Promise<boolean> {
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      await execute("UPDATE `htb_notifications` SET `is_read` = 1");
+      return;
+    } catch (err) {
+      console.error("MySQL markAllNotificationsRead error:", err);
+    }
+  }
   const db = readDb();
   db.notifications.forEach((n) => (n.read = true));
   writeDb(db);
 }
 
 /* ----------------------------------------------------
-   Team & Settings Methods
+   Team & User Authentication Methods
 ---------------------------------------------------- */
 export async function getTeam(): Promise<TeamMember[]> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>("SELECT * FROM `htb_team` ORDER BY `created_at` ASC");
+      return rows.map(mapTeamMember);
+    } catch (err) {
+      console.error("MySQL getTeam error:", err);
+    }
+  }
   const db = readDb();
   return db.team;
 }
 
 export async function createTeamMember(data: Omit<TeamMember, "id" | "createdAt">): Promise<TeamMember> {
+  const now = new Date().toISOString();
+  const id = `team-${Date.now()}`;
+
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      await execute(
+        "INSERT INTO `htb_team` (id, name, email, role, password, avatar, status, phone, last_login, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          id,
+          data.name,
+          data.email,
+          data.role,
+          data.password || "Admin@123",
+          data.avatar || null,
+          data.status || "Active",
+          data.phone,
+          data.lastLogin || null,
+          now,
+        ]
+      );
+      return { ...data, id, createdAt: now };
+    } catch (err) {
+      console.error("MySQL createTeamMember error:", err);
+    }
+  }
+
   const db = readDb();
-  const newMember: TeamMember = {
-    ...data,
-    id: `team-${Date.now()}`,
-    createdAt: new Date().toISOString(),
-  };
+  const newMember: TeamMember = { ...data, id, createdAt: now };
   db.team.push(newMember);
   writeDb(db);
   return newMember;
 }
 
 export async function updateTeamMember(id: string, data: Partial<TeamMember>): Promise<TeamMember | null> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const existing = await getTeam();
+      const target = existing.find((t) => t.id === id);
+      if (!target) return null;
+
+      const merged = { ...target, ...data };
+      await execute(
+        "UPDATE `htb_team` SET `name`=?, `email`=?, `role`=?, `password`=?, `avatar`=?, `status`=?, `phone`=?, `last_login`=? WHERE `id`=?",
+        [
+          merged.name,
+          merged.email,
+          merged.role,
+          merged.password || "Admin@123",
+          merged.avatar || null,
+          merged.status,
+          merged.phone,
+          merged.lastLogin || null,
+          id,
+        ]
+      );
+      return merged;
+    } catch (err) {
+      console.error("MySQL updateTeamMember error:", err);
+    }
+  }
+
   const db = readDb();
   const index = db.team.findIndex((t) => t.id === id);
   if (index === -1) return null;
@@ -1234,42 +1329,276 @@ export async function updateTeamMember(id: string, data: Partial<TeamMember>): P
   return db.team[index];
 }
 
-export async function getSettings(): Promise<Settings> {
+export async function getUserPassword(email: string): Promise<string> {
+  const normalized = email.toLowerCase().trim();
+  const mysqlUp = await isMySqlAvailable();
+
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>("SELECT `password` FROM `htb_team` WHERE LOWER(`email`) = ? LIMIT 1", [normalized]);
+      if (rows.length > 0 && rows[0].password) {
+        return rows[0].password;
+      }
+      return "Admin@123";
+    } catch (err) {
+      console.error("MySQL getUserPassword error:", err);
+    }
+  }
+
   const db = readDb();
-  return db.settings;
+  const member = db.team.find((t) => t.email.toLowerCase() === normalized);
+  if (member && member.password) return member.password;
+  return "Admin@123";
+}
+
+export async function updateUserPassword(email: string, newPassword: string): Promise<boolean> {
+  const normalized = email.toLowerCase().trim();
+  const now = new Date().toISOString();
+  const mysqlUp = await isMySqlAvailable();
+
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>("SELECT * FROM `htb_team` WHERE LOWER(`email`) = ? LIMIT 1", [normalized]);
+      if (rows.length > 0) {
+        await execute("UPDATE `htb_team` SET `password` = ? WHERE LOWER(`email`) = ?", [newPassword, normalized]);
+      } else if (normalized === "admin@hightechbirds.com" || normalized === "dev.omkar05@gmail.com") {
+        await execute(
+          "INSERT INTO `htb_team` (id, name, email, role, password, status, phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+          [
+            "team-super",
+            "Omkar Bhoir",
+            normalized,
+            "Super Admin",
+            newPassword,
+            "Active",
+            "+91 99208 18481",
+            now,
+          ]
+        );
+      } else {
+        return false;
+      }
+
+      await execute(
+        "INSERT INTO `htb_activities` (id, type, description, actor, date, time, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [
+          `act-${Date.now()}`,
+          "Team Action",
+          `Security: Password updated in MySQL for administrator account (${normalized}).`,
+          normalized,
+          now.split("T")[0],
+          "Just now",
+          now,
+        ]
+      );
+      return true;
+    } catch (err) {
+      console.error("MySQL updateUserPassword error:", err);
+    }
+  }
+
+  // Fallback JSON
+  const db = readDb();
+  const index = db.team.findIndex((t) => t.email.toLowerCase() === normalized);
+  if (index !== -1) {
+    db.team[index].password = newPassword;
+  } else if (normalized === "admin@hightechbirds.com" || normalized === "dev.omkar05@gmail.com") {
+    db.team.push({
+      id: "team-super",
+      name: "Omkar Bhoir",
+      email: normalized,
+      role: "Super Admin",
+      status: "Active",
+      phone: "+91 99208 18481",
+      password: newPassword,
+      createdAt: now,
+    });
+  } else {
+    return false;
+  }
+  writeDb(db);
+  return true;
+}
+
+export async function createPasswordReset(
+  email: string
+): Promise<{ otp: string; token: string; expiresAt: string } | null> {
+  const normalized = email.toLowerCase().trim();
+  const now = new Date().toISOString();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const token = `rst_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const isMaster = normalized === "admin@hightechbirds.com" || normalized === "dev.omkar05@gmail.com";
+      const teamRows = await query<any[]>("SELECT id FROM `htb_team` WHERE LOWER(`email`) = ? LIMIT 1", [normalized]);
+
+      if (teamRows.length === 0 && !isMaster) {
+        return null;
+      }
+
+      // Remove existing resets
+      await execute("DELETE FROM `htb_password_resets` WHERE LOWER(`email`) = ?", [normalized]);
+
+      await execute(
+        "INSERT INTO `htb_password_resets` (id, email, otp, token, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?)",
+        [`reset-${Date.now()}`, normalized, otp, token, expiresAt, now]
+      );
+
+      return { otp, token, expiresAt };
+    } catch (err) {
+      console.error("MySQL createPasswordReset error:", err);
+    }
+  }
+
+  // Fallback JSON
+  const db = readDb();
+  if (!db.passwordResets) db.passwordResets = [];
+  db.passwordResets = db.passwordResets.filter((r) => r.email.toLowerCase() !== normalized);
+  db.passwordResets.push({
+    id: `reset-${Date.now()}`,
+    email: normalized,
+    otp,
+    token,
+    expiresAt,
+    createdAt: now,
+  });
+  writeDb(db);
+  return { otp, token, expiresAt };
+}
+
+export async function resetPasswordWithOtp(
+  email: string,
+  otp: string,
+  newPassword: string
+): Promise<{ success: boolean; error?: string }> {
+  const normalized = email.toLowerCase().trim();
+  const mysqlUp = await isMySqlAvailable();
+
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>(
+        "SELECT * FROM `htb_password_resets` WHERE LOWER(`email`) = ? AND `otp` = ? LIMIT 1",
+        [normalized, otp.trim()]
+      );
+
+      if (rows.length === 0) {
+        return { success: false, error: "Invalid verification code. Please check and try again." };
+      }
+
+      const record = rows[0];
+      if (new Date(record.expires_at).getTime() < Date.now()) {
+        await execute("DELETE FROM `htb_password_resets` WHERE `id` = ?", [record.id]);
+        return { success: false, error: "Verification code has expired. Please request a new one." };
+      }
+
+      // Update password
+      const updated = await updateUserPassword(normalized, newPassword);
+      if (!updated) {
+        return { success: false, error: "Could not find account to update password." };
+      }
+
+      // Delete used reset
+      await execute("DELETE FROM `htb_password_resets` WHERE LOWER(`email`) = ?", [normalized]);
+      return { success: true };
+    } catch (err) {
+      console.error("MySQL resetPasswordWithOtp error:", err);
+    }
+  }
+
+  // Fallback JSON
+  const db = readDb();
+  if (!db.passwordResets || db.passwordResets.length === 0) {
+    return { success: false, error: "No reset request found for this email." };
+  }
+  const recordIndex = db.passwordResets.findIndex(
+    (r) => r.email.toLowerCase() === normalized && r.otp.trim() === otp.trim()
+  );
+  if (recordIndex === -1) {
+    return { success: false, error: "Invalid verification code. Please check and try again." };
+  }
+  const record = db.passwordResets[recordIndex];
+  if (new Date(record.expiresAt).getTime() < Date.now()) {
+    db.passwordResets.splice(recordIndex, 1);
+    writeDb(db);
+    return { success: false, error: "Verification code has expired. Please request a new one." };
+  }
+
+  await updateUserPassword(normalized, newPassword);
+  db.passwordResets.splice(recordIndex, 1);
+  writeDb(db);
+  return { success: true };
+}
+
+/* ----------------------------------------------------
+   Settings Methods
+---------------------------------------------------- */
+export async function getSettings(): Promise<Settings> {
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      const rows = await query<any[]>("SELECT `value_json` FROM `htb_settings` WHERE `key_name` = 'app_settings' LIMIT 1");
+      if (rows.length > 0 && rows[0].value_json) {
+        return JSON.parse(rows[0].value_json);
+      }
+    } catch (err) {
+      console.error("MySQL getSettings error:", err);
+    }
+  }
+  const db = readDb();
+  return db.settings || INITIAL_SETTINGS;
 }
 
 export async function updateSettings(updates: Partial<Settings>): Promise<Settings> {
+  const current = await getSettings();
+  const merged = { ...current, ...updates };
+
+  const mysqlUp = await isMySqlAvailable();
+  if (mysqlUp) {
+    try {
+      await execute(
+        "INSERT INTO `htb_settings` (`key_name`, `value_json`, `updated_at`) VALUES ('app_settings', ?, ?) ON DUPLICATE KEY UPDATE `value_json` = VALUES(`value_json`), `updated_at` = VALUES(`updated_at`)",
+        [JSON.stringify(merged), new Date().toISOString()]
+      );
+      return merged;
+    } catch (err) {
+      console.error("MySQL updateSettings error:", err);
+    }
+  }
+
   const db = readDb();
-  db.settings = {
-    ...db.settings,
-    ...updates,
-  };
+  db.settings = merged;
   writeDb(db);
-  return db.settings;
+  return merged;
 }
 
 /* ----------------------------------------------------
    Dashboard Metrics
 ---------------------------------------------------- */
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const db = readDb();
+  const leads = await getLeads();
+  const followUps = await getFollowUps();
+  const scheduledCalls = await getScheduledCalls();
+  const careerApplications = await getCareerApplications();
+  const activities = await getActivities(10);
+
   const todayStr = new Date().toISOString().split("T")[0];
 
-  const totalLeads = db.leads.length;
-  const newLeadsToday = db.leads.filter((l) => l.createdAt.startsWith(todayStr)).length;
-  const followUpsDueToday = db.followUps.filter(
+  const totalLeads = leads.length;
+  const newLeadsToday = leads.filter((l) => l.createdAt.startsWith(todayStr)).length;
+  const followUpsDueToday = followUps.filter(
     (f) => f.status !== "Completed" && f.date === todayStr
   ).length;
 
-  const scheduledCallsUpcoming = db.scheduledCalls.filter(
+  const scheduledCallsUpcoming = scheduledCalls.filter(
     (c) => c.status === "Confirmed" || c.status === "Pending"
   ).length;
 
-  const wonLeadsMonth = db.leads.filter((l) => l.status === "WON").length;
-  const careerApplications = db.careerApplications.length;
+  const wonLeadsMonth = leads.filter((l) => l.status === "WON").length;
+  const careerCount = careerApplications.length;
 
-  // Pipeline counts
   const pipelineCounts: Record<LeadStatus, number> = {
     NEW: 0,
     CONTACTED: 0,
@@ -1282,23 +1611,21 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     LOST: 0,
   };
 
-  db.leads.forEach((lead) => {
+  leads.forEach((lead) => {
     if (pipelineCounts[lead.status] !== undefined) {
       pipelineCounts[lead.status]++;
     }
   });
 
-  // Follow-up counts
   const followUpCounts = {
-    overdue: db.followUps.filter((f) => f.status !== "Completed" && f.date < todayStr).length,
+    overdue: followUps.filter((f) => f.status !== "Completed" && f.date < todayStr).length,
     today: followUpsDueToday,
-    upcoming: db.followUps.filter((f) => f.status !== "Completed" && f.date > todayStr).length,
-    completed: db.followUps.filter((f) => f.status === "Completed").length,
+    upcoming: followUps.filter((f) => f.status !== "Completed" && f.date > todayStr).length,
+    completed: followUps.filter((f) => f.status === "Completed").length,
   };
 
-  // Leads by source
   const sourceMap: Record<string, number> = {};
-  db.leads.forEach((l) => {
+  leads.forEach((l) => {
     sourceMap[l.source] = (sourceMap[l.source] || 0) + 1;
   });
 
@@ -1308,9 +1635,8 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     percentage: Math.round((count / (totalLeads || 1)) * 100),
   }));
 
-  // Most requested services
   const serviceMap: Record<string, number> = {};
-  db.leads.forEach((l) => {
+  leads.forEach((l) => {
     serviceMap[l.service] = (serviceMap[l.service] || 0) + 1;
   });
 
@@ -1329,15 +1655,15 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     scheduledCallsTrend: "↑ 12%",
     wonLeadsMonth,
     wonLeadsTrend: "↑ 18%",
-    careerApplications,
+    careerApplications: careerCount,
     careerApplicationsTrend: "↑ 8%",
     pipelineCounts,
     followUpCounts,
     leadsBySource,
     mostRequestedServices,
-    upcomingCalls: db.scheduledCalls.filter((c) => c.status !== "Completed" && c.status !== "Cancelled").slice(0, 4),
-    todayFollowUps: db.followUps.filter((f) => f.date === todayStr).slice(0, 5),
-    recentLeads: db.leads.slice(0, 8),
-    recentActivities: db.activities.slice(0, 7),
+    upcomingCalls: scheduledCalls.filter((c) => c.status !== "Completed" && c.status !== "Cancelled").slice(0, 4),
+    todayFollowUps: followUps.filter((f) => f.date === todayStr).slice(0, 5),
+    recentLeads: leads.slice(0, 8),
+    recentActivities: activities.slice(0, 7),
   };
 }

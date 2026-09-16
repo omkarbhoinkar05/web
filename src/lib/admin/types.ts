@@ -161,10 +161,20 @@ export interface TeamMember {
   name: string;
   email: string;
   role: AdminRole;
+  password?: string;
   avatar?: string;
   status: "Active" | "Inactive";
   phone: string;
   lastLogin?: string;
+  createdAt: string;
+}
+
+export interface PasswordResetRecord {
+  id: string;
+  email: string;
+  otp: string;
+  token: string;
+  expiresAt: string;
   createdAt: string;
 }
 

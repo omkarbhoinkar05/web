@@ -2,11 +2,13 @@
 
 import React, { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromUrl = searchParams.get("from") || "/admin";
+  const resetSuccess = searchParams.get("reset") === "success";
 
   const [email, setEmail] = useState("admin@hightechbirds.com");
   const [password, setPassword] = useState("Admin@123");
@@ -68,6 +70,15 @@ function LoginForm() {
           Sign in with authorized administrator credentials to access command dashboard.
         </p>
 
+        {resetSuccess && (
+          <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
+            <svg className="w-4 h-4 shrink-0 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+            <span>Password reset successfully! Please log in with your new password.</span>
+          </div>
+        )}
+
         {error && (
           <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
             <svg className="w-4 h-4 shrink-0 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -103,9 +114,17 @@ function LoginForm() {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Password
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Password
+              </label>
+              <Link
+                href="/admin/forgot-password"
+                className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 transition-colors cursor-pointer"
+              >
+                Forgot Password?
+              </Link>
+            </div>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
