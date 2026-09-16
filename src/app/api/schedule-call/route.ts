@@ -7,9 +7,27 @@ import {
   generateIcsFileContent,
 } from "@/lib/bookingUtils";
 import { createScheduledCall } from "@/lib/admin/db";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rateCheck = checkRateLimit(`schedule-call:${ip}`, 5, 30 * 60 * 1000);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Too many booking requests from your network. Please wait ${rateCheck.retryAfterSec} seconds before scheduling another call.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": rateCheck.retryAfterSec.toString(),
+          },
+        }
+      );
+    }
+
     const body: BookingFormData = await request.json();
 
     const errors: Record<string, string> = {};

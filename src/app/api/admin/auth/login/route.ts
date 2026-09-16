@@ -1,8 +1,29 @@
 import { NextResponse } from "next/server";
 import { validateCredentials, setAdminSession } from "@/lib/admin/auth";
+import { checkRateLimit, resetRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rateLimitKey = `login:${ip}`;
+
+    // Rate Limit: Max 5 attempts per 15 minutes per IP
+    const rateCheck = checkRateLimit(rateLimitKey, 5, 15 * 60 * 1000);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Too many login attempts from this IP. Please try again in ${rateCheck.retryAfterSec} seconds.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": rateCheck.retryAfterSec.toString(),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const { email, password } = body;
 
@@ -21,6 +42,9 @@ export async function POST(request: Request) {
         { status: 401 }
       );
     }
+
+    // Reset rate limiter on successful authentication
+    resetRateLimit(rateLimitKey);
 
     await setAdminSession({
       id: user.id,
@@ -47,3 +71,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

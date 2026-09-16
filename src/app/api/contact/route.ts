@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createContactEnquiry } from "@/lib/admin/db";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 interface ContactPayload {
   fullName?: string;
@@ -16,6 +17,23 @@ function sanitizeText(str: string): string {
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rateCheck = checkRateLimit(`contact:${ip}`, 5, 10 * 60 * 1000);
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Too many submissions from your network. Please wait ${rateCheck.retryAfterSec} seconds before sending another inquiry.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": rateCheck.retryAfterSec.toString(),
+          },
+        }
+      );
+    }
+
     const body: ContactPayload = await request.json();
 
     const fullName = sanitizeText(body.fullName || "");

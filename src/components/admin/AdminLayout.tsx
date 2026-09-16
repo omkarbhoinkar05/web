@@ -18,11 +18,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const [quickAddTab, setQuickAddTab] = useState<"lead" | "call" | "followup">("lead");
   const [authChecking, setAuthChecking] = useState(true);
 
-  // Skip auth check if currently on the login page
-  const isLoginPage = pathname === "/admin/login";
+  // Skip auth check if currently on public admin auth pages (login or forgot password)
+  const isPublicAdminPage = pathname === "/admin/login" || pathname === "/admin/forgot-password";
 
   useEffect(() => {
-    if (isLoginPage) {
+    if (isPublicAdminPage) {
       setAuthChecking(false);
       return;
     }
@@ -42,10 +42,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     };
 
     checkAuth();
-  }, [pathname, isLoginPage, router]);
+  }, [pathname, isPublicAdminPage, router]);
 
-  // If on login page, just render children without sidebar/header
-  if (isLoginPage) {
+  // If on public admin auth pages, render children without sidebar/header
+  if (isPublicAdminPage) {
     return <>{children}</>;
   }
 

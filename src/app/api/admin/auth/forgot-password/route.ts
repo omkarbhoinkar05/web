@@ -1,8 +1,27 @@
 import { NextResponse } from "next/server";
 import { createPasswordReset } from "@/lib/admin/db";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rateCheck = checkRateLimit(`forgot-password:${ip}`, 3, 15 * 60 * 1000);
+
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Too many password reset requests. Please try again in ${rateCheck.retryAfterSec} seconds.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": rateCheck.retryAfterSec.toString(),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const { email } = body;
 
@@ -38,3 +57,4 @@ export async function POST(request: Request) {
     );
   }
 }
+

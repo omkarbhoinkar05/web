@@ -1,8 +1,28 @@
 import { NextResponse } from "next/server";
 import { resetPasswordWithOtp } from "@/lib/admin/db";
+import { checkRateLimit, resetRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rateLimitKey = `reset-password:${ip}`;
+    const rateCheck = checkRateLimit(rateLimitKey, 5, 15 * 60 * 1000);
+
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Too many password reset verification attempts. Please try again in ${rateCheck.retryAfterSec} seconds.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": rateCheck.retryAfterSec.toString(),
+          },
+        }
+      );
+    }
+
     const body = await request.json();
     const { email, otp, newPassword, confirmPassword } = body;
 
@@ -35,6 +55,9 @@ export async function POST(request: Request) {
       );
     }
 
+    // Reset rate limiter on successful password change
+    resetRateLimit(rateLimitKey);
+
     return NextResponse.json({
       success: true,
       message: "Password reset successful! You can now log in with your new password.",
@@ -47,3 +70,4 @@ export async function POST(request: Request) {
     );
   }
 }
+
