@@ -84,8 +84,8 @@ export async function GET(request: Request, { params }: RouteParams) {
   }
 
   // If found real file on disk, serve it with proper headers
-  if (targetFilePath && fs.existsSync(targetFilePath)) {
-    const fileBuffer = fs.readFileSync(targetFilePath);
+  if (targetFilePath && fs.existsSync(/*turbopackIgnore: true*/ targetFilePath)) {
+    const fileBuffer = fs.readFileSync(/*turbopackIgnore: true*/ targetFilePath);
     const ext = path.extname(originalDisplayName || targetFilePath).toLowerCase();
 
     let contentType = mimeType || "application/octet-stream";

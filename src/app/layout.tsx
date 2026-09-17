@@ -18,22 +18,21 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "PixelForge — Premium Web Development Company",
+  title: "Web — Modern Web Architecture & Digital Experiences",
   description:
     "We design and develop high-performance websites and digital experiences that help businesses stand out, grow and scale.",
-  metadataBase: new URL("https://pixelforge.design"),
+  metadataBase: new URL("http://localhost:3000"),
   openGraph: {
-    title: "PixelForge — Premium Web Development Company",
+    title: "Web — Modern Web Architecture & Digital Experiences",
     description:
       "We design and develop high-performance websites and digital experiences that help businesses stand out, grow and scale.",
-    url: "https://pixelforge.design",
-    siteName: "PixelForge",
+    siteName: "Web",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "PixelForge — Premium Web Development Company",
+    title: "Web — Modern Web Architecture & Digital Experiences",
     description:
       "We design and develop high-performance websites and digital experiences that help businesses stand out, grow and scale.",
   },
