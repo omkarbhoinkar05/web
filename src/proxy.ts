@@ -103,7 +103,8 @@ export async function proxy(request: NextRequest) {
       pathname.startsWith("/admin/contact-enquiries") ||
       pathname.startsWith("/admin/reports") ||
       pathname.startsWith("/admin/team") ||
-      pathname.startsWith("/admin/settings")
+      pathname.startsWith("/admin/settings") ||
+      pathname.startsWith("/admin/blogs")
     ) {
       return NextResponse.redirect(new URL("/admin/career-applications", request.url));
     }
@@ -116,8 +117,12 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // - System settings & Reports: Super Admin & Admin only (Sales & HR blocked)
-  if (pathname.startsWith("/admin/settings") || pathname.startsWith("/admin/reports")) {
+  // - System settings, Reports & Blog Management: Super Admin & Admin only (Sales & HR blocked)
+  if (
+    pathname.startsWith("/admin/settings") ||
+    pathname.startsWith("/admin/reports") ||
+    pathname.startsWith("/admin/blogs")
+  ) {
     if (role !== "Super Admin" && role !== "Admin") {
       return NextResponse.redirect(new URL("/admin?error=forbidden", request.url));
     }

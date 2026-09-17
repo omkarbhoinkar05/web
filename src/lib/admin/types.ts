@@ -241,3 +241,23 @@ export interface DashboardStats {
   recentLeads: Lead[];
   recentActivities: LeadActivity[];
 }
+
+export type BlogStatus = "Published" | "Draft" | "Archived";
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage?: string | null;
+  category: string;
+  readTime: string;
+  author: string;
+  tags: string;
+  status: BlogStatus;
+  views: number;
+  publishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}

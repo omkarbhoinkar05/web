@@ -4,15 +4,17 @@ import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
+import prisma from "@/lib/prisma";
 
 export const metadata: Metadata = {
-  title: "Blog & Engineering Insights | PixelForge",
+  title: "Blog & Engineering Insights | Web",
   description:
-    "Explore practical engineering insights, web design trends, architecture deep dives and development best practices from the PixelForge team.",
+    "Explore practical engineering insights, web design trends, architecture deep dives, and modern full-stack development best practices from the Web engineering team.",
 };
 
-interface Article {
+interface ArticleItem {
   id: string;
+  slug: string;
   title: string;
   excerpt: string;
   category: string;
@@ -21,9 +23,10 @@ interface Article {
   tags: string[];
 }
 
-const articles: Article[] = [
+const FALLBACK_ARTICLES: ArticleItem[] = [
   {
     id: "1",
+    slug: "building-resilient-saas-architectures",
     title: "Building Resilient SaaS Architectures with Next.js and Micro-Frontends",
     excerpt:
       "A deep dive into how modern engineering teams architect scalable multi-tenant web applications without sacrificing performance or maintainability.",
@@ -34,6 +37,7 @@ const articles: Article[] = [
   },
   {
     id: "2",
+    slug: "principles-of-high-converting-b2b-web-design",
     title: "10 Principles of High-Converting B2B Web Design for Modern Tech Companies",
     excerpt:
       "Transforming complex technical offerings into crystal-clear value propositions that build trust and drive enterprise inquiries.",
@@ -44,6 +48,7 @@ const articles: Article[] = [
   },
   {
     id: "3",
+    slug: "how-we-optimized-core-web-vitals",
     title: "How We Optimized Core Web Vitals to Achieve 99+ Performance Scores",
     excerpt:
       "A step-by-step breakdown of font sub-setting, modern bundle splitting, and zero-layout-shift asset delivery in production.",
@@ -54,6 +59,7 @@ const articles: Article[] = [
   },
   {
     id: "4",
+    slug: "future-of-custom-erp-solutions",
     title: "The Future of Custom ERP Solutions: Cloud-Native vs Legacy Monoliths",
     excerpt:
       "Why growing SMBs and mid-market enterprises are transitioning to tailored custom ERPs to streamline inventory, orders, and real-time reporting.",
@@ -64,7 +70,38 @@ const articles: Article[] = [
   },
 ];
 
-export default function BlogPage() {
+async function getPublishedArticles(): Promise<ArticleItem[]> {
+  try {
+    const dbPosts = await prisma.blogPost.findMany({
+      where: { status: "Published" },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (dbPosts.length > 0) {
+      return dbPosts.map((p) => ({
+        id: p.id,
+        slug: p.slug,
+        title: p.title,
+        excerpt: p.excerpt,
+        category: p.category,
+        readTime: p.readTime,
+        date: new Date(p.createdAt).toLocaleDateString("en-US", {
+          month: "short",
+          year: "numeric",
+        }),
+        tags: p.tags ? p.tags.split(",").map((t) => t.trim()).filter(Boolean) : ["Web"],
+      }));
+    }
+  } catch (error) {
+    console.error("Error fetching articles from database:", error);
+  }
+
+  return FALLBACK_ARTICLES;
+}
+
+export default async function BlogPage() {
+  const articles = await getPublishedArticles();
+
   return (
     <div className="flex flex-col min-h-screen bg-white relative text-zinc-900">
       <Navbar />
@@ -79,7 +116,7 @@ export default function BlogPage() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-600" />
               </span>
               <span className="text-[11px] font-extrabold tracking-[0.2em] uppercase text-emerald-800">
-                PIXELFORGE INSIGHTS
+                WEB INSIGHTS
               </span>
             </div>
 
@@ -89,7 +126,7 @@ export default function BlogPage() {
             </h1>
 
             <p className="text-base sm:text-lg text-zinc-600 mt-4 leading-relaxed max-w-2xl font-normal">
-              Insights, engineering teardowns, and design thinking from our builders and software engineers in Mumbai.
+              Practical engineering insights, architectural teardowns, and design thinking from our digital craftsmen and software engineers.
             </p>
           </div>
 
@@ -113,10 +150,12 @@ export default function BlogPage() {
                   </div>
 
                   <h2 className="text-xl sm:text-2xl font-black text-zinc-900 group-hover:text-emerald-700 transition-colors leading-snug">
-                    {article.title}
+                    <Link href={`/blog/${article.slug}`}>
+                      {article.title}
+                    </Link>
                   </h2>
 
-                  <p className="text-sm text-zinc-600 mt-3 leading-relaxed font-normal">
+                  <p className="text-sm text-zinc-600 mt-3 leading-relaxed font-normal line-clamp-3">
                     {article.excerpt}
                   </p>
                 </div>
@@ -124,17 +163,20 @@ export default function BlogPage() {
                 <div className="pt-6 mt-6 border-t border-zinc-100 flex items-center justify-between">
                   <div className="flex flex-wrap gap-1.5">
                     {article.tags.map((tag, idx) => (
-                      <span key={idx} className="text-[11px] font-mono font-medium text-zinc-500 bg-zinc-50 px-2 py-0.5 rounded border border-zinc-200/60">
+                      <span
+                        key={idx}
+                        className="text-[11px] font-mono font-medium text-zinc-500 bg-zinc-50 px-2 py-0.5 rounded border border-zinc-200/60"
+                      >
                         #{tag}
                       </span>
                     ))}
                   </div>
 
                   <Link
-                    href="/#contact"
+                    href={`/blog/${article.slug}`}
                     className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-700 hover:text-emerald-900 group-hover:translate-x-1 transition-all"
                   >
-                    <span>Read More</span>
+                    <span>Read Article</span>
                     <span>→</span>
                   </Link>
                 </div>
@@ -142,7 +184,7 @@ export default function BlogPage() {
             ))}
           </div>
 
-          {/* Bottom Newsletter CTA */}
+          {/* Bottom CTA */}
           <div className="mt-14 sm:mt-18 p-8 sm:p-10 rounded-3xl bg-zinc-50 border border-zinc-200/90 text-center max-w-2xl mx-auto">
             <h3 className="text-xl sm:text-2xl font-black text-zinc-900">
               Have a project in mind?

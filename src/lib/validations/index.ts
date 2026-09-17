@@ -217,3 +217,18 @@ export const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
   newPassword: z.string().min(6, "New password must be at least 6 characters"),
 });
+
+export const blogPostSchema = z.object({
+  title: z.string().trim().min(3, "Title must be at least 3 characters"),
+  slug: z.string().trim().min(2, "Slug must be at least 2 characters").optional(),
+  excerpt: z.string().trim().min(10, "Excerpt must be at least 10 characters"),
+  content: z.string().trim().min(10, "Content must be at least 10 characters"),
+  coverImage: z.string().trim().optional().nullable(),
+  category: z.string().trim().min(1, "Category is required").default("Engineering"),
+  readTime: z.string().trim().default("5 min read"),
+  author: z.string().trim().default("Web Editorial"),
+  tags: z.string().trim().default("Web,Engineering"),
+  status: z.enum(["Published", "Draft", "Archived"]).default("Published"),
+});
+
+export type BlogPostInput = z.infer<typeof blogPostSchema>;

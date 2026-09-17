@@ -200,3 +200,25 @@ model Setting {
 
   @@map("web_settings")
 }
+
+model BlogPost {
+  id          String   @id @db.VarChar(64)
+  slug        String   @unique @db.VarChar(191)
+  title       String   @db.VarChar(255)
+  excerpt     String   @db.Text
+  content     String   @db.LongText
+  coverImage  String?  @map("cover_image") @db.VarChar(255)
+  category    String   @db.VarChar(100)
+  readTime    String   @default("5 min read") @map("read_time") @db.VarChar(50)
+  author      String   @default("Web Editorial") @db.VarChar(100)
+  tags        String   @default("Web,Engineering") @db.VarChar(255)
+  status      String   @default("Published") @db.VarChar(50)
+  views       Int      @default(0)
+  publishedAt String?  @map("published_at") @db.VarChar(64)
+  createdAt   String   @map("created_at") @db.VarChar(64)
+  updatedAt   String   @map("updated_at") @db.VarChar(64)
+
+  @@index([status], map: "idx_blogs_status")
+  @@index([category], map: "idx_blogs_category")
+  @@map("web_blogs")
+}

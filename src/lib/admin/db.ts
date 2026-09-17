@@ -15,6 +15,7 @@ import {
   LeadSource,
   PasswordResetRecord,
   AdminRole,
+  BlogPost,
 } from "./types";
 
 export const INITIAL_SETTINGS: Settings = {
@@ -1489,4 +1490,300 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       createdAt: a.createdAt,
     })),
   };
+}
+
+// ==========================================
+// BLOG POSTS (CRUD)
+// ==========================================
+
+export async function getBlogPosts(options?: {
+  search?: string;
+  status?: string;
+  category?: string;
+  limit?: number;
+  skip?: number;
+}): Promise<{ posts: BlogPost[]; total: number }> {
+  try {
+    const where: any = {};
+
+    if (options?.status && options.status !== "All") {
+      where.status = options.status;
+    }
+
+    if (options?.category && options.category !== "All") {
+      where.category = options.category;
+    }
+
+    if (options?.search && options.search.trim()) {
+      const q = options.search.trim();
+      where.OR = [
+        { title: { contains: q } },
+        { excerpt: { contains: q } },
+        { tags: { contains: q } },
+        { author: { contains: q } },
+      ];
+    }
+
+    const [total, records] = await Promise.all([
+      prisma.blogPost.count({ where }),
+      prisma.blogPost.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        take: options?.limit,
+        skip: options?.skip,
+      }),
+    ]);
+
+    const posts: BlogPost[] = records.map((r) => ({
+      id: r.id,
+      slug: r.slug,
+      title: r.title,
+      excerpt: r.excerpt,
+      content: r.content,
+      coverImage: r.coverImage,
+      category: r.category,
+      readTime: r.readTime,
+      author: r.author,
+      tags: r.tags,
+      status: r.status as any,
+      views: r.views,
+      publishedAt: r.publishedAt,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    }));
+
+    return { posts, total };
+  } catch (error) {
+    console.error("Error fetching blog posts from Prisma:", error);
+    return { posts: [], total: 0 };
+  }
+}
+
+export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+  try {
+    const r = await prisma.blogPost.findUnique({
+      where: { slug },
+    });
+    if (!r) return null;
+    return {
+      id: r.id,
+      slug: r.slug,
+      title: r.title,
+      excerpt: r.excerpt,
+      content: r.content,
+      coverImage: r.coverImage,
+      category: r.category,
+      readTime: r.readTime,
+      author: r.author,
+      tags: r.tags,
+      status: r.status as any,
+      views: r.views,
+      publishedAt: r.publishedAt,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    };
+  } catch (error) {
+    console.error("Error fetching blog post by slug:", error);
+    return null;
+  }
+}
+
+export async function getBlogPostById(id: string): Promise<BlogPost | null> {
+  try {
+    const r = await prisma.blogPost.findUnique({
+      where: { id },
+    });
+    if (!r) return null;
+    return {
+      id: r.id,
+      slug: r.slug,
+      title: r.title,
+      excerpt: r.excerpt,
+      content: r.content,
+      coverImage: r.coverImage,
+      category: r.category,
+      readTime: r.readTime,
+      author: r.author,
+      tags: r.tags,
+      status: r.status as any,
+      views: r.views,
+      publishedAt: r.publishedAt,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    };
+  } catch (error) {
+    console.error("Error fetching blog post by id:", error);
+    return null;
+  }
+}
+
+export function generateSlug(title: string): string {
+  return title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export async function createBlogPost(data: {
+  title: string;
+  slug?: string;
+  excerpt: string;
+  content: string;
+  coverImage?: string | null;
+  category?: string;
+  readTime?: string;
+  author?: string;
+  tags?: string;
+  status?: "Published" | "Draft" | "Archived";
+}): Promise<BlogPost> {
+  const id = "blog-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+  let baseSlug = data.slug ? generateSlug(data.slug) : generateSlug(data.title);
+  if (!baseSlug) baseSlug = "article-" + Date.now();
+
+  // Ensure unique slug
+  let slug = baseSlug;
+  let counter = 1;
+  while (await prisma.blogPost.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  const now = new Date().toISOString();
+  const publishedAt = data.status === "Published" ? now : null;
+
+  const r = await prisma.blogPost.create({
+    data: {
+      id,
+      slug,
+      title: data.title,
+      excerpt: data.excerpt,
+      content: data.content,
+      coverImage: data.coverImage || null,
+      category: data.category || "Engineering",
+      readTime: data.readTime || "5 min read",
+      author: data.author || "Web Editorial",
+      tags: data.tags || "Web,Technology",
+      status: data.status || "Published",
+      views: 0,
+      publishedAt,
+      createdAt: now,
+      updatedAt: now,
+    },
+  });
+
+  return {
+    id: r.id,
+    slug: r.slug,
+    title: r.title,
+    excerpt: r.excerpt,
+    content: r.content,
+    coverImage: r.coverImage,
+    category: r.category,
+    readTime: r.readTime,
+    author: r.author,
+    tags: r.tags,
+    status: r.status as any,
+    views: r.views,
+    publishedAt: r.publishedAt,
+    createdAt: r.createdAt,
+    updatedAt: r.updatedAt,
+  };
+}
+
+export async function updateBlogPost(
+  id: string,
+  updates: {
+    title?: string;
+    slug?: string;
+    excerpt?: string;
+    content?: string;
+    coverImage?: string | null;
+    category?: string;
+    readTime?: string;
+    author?: string;
+    tags?: string;
+    status?: "Published" | "Draft" | "Archived";
+  }
+): Promise<BlogPost | null> {
+  try {
+    const existing = await prisma.blogPost.findUnique({ where: { id } });
+    if (!existing) return null;
+
+    let newSlug = existing.slug;
+    if (updates.slug && updates.slug !== existing.slug) {
+      const generated = generateSlug(updates.slug);
+      const conflict = await prisma.blogPost.findFirst({
+        where: { slug: generated, NOT: { id } },
+      });
+      newSlug = conflict ? `${generated}-${Date.now().toString().slice(-4)}` : generated;
+    }
+
+    const now = new Date().toISOString();
+    let publishedAt = existing.publishedAt;
+    if (updates.status === "Published" && !publishedAt) {
+      publishedAt = now;
+    }
+
+    const r = await prisma.blogPost.update({
+      where: { id },
+      data: {
+        title: updates.title ?? existing.title,
+        slug: newSlug,
+        excerpt: updates.excerpt ?? existing.excerpt,
+        content: updates.content ?? existing.content,
+        coverImage: updates.coverImage !== undefined ? updates.coverImage : existing.coverImage,
+        category: updates.category ?? existing.category,
+        readTime: updates.readTime ?? existing.readTime,
+        author: updates.author ?? existing.author,
+        tags: updates.tags ?? existing.tags,
+        status: updates.status ?? existing.status,
+        publishedAt,
+        updatedAt: now,
+      },
+    });
+
+    return {
+      id: r.id,
+      slug: r.slug,
+      title: r.title,
+      excerpt: r.excerpt,
+      content: r.content,
+      coverImage: r.coverImage,
+      category: r.category,
+      readTime: r.readTime,
+      author: r.author,
+      tags: r.tags,
+      status: r.status as any,
+      views: r.views,
+      publishedAt: r.publishedAt,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+    };
+  } catch (error) {
+    console.error("Error updating blog post:", error);
+    return null;
+  }
+}
+
+export async function deleteBlogPost(id: string): Promise<boolean> {
+  try {
+    await prisma.blogPost.delete({ where: { id } });
+    return true;
+  } catch (error) {
+    console.error("Error deleting blog post:", error);
+    return false;
+  }
+}
+
+export async function incrementBlogViews(slug: string): Promise<void> {
+  try {
+    await prisma.blogPost.update({
+      where: { slug },
+      data: { views: { increment: 1 } },
+    });
+  } catch (error) {
+    console.error("Error incrementing blog views:", error);
+  }
 }
