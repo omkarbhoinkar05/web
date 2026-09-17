@@ -11,7 +11,7 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState<1 | 2>(1);
 
   // Form fields
-  const [email, setEmail] = useState("admin@hightechbirds.com");
+  const [email, setEmail] = useState("admin@web.com");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -126,10 +126,10 @@ export default function ForgotPasswordPage() {
         {/* Header Branding */}
         <div className="text-center mb-8">
           <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-black text-3xl shadow-xl shadow-emerald-500/20 mb-4">
-            H
+            W
           </div>
           <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-            HighTechBirds
+            Web
           </h1>
           <p className="text-xs font-semibold text-emerald-400 uppercase tracking-widest mt-1">
             Account Recovery & Security Access
@@ -214,7 +214,7 @@ export default function ForgotPasswordPage() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="admin@hightechbirds.com"
+                    placeholder="admin@web.com"
                     className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-hidden text-xs sm:text-sm text-slate-900 font-medium transition-all"
                   />
                 </div>
@@ -430,7 +430,7 @@ export default function ForgotPasswordPage() {
 
         {/* Footer info */}
         <div className="text-center mt-6 text-xs text-slate-400 font-medium">
-          Protected Area &bull; HighTechBirds &copy; {new Date().getFullYear()} &bull; Internal Use Only
+          Protected Area &bull; Web &copy; {new Date().getFullYear()} &bull; Internal Use Only
         </div>
       </div>
     </div>

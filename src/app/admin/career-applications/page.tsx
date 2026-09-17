@@ -164,7 +164,7 @@ export default function CareerApplicationsPage() {
                             <polyline points="7 10 12 15 17 10" />
                             <line x1="12" y1="15" x2="12" y2="3" />
                           </svg>
-                          <span>Resume</span>
+                          <span>View Resume</span>
                         </a>
                       ) : (
                         <span className="text-slate-400 text-[11px] italic">Not provided</span>
@@ -240,7 +240,7 @@ export default function CareerApplicationsPage() {
                       <polyline points="7 10 12 15 17 10" />
                       <line x1="12" y1="15" x2="12" y2="3" />
                     </svg>
-                    <span>Download Candidate Resume ({selectedApp.resumeFileName})</span>
+                    <span>Open / Download Candidate Resume ({selectedApp.resumeFileName})</span>
                   </a>
                 </div>
               )}

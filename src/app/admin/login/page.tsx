@@ -10,7 +10,7 @@ function LoginForm() {
   const fromUrl = searchParams.get("from") || "/admin";
   const resetSuccess = searchParams.get("reset") === "success";
 
-  const [email, setEmail] = useState("admin@hightechbirds.com");
+  const [email, setEmail] = useState("admin@web.com");
   const [password, setPassword] = useState("Admin@123");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +41,7 @@ function LoginForm() {
   };
 
   const fillDemoCreds = () => {
-    setEmail("admin@hightechbirds.com");
+    setEmail("admin@web.com");
     setPassword("Admin@123");
   };
 
@@ -50,10 +50,10 @@ function LoginForm() {
       {/* Card Header Brand */}
       <div className="text-center mb-8">
         <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-black text-3xl shadow-xl shadow-emerald-500/20 mb-4">
-          H
+          W
         </div>
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-          HighTechBirds
+          Web
         </h1>
         <p className="text-xs font-semibold text-emerald-400 uppercase tracking-widest mt-1">
           Business Command Center
@@ -63,26 +63,30 @@ function LoginForm() {
         </p>
       </div>
 
-      {/* Login Box */}
+      {/* Main Login Card */}
       <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20">
-        <h2 className="text-lg font-bold text-slate-900 mb-1">Welcome Back</h2>
-        <p className="text-xs text-slate-500 mb-6">
-          Sign in with authorized administrator credentials to access command dashboard.
-        </p>
+        <div className="mb-6">
+          <h2 className="text-lg font-bold text-slate-900">
+            Sign In to Your Workspace
+          </h2>
+          <p className="text-xs text-slate-500 mt-1">
+            Access leads, client communications, pipeline, and team controls.
+          </p>
+        </div>
 
         {resetSuccess && (
-          <div className="mb-5 p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-semibold flex items-center gap-2">
-            <svg className="w-4 h-4 shrink-0 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 6 9 17l-5-5" />
+          <div className="mb-5 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-medium text-emerald-800 flex items-center gap-2">
+            <svg className="w-4 h-4 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="20 6 9 17 4 12" />
             </svg>
-            <span>Password reset successfully! Please log in with your new password.</span>
+            <span>Password reset successfully. You may now log in.</span>
           </div>
         )}
 
         {error && (
-          <div className="mb-5 p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
-            <svg className="w-4 h-4 shrink-0 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="10" r="10" />
+          <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs font-semibold text-rose-700 flex items-center gap-2">
+            <svg className="w-4 h-4 text-rose-500 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
@@ -98,8 +102,8 @@ function LoginForm() {
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect width="20" height="16" x="2" y="4" rx="2" />
-                  <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                  <polyline points="22,6 12,13 2,6" />
                 </svg>
               </div>
               <input
@@ -107,7 +111,7 @@ function LoginForm() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@hightechbirds.com"
+                placeholder="admin@web.com"
                 className="w-full pl-10 pr-3.5 py-2.5 bg-slate-50 focus:bg-white border border-slate-200 focus:border-emerald-500 rounded-xl outline-hidden text-xs sm:text-sm text-slate-900 font-medium transition-all"
               />
             </div>
@@ -171,7 +175,7 @@ function LoginForm() {
             <span className="text-[10px] font-black uppercase tracking-wider text-emerald-800 block">
               Demo Credentials
             </span>
-            <span className="text-slate-600 text-[11px] block">admin@hightechbirds.com</span>
+            <span className="text-slate-600 text-[11px] block">admin@web.com</span>
           </div>
           <button
             type="button"
@@ -185,7 +189,7 @@ function LoginForm() {
 
       {/* Footer info */}
       <div className="text-center mt-6 text-xs text-slate-400 font-medium">
-        Protected Area &bull; HighTechBirds &copy; {new Date().getFullYear()} &bull; Internal Use Only
+        Protected Area &bull; Web &copy; {new Date().getFullYear()} &bull; Internal Use Only
       </div>
     </div>
   );
@@ -198,7 +202,13 @@ export default function AdminLoginPage() {
       <div className="absolute top-1/4 left-1/4 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl pointer-events-none" />
 
-      <Suspense fallback={<div className="text-white text-xs">Loading login...</div>}>
+      <Suspense
+        fallback={
+          <div className="text-white text-xs font-bold uppercase tracking-widest animate-pulse">
+            Loading authentication...
+          </div>
+        }
+      >
         <LoginForm />
       </Suspense>
     </div>

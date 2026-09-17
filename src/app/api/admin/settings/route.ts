@@ -8,6 +8,10 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!hasPermission(session.role, "settings")) {
+    return NextResponse.json({ error: "Forbidden: Access restricted to Super Admin and Admin" }, { status: 403 });
+  }
+
   const settings = await getSettings();
   return NextResponse.json({ success: true, settings });
 }

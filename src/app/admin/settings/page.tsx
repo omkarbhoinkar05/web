@@ -5,7 +5,7 @@ import { Settings } from "@/lib/admin/types";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>({
-    companyName: "HighTechBirds",
+    companyName: "Web",
     tagline: "Ideas | Innovation | Growth",
     supportEmail: "dev.omkar05@gmail.com",
     supportPhone: "9920818481",
@@ -155,7 +155,7 @@ export default function SettingsPage() {
           System Preferences & Company Settings
         </h1>
         <p className="text-xs text-slate-500">
-          Configure HighTechBirds operational metadata, notification rules, and default preferences
+          Configure operational metadata, notification rules, and default preferences
         </p>
       </div>
 

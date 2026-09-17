@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
-import { getAdminSession } from "@/lib/admin/auth";
+import { getAdminSession, hasPermission } from "@/lib/admin/auth";
+import { prisma } from "@/lib/prisma";
 
 interface RouteParams {
   params: Promise<{ filename: string }>;
@@ -15,63 +16,103 @@ export async function GET(request: Request, { params }: RouteParams) {
     });
   }
 
-  const { filename } = await params;
-  const safeFilename = path.basename(filename);
-  const filePath = path.join(process.cwd(), "data", "resumes", safeFilename);
+  // Enforce RBAC: HR, Admin, and Super Admin only
+  if (!hasPermission(session.role, "download_resumes")) {
+    return new NextResponse("Forbidden: Access restricted to HR and Administrators.", {
+      status: 403,
+    });
+  }
 
-  if (fs.existsSync(filePath)) {
-    const fileBuffer = fs.readFileSync(filePath);
-    const ext = path.extname(safeFilename).toLowerCase();
-    let contentType = "application/octet-stream";
+  const { filename } = await params;
+  const decodedFilename = decodeURIComponent(filename);
+  const safeFilename = path.basename(decodedFilename);
+  const resumesDir = path.join(process.cwd(), "data", "resumes");
+
+  let targetFilePath: string | null = null;
+  let originalDisplayName: string = safeFilename;
+  let mimeType: string | null = null;
+
+  // 1. Direct path check in data/resumes
+  const directPath = path.join(resumesDir, safeFilename);
+  if (fs.existsSync(directPath) && fs.statSync(directPath).isFile()) {
+    targetFilePath = directPath;
+  }
+
+  // 2. Query Prisma database to find the application record
+  if (!targetFilePath) {
+    try {
+      const appRecord = await prisma.careerApplication.findFirst({
+        where: {
+          OR: [
+            { resumeFileName: safeFilename },
+            { id: safeFilename },
+            { applicationId: safeFilename },
+            { resumeFilePath: { endsWith: safeFilename } },
+          ],
+        },
+      });
+
+      if (appRecord) {
+        originalDisplayName = appRecord.resumeFileName || safeFilename;
+        mimeType = appRecord.resumeMimeType;
+
+        // Check if appRecord.resumeFilePath exists
+        if (appRecord.resumeFilePath && fs.existsSync(appRecord.resumeFilePath)) {
+          targetFilePath = appRecord.resumeFilePath;
+        } else if (appRecord.resumeFilePath) {
+          const baseNameInDb = path.basename(appRecord.resumeFilePath);
+          const candidatePath = path.join(resumesDir, baseNameInDb);
+          if (fs.existsSync(candidatePath)) {
+            targetFilePath = candidatePath;
+          }
+        }
+      }
+    } catch (dbErr) {
+      console.error("Database lookup error for resume:", dbErr);
+    }
+  }
+
+  // 3. Fallback: Search data/resumes directory for any file ending with the filename
+  if (!targetFilePath && fs.existsSync(resumesDir)) {
+    const files = fs.readdirSync(resumesDir);
+    const matched = files.find(
+      (f) => f === safeFilename || f.endsWith(`-${safeFilename}`) || f.includes(safeFilename)
+    );
+    if (matched) {
+      targetFilePath = path.join(resumesDir, matched);
+    }
+  }
+
+  // If found real file on disk, serve it with proper headers
+  if (targetFilePath && fs.existsSync(targetFilePath)) {
+    const fileBuffer = fs.readFileSync(targetFilePath);
+    const ext = path.extname(originalDisplayName || targetFilePath).toLowerCase();
+
+    let contentType = mimeType || "application/octet-stream";
     if (ext === ".pdf") contentType = "application/pdf";
-    if (ext === ".doc") contentType = "application/msword";
-    if (ext === ".docx")
+    else if (ext === ".doc") contentType = "application/msword";
+    else if (ext === ".docx") {
       contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    }
+
+    const safeHeaderName = originalDisplayName.replace(/["\r\n]/g, "_");
 
     return new NextResponse(fileBuffer, {
       status: 200,
       headers: {
         "Content-Type": contentType,
-        "Content-Disposition": `inline; filename="${safeFilename}"`,
+        "Content-Disposition": `inline; filename="${safeHeaderName}"; filename*=UTF-8''${encodeURIComponent(originalDisplayName)}`,
+        "Cache-Control": "private, no-cache, no-store, must-revalidate",
       },
     });
   }
 
-  // If seeded demo file does not yet have raw binary on disk, provide fallback PDF response
-  const samplePdfContent = `%PDF-1.4
-1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj
-2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj
-3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >> endobj
-4 0 obj << /Length 135 >> stream
-BT
-/F1 18 Tf
-70 700 Td
-(HighTechBirds Candidate Resume: ${safeFilename}) Tj
-/F1 12 Tf
-0 -30 Td
-(Verified confidential candidate profile for talent evaluation.) Tj
-ET
-endstream
-endobj
-5 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj
-xref
-0 6
-0000000000 65535 f
-0000000009 00000 n
-0000000058 00000 n
-0000000115 00000 n
-0000000244 00000 n
-0000000431 00000 n
-trailer << /Size 6 /Root 1 0 R >>
-startxref
-503
-%%EOF`;
-
-  return new NextResponse(samplePdfContent, {
-    status: 200,
-    headers: {
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="${safeFilename}"`,
-    },
-  });
+  // 4. File genuinely not found
+  return new NextResponse(
+    `Resume file "${safeFilename}" not found on server. Please ask the applicant to re-upload.`,
+    {
+      status: 404,
+      headers: { "Content-Type": "text/plain" },
+    }
+  );
 }

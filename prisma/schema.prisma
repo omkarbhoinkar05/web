@@ -1,0 +1,202 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model TeamMember {
+  id        String   @id
+  name      String   @db.VarChar(191)
+  email     String   @unique @db.VarChar(191)
+  role      String   @db.VarChar(50)
+  password  String   @default("Admin@123") @db.VarChar(255)
+  avatar    String?  @db.VarChar(255)
+  status    String   @default("Active") @db.VarChar(20)
+  phone     String   @db.VarChar(32)
+  lastLogin String?  @map("last_login") @db.VarChar(50)
+  createdAt String   @map("created_at") @db.VarChar(64)
+
+  @@map("web_team")
+}
+
+model Lead {
+  id             String            @id @db.VarChar(64)
+  leadId         String            @unique @map("lead_id") @db.VarChar(32)
+  fullName       String            @map("full_name") @db.VarChar(191)
+  email          String            @db.VarChar(191)
+  mobile         String            @db.VarChar(32)
+  service        String            @db.VarChar(100)
+  budget         String?           @db.VarChar(100)
+  source         String            @db.VarChar(50)
+  status         String            @db.VarChar(50)
+  priority       String            @db.VarChar(50)
+  assignedTo     String            @map("assigned_to") @db.VarChar(100)
+  notes          String?           @db.Text
+  lastContact    String?           @map("last_contact") @db.VarChar(100)
+  nextFollowUp   String?           @map("next_follow_up") @db.VarChar(100)
+  closingNote    String?           @map("closing_note") @db.Text
+  lostReason     String?           @map("lost_reason") @db.VarChar(100)
+  createdAt      String            @map("created_at") @db.VarChar(64)
+  updatedAt      String            @map("updated_at") @db.VarChar(64)
+
+  notesList      LeadNote[]
+  activities     LeadActivity[]
+  followUps      FollowUp[]
+  enquiries      ContactEnquiry[]
+  calls          ScheduledCall[]
+
+  @@index([status], map: "idx_leads_status")
+  @@index([priority], map: "idx_leads_priority")
+  @@index([createdAt], map: "idx_leads_created")
+  @@map("web_leads")
+}
+
+model ContactEnquiry {
+  id         String   @id @db.VarChar(64)
+  enquiryId  String   @unique @map("enquiry_id") @db.VarChar(32)
+  fullName   String   @map("full_name") @db.VarChar(191)
+  email      String   @db.VarChar(191)
+  mobile     String   @db.VarChar(32)
+  service    String   @db.VarChar(100)
+  budget     String?  @db.VarChar(100)
+  message    String   @db.Text
+  source     String   @db.VarChar(100)
+  status     String   @db.VarChar(50)
+  assignedTo String   @map("assigned_to") @db.VarChar(100)
+  leadId     String?  @map("lead_id") @db.VarChar(64)
+  createdAt  String   @map("created_at") @db.VarChar(64)
+
+  lead       Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@map("web_contact_enquiries")
+}
+
+model ScheduledCall {
+  id         String   @id @db.VarChar(64)
+  callId     String   @unique @map("call_id") @db.VarChar(32)
+  fullName   String   @map("full_name") @db.VarChar(191)
+  email      String   @db.VarChar(191)
+  mobile     String   @db.VarChar(32)
+  service    String   @db.VarChar(100)
+  date       String   @db.VarChar(32)
+  time       String   @db.VarChar(32)
+  timezone   String   @db.VarChar(50)
+  status     String   @db.VarChar(50)
+  notes      String?  @db.Text
+  assignedTo String   @map("assigned_to") @db.VarChar(100)
+  leadId     String?  @map("lead_id") @db.VarChar(64)
+  createdAt  String   @map("created_at") @db.VarChar(64)
+
+  lead       Lead?    @relation(fields: [leadId], references: [id], onDelete: SetNull)
+
+  @@map("web_scheduled_calls")
+}
+
+model CareerApplication {
+  id              String   @id @db.VarChar(64)
+  applicationId   String   @unique @map("application_id") @db.VarChar(32)
+  applicantName   String   @map("applicant_name") @db.VarChar(191)
+  email           String   @db.VarChar(191)
+  mobile          String   @db.VarChar(32)
+  resumeFileName  String   @map("resume_file_name") @db.VarChar(255)
+  resumeFilePath  String   @map("resume_file_path") @db.VarChar(255)
+  resumeSizeBytes Int      @map("resume_size_bytes")
+  resumeMimeType  String   @map("resume_mime_type") @db.VarChar(100)
+  message         String   @db.Text
+  status          String   @db.VarChar(50)
+  assignedTo      String   @map("assigned_to") @db.VarChar(100)
+  notes           String?  @db.Text
+  appliedDate     String   @map("applied_date") @db.VarChar(50)
+  createdAt       String   @map("created_at") @db.VarChar(64)
+
+  @@map("web_career_applications")
+}
+
+model FollowUp {
+  id          String   @id @db.VarChar(64)
+  followUpId  String   @unique @map("follow_up_id") @db.VarChar(32)
+  leadId      String   @map("lead_id") @db.VarChar(32)
+  leadName    String   @map("lead_name") @db.VarChar(191)
+  leadMobile  String   @map("lead_mobile") @db.VarChar(32)
+  date        String   @db.VarChar(32)
+  time        String   @db.VarChar(32)
+  type        String   @db.VarChar(50)
+  assignedTo  String   @map("assigned_to") @db.VarChar(100)
+  status      String   @db.VarChar(50)
+  notes       String   @db.Text
+  completedAt String?  @map("completed_at") @db.VarChar(50)
+  createdAt   String   @map("created_at") @db.VarChar(64)
+
+  lead        Lead?    @relation(fields: [leadId], references: [leadId], onDelete: Cascade)
+
+  @@map("web_follow_ups")
+}
+
+model LeadActivity {
+  id             String   @id @db.VarChar(64)
+  leadId         String?  @map("lead_id") @db.VarChar(32)
+  leadName       String?  @map("lead_name") @db.VarChar(191)
+  type           String   @db.VarChar(100)
+  description    String   @db.Text
+  actor          String   @db.VarChar(100)
+  previousStatus String?  @map("previous_status") @db.VarChar(50)
+  newStatus      String?  @map("new_status") @db.VarChar(50)
+  date           String   @db.VarChar(32)
+  time           String   @db.VarChar(32)
+  createdAt      String   @map("created_at") @db.VarChar(64)
+
+  lead           Lead?    @relation(fields: [leadId], references: [leadId], onDelete: SetNull)
+
+  @@index([createdAt], map: "idx_activities_created")
+  @@map("web_activities")
+}
+
+model LeadNote {
+  id        String   @id @db.VarChar(64)
+  leadId    String   @map("lead_id") @db.VarChar(32)
+  category  String   @default("General Update") @map("category") @db.VarChar(100)
+  status    String?  @map("status") @db.VarChar(50)
+  note      String   @db.Text
+  actor     String   @db.VarChar(100)
+  createdAt String   @map("created_at") @db.VarChar(64)
+
+  lead      Lead     @relation(fields: [leadId], references: [leadId], onDelete: Cascade)
+
+  @@index([leadId], map: "idx_notes_lead")
+  @@map("web_notes")
+}
+
+model Notification {
+  id        String   @id @db.VarChar(64)
+  title     String   @db.VarChar(191)
+  message   String   @db.Text
+  type      String   @db.VarChar(50)
+  isRead    Boolean  @default(false) @map("is_read")
+  link      String   @db.VarChar(255)
+  createdAt String   @map("created_at") @db.VarChar(64)
+
+  @@map("web_notifications")
+}
+
+model PasswordReset {
+  id        String   @id @db.VarChar(64)
+  email     String   @db.VarChar(191)
+  otp       String   @db.VarChar(10)
+  token     String   @db.VarChar(191)
+  expiresAt String   @map("expires_at") @db.VarChar(64)
+  createdAt String   @map("created_at") @db.VarChar(64)
+
+  @@index([email], map: "idx_resets_email")
+  @@map("web_password_resets")
+}
+
+model Setting {
+  keyName   String   @id @map("key_name") @db.VarChar(64)
+  valueJson String   @map("value_json") @db.LongText
+  updatedAt String   @map("updated_at") @db.VarChar(64)
+
+  @@map("web_settings")
+}

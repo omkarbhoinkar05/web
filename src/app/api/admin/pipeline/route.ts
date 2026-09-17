@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/admin/auth";
+import { getAdminSession, hasPermission } from "@/lib/admin/auth";
 import { getLeads, updateLead } from "@/lib/admin/db";
 import { LeadStatus, Lead } from "@/lib/admin/types";
 
@@ -19,6 +19,10 @@ export async function GET() {
   const session = await getAdminSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!hasPermission(session.role, "manage_pipeline") && !hasPermission(session.role, "view_leads")) {
+    return NextResponse.json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
   }
 
   const allLeads = await getLeads();
@@ -49,6 +53,10 @@ export async function PUT(request: Request) {
   const session = await getAdminSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!hasPermission(session.role, "manage_pipeline")) {
+    return NextResponse.json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
   }
 
   try {

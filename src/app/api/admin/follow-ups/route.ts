@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/admin/auth";
+import { getAdminSession, hasPermission } from "@/lib/admin/auth";
 import { getFollowUps, createFollowUp, completeFollowUp } from "@/lib/admin/db";
+import { followUpSchema } from "@/lib/validations";
 
 export async function GET(request: Request) {
   const session = await getAdminSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!hasPermission(session.role, "follow_ups") && !hasPermission(session.role, "all")) {
+    return NextResponse.json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -21,31 +26,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!hasPermission(session.role, "follow_ups") && !hasPermission(session.role, "all")) {
+    return NextResponse.json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
-    const { leadId, leadName, leadMobile, date, time, type, assignedTo, notes } = body;
 
-    if (!leadId || !date || !time) {
+    const parseResult = followUpSchema.safeParse(body);
+    if (!parseResult.success) {
       return NextResponse.json(
-        { success: false, error: "Lead, date, and time are required" },
+        { success: false, errors: parseResult.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
+    const { leadId, date, time, type, notes } = parseResult.data;
+
     const newFollowUp = await createFollowUp({
       leadId,
-      leadName: leadName || "Lead",
-      leadMobile: leadMobile || "",
+      leadName: body.leadName || "Lead",
+      leadMobile: body.leadMobile || "",
       date,
       time,
-      type: type || "Call",
-      assignedTo: assignedTo || session.name,
+      type,
+      assignedTo: body.assignedTo || session.name,
       status: "Upcoming",
-      notes: notes || "",
+      notes,
     });
 
     return NextResponse.json({ success: true, message: "Follow-up scheduled", followUp: newFollowUp });
-  } catch {
+  } catch (error) {
+    console.error("POST follow-up error:", error);
     return NextResponse.json({ success: false, error: "Failed to create follow-up" }, { status: 500 });
   }
 }
@@ -56,17 +68,26 @@ export async function PUT(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!hasPermission(session.role, "follow_ups") && !hasPermission(session.role, "all")) {
+    return NextResponse.json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
-    const { id } = body;
+    const { id, notes } = body;
 
-    const completed = await completeFollowUp(id);
+    if (!id) {
+      return NextResponse.json({ success: false, error: "Follow-up ID required" }, { status: 400 });
+    }
+
+    const completed = await completeFollowUp(id, notes);
     if (!completed) {
       return NextResponse.json({ success: false, error: "Follow-up not found" }, { status: 404 });
     }
 
     return NextResponse.json({ success: true, message: "Follow-up marked as completed", followUp: completed });
-  } catch {
+  } catch (error) {
+    console.error("PUT follow-up error:", error);
     return NextResponse.json({ success: false, error: "Failed to update follow-up" }, { status: 500 });
   }
 }

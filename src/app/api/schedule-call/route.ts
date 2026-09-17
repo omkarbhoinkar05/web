@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { BookingFormData, ConfirmedBooking } from "@/types/booking";
+import { ConfirmedBooking } from "@/types/booking";
 import { bookingConfig } from "@/config/bookingConfig";
 import {
   generateGoogleCalendarUrl,
@@ -8,6 +8,8 @@ import {
 } from "@/lib/bookingUtils";
 import { createScheduledCall } from "@/lib/admin/db";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
+import { scheduleCallSchema } from "@/lib/validations";
+import prisma from "@/lib/prisma";
 
 export async function POST(request: Request) {
   try {
@@ -28,52 +30,56 @@ export async function POST(request: Request) {
       );
     }
 
-    const body: BookingFormData = await request.json();
+    const body = await request.json();
 
-    const errors: Record<string, string> = {};
-
-    // 1. Date Validation
-    if (!body.date) {
-      errors.date = "Please select a date.";
+    const parseResult = scheduleCallSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          errors: parseResult.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
 
-    // 2. Time Validation
-    if (!body.time) {
-      errors.time = "Please select a time.";
-    }
+    const validated = parseResult.data;
 
-    // 3. Name Validation
-    if (!body.fullName || body.fullName.trim().length < 2) {
-      errors.fullName = "Please enter your full name (minimum 2 characters).";
-    }
+    // Check Slot Availability (Prevent duplicate bookings for the exact same slot)
+    const existingSlot = await prisma.scheduledCall.findFirst({
+      where: {
+        date: validated.date,
+        time: validated.time,
+        status: { in: ["Confirmed", "Pending"] },
+      },
+    });
 
-    // 4. Mobile Number Validation (Indian 10-digit mobile)
-    const cleanedMobile = (body.mobileNumber || "").replace(/[\s-]/g, "");
-    const mobileRegex = /^(?:\+91|91)?[6-9]\d{9}$/;
-    if (!cleanedMobile) {
-      errors.mobileNumber = "Please enter your mobile number.";
-    } else if (!mobileRegex.test(cleanedMobile)) {
-      errors.mobileNumber = "Please enter a valid 10-digit mobile number.";
-    }
-
-    // 5. Email Validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!body.email || !emailRegex.test(body.email.trim())) {
-      errors.email = "Please enter a valid email address.";
-    }
-
-    if (Object.keys(errors).length > 0) {
-      return NextResponse.json({ success: false, errors }, { status: 400 });
+    if (existingSlot) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "This time slot has just been booked by another client. Please select another slot.",
+          fieldErrors: {
+            time: "Time slot unavailable. Please pick a different time.",
+          },
+        },
+        { status: 409 }
+      );
     }
 
     // Generate unique booking identifier
     const bookingId = `PF-${Math.floor(100000 + Math.random() * 900000)}`;
 
     const confirmedBooking: ConfirmedBooking = {
-      ...body,
+      fullName: validated.fullName,
+      email: validated.email,
+      mobileNumber: validated.mobileNumber,
+      date: validated.date,
+      time: validated.time,
+      meetingType: validated.meetingType || "Video Call (Google Meet)",
+      timezone: validated.timezone || "IST (GMT+5:30)",
+      message: validated.message || "",
       bookingId,
-      timezone: body.timezone || bookingConfig.timezone,
-      meetingType: body.meetingType || bookingConfig.meetingType,
       createdAt: new Date().toISOString(),
     };
 
@@ -84,7 +90,7 @@ export async function POST(request: Request) {
       icsData: generateIcsFileContent(confirmedBooking),
     };
 
-    // Auto-save to HighTechBirds CRM & Admin store
+    // Persist to MySQL database 'web' via Prisma
     const { call, lead } = await createScheduledCall({
       fullName: confirmedBooking.fullName,
       email: confirmedBooking.email,

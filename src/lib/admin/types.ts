@@ -139,6 +139,8 @@ export interface LeadActivity {
 export interface LeadNote {
   id: string;
   leadId: string;
+  category?: string;
+  status?: string;
   note: string;
   actor: string;
   createdAt: string;

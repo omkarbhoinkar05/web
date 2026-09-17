@@ -7,6 +7,7 @@ export default function TeamManagementPage() {
   const [team, setTeam] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("");
 
   // Form state
   const [name, setName] = useState("");
@@ -32,6 +33,14 @@ export default function TeamManagementPage() {
 
   useEffect(() => {
     fetchTeam();
+    fetch("/api/admin/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.authenticated && data.user) {
+          setCurrentUserRole(data.user.role);
+        }
+      })
+      .catch(() => null);
   }, [fetchTeam]);
 
   const handleAddMember = async (e: React.FormEvent) => {
@@ -49,11 +58,29 @@ export default function TeamManagementPage() {
         setEmail("");
         setPassword("");
         fetchTeam();
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "Failed to add team member.");
       }
     } catch (err) {
       console.error(err);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleDeleteMember = async (id: string, memberName: string) => {
+    if (!confirm(`Are you sure you want to delete ${memberName}? This action is irreversible.`)) return;
+    try {
+      const res = await fetch(`/api/admin/team?id=${id}`, { method: "DELETE" });
+      if (res.ok) {
+        fetchTeam();
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to remove team member.");
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -70,16 +97,22 @@ export default function TeamManagementPage() {
           </p>
         </div>
 
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all cursor-pointer self-start sm:self-auto"
-        >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <span>Invite Team Member</span>
-        </button>
+        {currentUserRole === "Super Admin" ? (
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-md shadow-emerald-500/20 transition-all cursor-pointer self-start sm:self-auto"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>+ Add Team Member</span>
+          </button>
+        ) : (
+          <div className="px-3 py-1.5 rounded-xl bg-amber-50 text-amber-900 border border-amber-200 text-xs font-semibold self-start sm:self-auto">
+            Team Creation: Super Admin Exclusive
+          </div>
+        )}
       </div>
 
       {/* Team Members Table */}
@@ -93,12 +126,13 @@ export default function TeamManagementPage() {
                 <th className="py-3 px-3">Role / Permissions</th>
                 <th className="py-3 px-3">Status</th>
                 <th className="py-3 px-3">Last Active</th>
+                {currentUserRole === "Super Admin" && <th className="py-3 px-4 text-right">Actions</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-12 text-center text-slate-400 font-medium">
+                  <td colSpan={currentUserRole === "Super Admin" ? 6 : 5} className="py-12 text-center text-slate-400 font-medium">
                     Loading team members...
                   </td>
                 </tr>
@@ -135,6 +169,23 @@ export default function TeamManagementPage() {
                       ? new Date(member.lastLogin).toLocaleDateString()
                       : "Never"}
                   </td>
+
+                  {currentUserRole === "Super Admin" && (
+                    <td className="py-3.5 px-4 text-right">
+                      {member.id !== "team-super" && (
+                        <button
+                          onClick={() => handleDeleteMember(member.id, member.name)}
+                          className="p-1.5 rounded-lg border border-slate-200 hover:border-rose-300 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                          title="Delete Team Member"
+                        >
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
+                        </button>
+                      )}
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -143,56 +194,99 @@ export default function TeamManagementPage() {
       </div>
 
       {/* Permissions Matrix Reference Card */}
-      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-        <h2 className="text-base font-bold text-slate-900 mb-2">Role Permissions Matrix</h2>
-        <p className="text-xs text-slate-500 mb-4">Granular capabilities per authorized role tier</p>
+      <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 className="text-base font-bold text-slate-900">Role Permissions Matrix</h2>
+            <p className="text-xs text-slate-500">Granular capabilities per authorized role tier</p>
+          </div>
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+            5 Role Levels Defined
+          </span>
+        </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto rounded-2xl border border-slate-200">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase">
-                <th className="py-2">Permission Area</th>
-                <th className="py-2 text-center">Super Admin</th>
-                <th className="py-2 text-center">Admin</th>
-                <th className="py-2 text-center">Sales</th>
-                <th className="py-2 text-center">Support / HR</th>
+              <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase text-slate-500">
+                <th className="py-3 px-4">Permission Area</th>
+                <th className="py-3 px-3 text-center">Super Admin</th>
+                <th className="py-3 px-3 text-center">Admin</th>
+                <th className="py-3 px-3 text-center">Sales</th>
+                <th className="py-3 px-3 text-center">HR</th>
+                <th className="py-3 px-3 text-center">Support</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              <tr>
-                <td className="py-2.5 font-medium">View Leads, Calls, Inquiries</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
+              <tr className="bg-emerald-50/30">
+                <td className="py-3 px-4 font-bold text-slate-900">
+                  Delete Any Record / Member (Leads, Team, Data)
+                </td>
+                <td className="py-3 px-3 text-center text-emerald-700 font-extrabold">✓ Exclusive</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+              </tr>
+              <tr className="bg-emerald-50/30">
+                <td className="py-3 px-4 font-bold text-slate-900">
+                  Create / Manage Team Members
+                </td>
+                <td className="py-3 px-3 text-center text-emerald-700 font-extrabold">✓ Exclusive</td>
+                <td className="py-3 px-3 text-center text-rose-600 font-bold">✗ Cannot Create</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
               </tr>
               <tr>
-                <td className="py-2.5 font-medium">Add & Edit Leads, Add Notes</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-slate-300">✗</td>
+                <td className="py-3 px-4 font-medium text-slate-800">
+                  View & Manage Leads CRM (Leads, Pipeline, Calls, Enquiries)
+                </td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full Sales</td>
+                <td className="py-3 px-3 text-center text-rose-600 font-bold">✗ Strictly Hidden</td>
+                <td className="py-3 px-3 text-center text-slate-600 font-bold">✓ View Only</td>
               </tr>
               <tr>
-                <td className="py-2.5 font-medium">Advance Pipeline Stages & Close Deals</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-slate-300">✗</td>
+                <td className="py-3 px-4 font-medium text-slate-800">
+                  Schedule Follow-ups & Touchpoints
+                </td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full Sales</td>
+                <td className="py-3 px-3 text-center text-rose-600 font-bold">✗ Strictly Hidden</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
               </tr>
               <tr>
-                <td className="py-2.5 font-medium">Export CSV Data</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-slate-300">✗</td>
+                <td className="py-3 px-4 font-medium text-slate-800">
+                  Career Applications, Candidate Review & Resumes
+                </td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full HR</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
               </tr>
               <tr>
-                <td className="py-2.5 font-medium">Team & System Settings Management</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-emerald-600 font-bold">✓</td>
-                <td className="py-2.5 text-center text-slate-300">✗</td>
-                <td className="py-2.5 text-center text-slate-300">✗</td>
+                <td className="py-3 px-4 font-medium text-slate-800">
+                  Executive Reports & Analytics
+                </td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+              </tr>
+              <tr>
+                <td className="py-3 px-4 font-medium text-slate-800">
+                  Company Settings & Preferences
+                </td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
               </tr>
             </tbody>
           </table>
@@ -221,13 +315,13 @@ export default function TeamManagementPage() {
               </div>
 
               <div>
-                <label className="block font-bold text-slate-700 uppercase mb-1">Work Email</label>
+                <label className="block font-bold text-slate-700 uppercase mb-1">Email Address</label>
                 <input
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="priya@hightechbirds.com"
+                  placeholder="priya@web.com"
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
                 />
               </div>
@@ -237,13 +331,12 @@ export default function TeamManagementPage() {
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as AdminRole)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl font-bold"
                 >
-                  <option value="Sales">Sales</option>
-                  <option value="Admin">Admin</option>
-                  <option value="Support">Support</option>
-                  <option value="HR">HR</option>
-                  <option value="Super Admin">Super Admin</option>
+                  <option value="Admin">Admin (Full Management without Team creation / Deletion)</option>
+                  <option value="Sales">Sales (Leads, Pipeline, Calls & Follow-ups)</option>
+                  <option value="HR">HR (Careers & Resumes Only)</option>
+                  <option value="Support">Support (View Leads & Notes)</option>
                 </select>
               </div>
 
@@ -254,7 +347,7 @@ export default function TeamManagementPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Minimum 8 characters"
+                  placeholder="••••••••"
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl"
                 />
               </div>

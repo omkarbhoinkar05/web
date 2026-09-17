@@ -1,24 +1,51 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+
+export interface SessionUser {
+  id: string;
+  name: string;
+  email: string;
+  role: "Super Admin" | "Admin" | "Sales" | "HR" | "Support";
+}
 
 interface AdminSidebarProps {
   mobileOpen: boolean;
   setMobileOpen: (open: boolean) => void;
+  user?: SessionUser | null;
 }
 
-export function AdminSidebar({ mobileOpen, setMobileOpen }: AdminSidebarProps) {
+export function AdminSidebar({ mobileOpen, setMobileOpen, user: propUser }: AdminSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const [user, setUser] = useState<SessionUser | null>(propUser || null);
+
+  useEffect(() => {
+    if (propUser) {
+      setUser(propUser);
+    } else {
+      // Fetch session user if not passed from parent
+      fetch("/api/admin/auth/me")
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.authenticated && data?.user) {
+            setUser(data.user);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [propUser]);
 
   const handleLogout = async () => {
     await fetch("/api/admin/auth/logout", { method: "POST" });
     router.push("/admin/login");
   };
 
-  const navGroups = [
+  const role = user?.role || "Super Admin";
+
+  const allNavGroups = [
     {
       group: "MAIN",
       items: [
@@ -166,6 +193,46 @@ export function AdminSidebar({ mobileOpen, setMobileOpen }: AdminSidebarProps) {
     },
   ];
 
+  // RBAC Navigation Filtering:
+  // 1. HR: Only CAREERS (no leads, no dashboard, no team, no settings)
+  // 2. Sales: Only MAIN, LEADS, COMMUNICATION (no careers, no reports, no team, no settings)
+  // 3. Admin: MAIN, LEADS, CAREERS, COMMUNICATION, REPORTS, and in MANAGEMENT only Settings (no Team creation/management)
+  // 4. Super Admin: ALL groups and links
+  const navGroups = React.useMemo(() => {
+    if (role === "HR") {
+      return allNavGroups.filter((g) => g.group === "CAREERS");
+    }
+    if (role === "Sales") {
+      return allNavGroups.filter((g) =>
+        g.group === "MAIN" || g.group === "LEADS" || g.group === "COMMUNICATION"
+      );
+    }
+    if (role === "Admin") {
+      return allNavGroups.map((g) => {
+        if (g.group === "MANAGEMENT") {
+          return {
+            ...g,
+            items: g.items.filter((item) => item.name === "Settings"),
+          };
+        }
+        return g;
+      });
+    }
+    return allNavGroups;
+  }, [role]);
+
+  // Derive user initials
+  const initials = user?.name
+    ? user.name
+        .split(" ")
+        .map((p) => p[0])
+        .slice(0, 2)
+        .join("")
+        .toUpperCase()
+    : "AD";
+
+  const homeHref = role === "HR" ? "/admin/career-applications" : "/admin";
+
   return (
     <>
       {/* Mobile Backdrop Overlay */}
@@ -184,13 +251,13 @@ export function AdminSidebar({ mobileOpen, setMobileOpen }: AdminSidebarProps) {
       >
         {/* Brand Header */}
         <div className="h-20 flex items-center justify-between px-6 border-b border-emerald-800/40 bg-[#032a20]">
-          <Link href="/admin" className="flex items-center gap-3">
+          <Link href={homeHref} className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-md shadow-emerald-500/20">
-              H
+              W
             </div>
             <div>
               <span className="text-base font-black tracking-tight text-white block leading-tight">
-                HighTechBirds
+                Web
               </span>
               <span className="text-[10px] font-medium text-emerald-300/80 tracking-wider uppercase block">
                 Ideas | Innovation | Growth
@@ -205,8 +272,24 @@ export function AdminSidebar({ mobileOpen, setMobileOpen }: AdminSidebarProps) {
           </button>
         </div>
 
+        {/* Role Portal Banner */}
+        <div className="px-4 pt-3 pb-1">
+          <div className="px-3 py-1.5 rounded-xl bg-emerald-900/40 border border-emerald-700/30 flex items-center justify-between">
+            <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">
+              {role === "HR"
+                ? "HR Portal"
+                : role === "Sales"
+                ? "Sales CRM"
+                : role === "Admin"
+                ? "Admin Portal"
+                : "Super Admin Command"}
+            </span>
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          </div>
+        </div>
+
         {/* Navigation Items */}
-        <div className="flex-1 overflow-y-auto px-4 py-5 space-y-6 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-5 custom-scrollbar">
           {navGroups.map((group, gIdx) => (
             <div key={gIdx}>
               <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400/60 px-3 block mb-2">
@@ -246,19 +329,23 @@ export function AdminSidebar({ mobileOpen, setMobileOpen }: AdminSidebarProps) {
         {/* Bottom Profile / Logout Footer */}
         <div className="p-4 border-t border-emerald-800/40 bg-[#032a20]">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center font-bold text-xs text-emerald-300">
-                AD
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-8 h-8 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center font-bold text-xs text-emerald-300 shrink-0">
+                {initials}
               </div>
-              <div className="leading-tight">
-                <span className="text-xs font-bold text-white block">Administrator</span>
-                <span className="text-[10px] text-emerald-400/80 block">admin@hightechbirds.com</span>
+              <div className="leading-tight truncate">
+                <span className="text-xs font-bold text-white block truncate">
+                  {user?.name || "Administrator"}
+                </span>
+                <span className="text-[10px] text-emerald-400/80 block truncate">
+                  {user?.role || "Super Admin"}
+                </span>
               </div>
             </div>
             <button
               onClick={handleLogout}
               title="Logout"
-              className="p-1.5 rounded-lg text-emerald-400 hover:text-rose-400 hover:bg-emerald-950/40 transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-emerald-400 hover:text-rose-400 hover:bg-emerald-950/40 transition-colors cursor-pointer shrink-0"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />

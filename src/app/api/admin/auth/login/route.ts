@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { validateCredentials, setAdminSession } from "@/lib/admin/auth";
 import { checkRateLimit, resetRateLimit, getClientIp } from "@/lib/rateLimit";
+import { loginSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
@@ -25,15 +26,16 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { email, password } = body;
+    const parseResult = loginSchema.safeParse(body);
 
-    if (!email || !password) {
+    if (!parseResult.success) {
       return NextResponse.json(
-        { success: false, error: "Please enter both email and password." },
+        { success: false, errors: parseResult.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
+    const { email, password } = parseResult.data;
     const user = await validateCredentials(email, password);
 
     if (!user) {
@@ -71,4 +73,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

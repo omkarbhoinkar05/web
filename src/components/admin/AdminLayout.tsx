@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { AdminSidebar } from "./AdminSidebar";
+import { AdminSidebar, SessionUser } from "./AdminSidebar";
 import { AdminHeader } from "./AdminHeader";
 import { QuickAddModal } from "./QuickAddModal";
 
@@ -13,6 +13,7 @@ interface AdminLayoutProps {
 export function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const [currentUser, setCurrentUser] = useState<SessionUser | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [quickAddTab, setQuickAddTab] = useState<"lead" | "call" | "followup">("lead");
@@ -33,6 +34,10 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         if (!res.ok) {
           router.replace(`/admin/login?from=${encodeURIComponent(pathname)}`);
         } else {
+          const data = await res.json();
+          if (data?.authenticated && data?.user) {
+            setCurrentUser(data.user);
+          }
           setAuthChecking(false);
         }
       } catch (err) {
@@ -53,7 +58,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
     return (
       <div className="min-h-screen bg-[#f8fafc] flex flex-col items-center justify-center">
         <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg shadow-emerald-500/20 animate-bounce">
-          H
+          W
         </div>
         <p className="mt-4 text-xs font-bold text-slate-600 tracking-wider uppercase animate-pulse">
           Loading Command Center...
@@ -70,7 +75,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans antialiased">
       {/* Sidebar */}
-      <AdminSidebar mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />
+      <AdminSidebar
+        mobileOpen={mobileOpen}
+        setMobileOpen={setMobileOpen}
+        user={currentUser}
+      />
 
       {/* Main Content Area */}
       <div className="lg:pl-64 flex flex-col min-h-screen transition-all">
@@ -78,6 +87,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         <AdminHeader
           onOpenMobileMenu={() => setMobileOpen(true)}
           onOpenQuickAdd={handleOpenQuickAdd}
+          user={currentUser}
         />
 
         {/* Page Body */}

@@ -1,19 +1,7 @@
 import { NextResponse } from "next/server";
 import { createContactEnquiry } from "@/lib/admin/db";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
-
-interface ContactPayload {
-  fullName?: string;
-  service?: string;
-  email?: string;
-  mobile?: string;
-  message?: string;
-  budget?: string;
-}
-
-function sanitizeText(str: string): string {
-  return str.replace(/[<>]/g, "").trim();
-}
+import { contactSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
   try {
@@ -34,57 +22,28 @@ export async function POST(request: Request) {
       );
     }
 
-    const body: ContactPayload = await request.json();
+    const body = await request.json();
 
-    const fullName = sanitizeText(body.fullName || "");
-    const service = sanitizeText(body.service || "");
-    const email = sanitizeText(body.email || "");
-    const mobile = (body.mobile || "").replace(/[\s-]/g, "").trim();
-    const message = sanitizeText(body.message || "");
-    const budget = sanitizeText(body.budget || "");
-
-    const errors: Record<string, string> = {};
-
-    // 1. Full Name Validation
-    if (!fullName || fullName.length < 2) {
-      errors.fullName = "Full name is required (minimum 2 characters).";
+    const parseResult = contactSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        {
+          success: false,
+          errors: parseResult.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
 
-    // 2. Service Validation
-    if (!service) {
-      errors.service = "Please select a service.";
-    }
+    const { fullName, email, mobile, service, budget, message } = parseResult.data;
 
-    // 3. Email Validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email || !emailRegex.test(email)) {
-      errors.email = "Please enter a valid email address.";
-    }
-
-    // 4. Mobile Validation (Indian 10-digit mobile number)
-    const mobileRegex = /^(?:\+91|91)?[6-9]\d{9}$/;
-    if (!mobile) {
-      errors.mobile = "Mobile number is required.";
-    } else if (!mobileRegex.test(mobile)) {
-      errors.mobile = "Please enter a valid 10-digit mobile number.";
-    }
-
-    // 5. Message Validation
-    if (!message || message.length < 10) {
-      errors.message = "Message must be at least 10 characters describing your inquiry.";
-    }
-
-    if (Object.keys(errors).length > 0) {
-      return NextResponse.json({ success: false, errors }, { status: 400 });
-    }
-
-    // Auto-save to HighTechBirds CRM & Admin store
+    // Persist to MySQL database 'web' via Prisma
     const { enquiry, lead } = await createContactEnquiry({
       fullName,
       email,
       mobile,
       service,
-      budget: budget || "Not specified",
+      budget,
       message,
       source: "Website Contact Form",
     });
@@ -94,22 +53,24 @@ export async function POST(request: Request) {
         success: true,
         inquiryId: enquiry.enquiryId,
         leadId: lead.leadId,
-        message: "Thank you! Your inquiry has been received. Our team will get in touch within 24 hours.",
+        message:
+          "Thank you! Your inquiry has been received. Our team will get in touch within 24 hours.",
         data: {
           fullName,
           service,
           email,
           mobile,
-          budget: budget || "Not specified",
+          budget,
         },
       },
       { status: 200 }
     );
-  } catch {
+  } catch (error) {
+    console.error("Contact API error:", error);
     return NextResponse.json(
       {
         success: false,
-        error: "Unable to process inquiry. Please try again or reach us via WhatsApp.",
+        error: "Unable to process inquiry at this moment. Please try again later.",
       },
       { status: 500 }
     );

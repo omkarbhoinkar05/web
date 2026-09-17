@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/admin/auth";
+import { getAdminSession, hasPermission } from "@/lib/admin/auth";
 import { getLeads, createLead } from "@/lib/admin/db";
+import { leadCreateSchema } from "@/lib/validations";
 
 export async function GET(request: Request) {
   const session = await getAdminSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!hasPermission(session.role, "view_leads")) {
+    return NextResponse.json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
   }
 
   const { searchParams } = new URL(request.url);
@@ -18,6 +23,10 @@ export async function GET(request: Request) {
   const sort = searchParams.get("sort") || undefined;
   const isExport = searchParams.get("export") === "csv";
 
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "100", 10);
+  const skip = isExport ? undefined : (page - 1) * limit;
+
   const leads = await getLeads({
     search,
     status,
@@ -26,10 +35,16 @@ export async function GET(request: Request) {
     source,
     assignedTo,
     sort,
+    limit: isExport ? undefined : limit,
+    skip,
   });
 
   // Handle CSV export
   if (isExport) {
+    if (!hasPermission(session.role, "export")) {
+      return NextResponse.json({ error: "Forbidden: Export permission required" }, { status: 403 });
+    }
+
     const headers = [
       "Lead ID",
       "Full Name",
@@ -66,7 +81,7 @@ export async function GET(request: Request) {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="HighTechBirds_Leads_${new Date().toISOString().split("T")[0]}.csv"`,
+        "Content-Disposition": `attachment; filename="Web_Leads_${new Date().toISOString().split("T")[0]}.csv"`,
       },
     });
   }
@@ -80,32 +95,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!hasPermission(session.role, "edit_leads") && !hasPermission(session.role, "all")) {
+    return NextResponse.json({ error: "Forbidden: Insufficient permissions to create leads" }, { status: 403 });
+  }
+
   try {
     const body = await request.json();
-    const { fullName, email, mobile, service, budget, source, status, priority, assignedTo, notes } = body;
 
-    if (!fullName || !mobile || !service) {
+    const parseResult = leadCreateSchema.safeParse(body);
+    if (!parseResult.success) {
       return NextResponse.json(
-        { success: false, error: "Name, mobile, and service are required." },
+        { success: false, errors: parseResult.error.flatten().fieldErrors },
         { status: 400 }
       );
     }
 
+    const validated = parseResult.data;
     const lead = await createLead({
-      fullName,
-      email: email || "",
-      mobile,
-      service,
-      budget: budget || "Not specified",
-      source: source || "Direct Inbound",
-      status: status || "NEW",
-      priority: priority || "Medium",
-      assignedTo: assignedTo || session.name,
-      notes: notes || "",
+      fullName: validated.fullName,
+      email: validated.email,
+      mobile: validated.mobile,
+      service: validated.service,
+      budget: validated.budget,
+      source: validated.source,
+      status: validated.status,
+      priority: validated.priority,
+      assignedTo: validated.assignedTo !== "Unassigned" ? validated.assignedTo : session.name,
+      notes: validated.notes,
+      nextFollowUp: validated.nextFollowUp,
     });
 
     return NextResponse.json({ success: true, message: "Lead created successfully", lead });
-  } catch {
+  } catch (error) {
+    console.error("POST lead error:", error);
     return NextResponse.json({ success: false, error: "Failed to create lead" }, { status: 500 });
   }
 }

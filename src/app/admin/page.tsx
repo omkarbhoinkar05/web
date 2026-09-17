@@ -70,6 +70,14 @@ export default function AdminDashboardPage() {
   }, []);
 
   useEffect(() => {
+    fetch("/api/admin/auth/me")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d?.user?.role === "HR") {
+          window.location.href = "/admin/career-applications";
+        }
+      })
+      .catch(() => {});
     loadDashboardData();
   }, [loadDashboardData]);
 
@@ -104,7 +112,7 @@ export default function AdminDashboardPage() {
             {getGreeting()}, Admin 👋
           </h1>
           <p className="text-xs sm:text-sm text-emerald-100/80 mt-1 max-w-xl">
-            Welcome to the HighTechBirds command center. Monitor leads, pipelines, scheduled client consultations, and business revenue metrics in real-time.
+            Welcome to the Web command center. Monitor leads, pipelines, scheduled client consultations, and business revenue metrics in real-time.
           </p>
         </div>
 
@@ -395,7 +403,7 @@ export default function AdminDashboardPage() {
               href="/admin/leads"
               className="text-xs font-bold text-emerald-600 hover:text-emerald-800"
             >
-              Browse Full HighTechBirds Leads CRM Directory →
+              Browse Full Leads CRM Directory →
             </Link>
           </div>
         </div>

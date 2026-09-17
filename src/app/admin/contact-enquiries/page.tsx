@@ -90,7 +90,7 @@ export default function ContactEnquiriesPage() {
             Contact Form Enquiries
           </h1>
           <p className="text-xs text-slate-500">
-            Messages received directly through the HighTechBirds website contact form ({enquiries.length} items)
+            Messages received directly through the website contact form ({enquiries.length} items)
           </p>
         </div>
 

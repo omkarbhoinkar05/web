@@ -1,5 +1,4 @@
-import fs from "fs";
-import path from "path";
+import prisma from "@/lib/prisma";
 import {
   Lead,
   ContactEnquiry,
@@ -15,41 +14,14 @@ import {
   LeadStatus,
   LeadSource,
   PasswordResetRecord,
+  AdminRole,
 } from "./types";
-import { query, execute, isMySqlAvailable } from "../mysql";
 
-interface DatabaseSchema {
-  leads: Lead[];
-  contactEnquiries: ContactEnquiry[];
-  scheduledCalls: ScheduledCall[];
-  careerApplications: CareerApplication[];
-  followUps: FollowUp[];
-  activities: LeadActivity[];
-  notes: LeadNote[];
-  notifications: Notification[];
-  team: TeamMember[];
-  settings: Settings;
-  passwordResets?: PasswordResetRecord[];
-}
-
-const DATA_DIR = path.join(process.cwd(), "data");
-const DB_FILE = path.join(DATA_DIR, "db.json");
-const RESUMES_DIR = path.join(DATA_DIR, "resumes");
-
-function ensureDirectories() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(RESUMES_DIR)) {
-    fs.mkdirSync(RESUMES_DIR, { recursive: true });
-  }
-}
-
-const INITIAL_SETTINGS: Settings = {
-  companyName: "HighTechBirds",
+export const INITIAL_SETTINGS: Settings = {
+  companyName: "Web",
   tagline: "Ideas | Innovation | Growth",
-  supportEmail: "dev.omkar05@gmail.com",
-  supportPhone: "+91 99208 18481",
+  supportEmail: "support@web.com",
+  supportPhone: "+91 99999 99999",
   bookingSettings: {
     workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
     workingHoursStart: "09:00 AM",
@@ -101,218 +73,80 @@ const INITIAL_SETTINGS: Settings = {
   },
 };
 
-/* ----------------------------------------------------
-   Fallback JSON File Helper (Used for backup/safety)
----------------------------------------------------- */
-export function readDb(): DatabaseSchema {
-  ensureDirectories();
-  if (!fs.existsSync(DB_FILE)) {
-    const seed = {
-      leads: [],
-      contactEnquiries: [],
-      scheduledCalls: [],
-      careerApplications: [],
-      followUps: [],
-      activities: [],
-      notes: [],
-      notifications: [],
-      team: [],
-      settings: INITIAL_SETTINGS,
-      passwordResets: [],
-    };
-    fs.writeFileSync(DB_FILE, JSON.stringify(seed, null, 2), "utf8");
-    return seed;
-  }
-
+/**
+ * Seed initial administrative accounts and default settings if fresh database is empty
+ */
+export async function seedDatabaseIfEmpty(): Promise<void> {
   try {
-    const raw = fs.readFileSync(DB_FILE, "utf8");
-    const parsed = JSON.parse(raw);
-    if (!parsed.passwordResets) parsed.passwordResets = [];
-    return parsed;
-  } catch {
-    return {
-      leads: [],
-      contactEnquiries: [],
-      scheduledCalls: [],
-      careerApplications: [],
-      followUps: [],
-      activities: [],
-      notes: [],
-      notifications: [],
-      team: [],
-      settings: INITIAL_SETTINGS,
-      passwordResets: [],
-    };
-  }
-}
+    const teamCount = await prisma.teamMember.count();
+    if (teamCount === 0) {
+      const now = new Date().toISOString();
+      await prisma.teamMember.createMany({
+        data: [
+          {
+            id: "team-super",
+            name: "Admin User",
+            email: "admin@web.com",
+            role: "Super Admin",
+            password: "Admin@123",
+            phone: "+91 99999 99999",
+            status: "Active",
+            createdAt: now,
+          },
+          {
+            id: "team-2",
+            name: "Siddharth Shinde",
+            email: "siddharth@web.com",
+            role: "Admin",
+            password: "Admin@123",
+            phone: "+91 98200 12345",
+            status: "Active",
+            createdAt: now,
+          },
+          {
+            id: "team-3",
+            name: "Anjali Dave",
+            email: "anjali@web.com",
+            role: "Sales",
+            password: "Admin@123",
+            phone: "+91 98331 12233",
+            status: "Active",
+            createdAt: now,
+          },
+          {
+            id: "team-4",
+            name: "Pooja Hegde",
+            email: "pooja@web.com",
+            role: "HR",
+            password: "Admin@123",
+            phone: "+91 97115 56677",
+            status: "Active",
+            createdAt: now,
+          },
+        ],
+      });
 
-export function writeDb(data: DatabaseSchema): void {
-  try {
-    ensureDirectories();
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf8");
+      // Seed settings
+      await prisma.setting.upsert({
+        where: { keyName: "app_settings" },
+        update: {},
+        create: {
+          keyName: "app_settings",
+          valueJson: JSON.stringify(INITIAL_SETTINGS),
+          updatedAt: now,
+        },
+      });
+    }
   } catch (err) {
-    console.error("Backup file write warning:", err);
+    console.error("Database seeding check:", err);
   }
 }
 
-/* ----------------------------------------------------
-   Row Mappers (MySQL snake_case -> TypeScript camelCase)
----------------------------------------------------- */
-function mapLead(row: any): Lead {
-  return {
-    id: row.id,
-    leadId: row.lead_id,
-    fullName: row.full_name,
-    email: row.email,
-    mobile: row.mobile,
-    service: row.service,
-    budget: row.budget || undefined,
-    source: row.source,
-    status: row.status,
-    priority: row.priority,
-    assignedTo: row.assigned_to,
-    notes: row.notes || undefined,
-    lastContact: row.last_contact || undefined,
-    nextFollowUp: row.next_follow_up || undefined,
-    closingNote: row.closing_note || undefined,
-    lostReason: row.lost_reason || undefined,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  };
-}
+// ----------------------------------------------------
+// Lead Management
+// ----------------------------------------------------
 
-function mapEnquiry(row: any): ContactEnquiry {
-  return {
-    id: row.id,
-    enquiryId: row.enquiry_id,
-    fullName: row.full_name,
-    email: row.email,
-    mobile: row.mobile,
-    service: row.service,
-    budget: row.budget || undefined,
-    message: row.message,
-    source: row.source,
-    status: row.status,
-    assignedTo: row.assigned_to,
-    leadId: row.lead_id || undefined,
-    createdAt: row.created_at,
-  };
-}
-
-function mapScheduledCall(row: any): ScheduledCall {
-  return {
-    id: row.id,
-    callId: row.call_id,
-    fullName: row.full_name,
-    email: row.email,
-    mobile: row.mobile,
-    service: row.service,
-    date: row.date,
-    time: row.time,
-    timezone: row.timezone,
-    status: row.status,
-    notes: row.notes || undefined,
-    assignedTo: row.assigned_to,
-    leadId: row.lead_id || undefined,
-    createdAt: row.created_at,
-  };
-}
-
-function mapCareer(row: any): CareerApplication {
-  return {
-    id: row.id,
-    applicationId: row.application_id,
-    applicantName: row.applicant_name,
-    email: row.email,
-    mobile: row.mobile,
-    resumeFileName: row.resume_file_name,
-    resumeFilePath: row.resume_file_path,
-    resumeSizeBytes: row.resume_size_bytes,
-    resumeMimeType: row.resume_mime_type,
-    message: row.message,
-    status: row.status,
-    assignedTo: row.assigned_to,
-    notes: row.notes || undefined,
-    appliedDate: row.applied_date,
-    createdAt: row.created_at,
-  };
-}
-
-function mapFollowUp(row: any): FollowUp {
-  return {
-    id: row.id,
-    followUpId: row.follow_up_id,
-    leadId: row.lead_id,
-    leadName: row.lead_name,
-    leadMobile: row.lead_mobile,
-    date: row.date,
-    time: row.time,
-    type: row.type,
-    assignedTo: row.assigned_to,
-    status: row.status,
-    notes: row.notes,
-    completedAt: row.completed_at || undefined,
-    createdAt: row.created_at,
-  };
-}
-
-function mapActivity(row: any): LeadActivity {
-  return {
-    id: row.id,
-    leadId: row.lead_id || undefined,
-    leadName: row.lead_name || undefined,
-    type: row.type,
-    description: row.description,
-    actor: row.actor,
-    previousStatus: row.previous_status || undefined,
-    newStatus: row.new_status || undefined,
-    date: row.date,
-    time: row.time,
-    createdAt: row.created_at,
-  };
-}
-
-function mapNote(row: any): LeadNote {
-  return {
-    id: row.id,
-    leadId: row.lead_id,
-    note: row.note,
-    actor: row.actor,
-    createdAt: row.created_at,
-  };
-}
-
-function mapNotification(row: any): Notification {
-  return {
-    id: row.id,
-    title: row.title,
-    message: row.message,
-    type: row.type,
-    read: Boolean(row.is_read),
-    link: row.link,
-    createdAt: row.created_at,
-  };
-}
-
-function mapTeamMember(row: any): TeamMember {
-  return {
-    id: row.id,
-    name: row.name,
-    email: row.email,
-    role: row.role,
-    password: row.password || "Admin@123",
-    avatar: row.avatar || undefined,
-    status: row.status,
-    phone: row.phone,
-    lastLogin: row.last_login || undefined,
-    createdAt: row.created_at,
-  };
-}
-
-/* ----------------------------------------------------
-   Leads API Methods
----------------------------------------------------- */
-export async function getLeads(filters?: {
+export interface LeadFilters {
   search?: string;
   status?: string;
   priority?: string;
@@ -320,274 +154,258 @@ export async function getLeads(filters?: {
   source?: string;
   assignedTo?: string;
   sort?: string;
-}): Promise<Lead[]> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      let sql = "SELECT * FROM `htb_leads` WHERE 1=1";
-      const params: any[] = [];
+  limit?: number;
+  skip?: number;
+}
 
-      if (filters?.status && filters.status !== "All") {
-        sql += " AND `status` = ?";
-        params.push(filters.status);
-      }
-      if (filters?.priority && filters.priority !== "All") {
-        sql += " AND `priority` = ?";
-        params.push(filters.priority);
-      }
-      if (filters?.service && filters.service !== "All") {
-        sql += " AND `service` = ?";
-        params.push(filters.service);
-      }
-      if (filters?.source && filters.source !== "All") {
-        sql += " AND `source` = ?";
-        params.push(filters.source);
-      }
-      if (filters?.assignedTo && filters.assignedTo !== "All") {
-        sql += " AND `assigned_to` = ?";
-        params.push(filters.assignedTo);
-      }
-      if (filters?.search) {
-        const q = `%${filters.search.toLowerCase().trim()}%`;
-        sql += " AND (LOWER(`full_name`) LIKE ? OR LOWER(`email`) LIKE ? OR `mobile` LIKE ? OR LOWER(`lead_id`) LIKE ?)";
-        params.push(q, q, q, q);
-      }
+export async function getLeads(filters?: LeadFilters): Promise<Lead[]> {
+  await seedDatabaseIfEmpty();
 
-      sql += " ORDER BY `created_at` DESC";
-      const rows = await query<any[]>(sql, params);
-      return rows.map(mapLead);
-    } catch (err) {
-      console.error("MySQL getLeads error:", err);
-    }
+  const where: any = {};
+
+  if (filters?.status && filters.status !== "All") {
+    where.status = filters.status;
   }
-
-  // Fallback to JSON
-  const db = readDb();
-  let results = [...db.leads];
-  if (filters?.status && filters.status !== "All") results = results.filter((l) => l.status === filters.status);
-  if (filters?.priority && filters.priority !== "All") results = results.filter((l) => l.priority === filters.priority);
-  if (filters?.service && filters.service !== "All") results = results.filter((l) => l.service === filters.service);
-  if (filters?.source && filters.source !== "All") results = results.filter((l) => l.source === filters.source);
-  if (filters?.assignedTo && filters.assignedTo !== "All") results = results.filter((l) => l.assignedTo === filters.assignedTo);
+  if (filters?.priority && filters.priority !== "All") {
+    where.priority = filters.priority;
+  }
+  if (filters?.service && filters.service !== "All") {
+    where.service = filters.service;
+  }
+  if (filters?.source && filters.source !== "All") {
+    where.source = filters.source;
+  }
+  if (filters?.assignedTo && filters.assignedTo !== "All") {
+    where.assignedTo = filters.assignedTo;
+  }
   if (filters?.search) {
-    const q = filters.search.toLowerCase().trim();
-    results = results.filter(
-      (l) =>
-        l.fullName.toLowerCase().includes(q) ||
-        l.email.toLowerCase().includes(q) ||
-        l.mobile.includes(q) ||
-        l.leadId.toLowerCase().includes(q)
-    );
+    const q = filters.search.trim();
+    where.OR = [
+      { fullName: { contains: q } },
+      { email: { contains: q } },
+      { mobile: { contains: q } },
+      { leadId: { contains: q } },
+    ];
   }
-  return results;
+
+  const leads = await prisma.lead.findMany({
+    where,
+    orderBy: { createdAt: "desc" },
+    take: filters?.limit,
+    skip: filters?.skip,
+  });
+
+  return leads.map((l) => ({
+    id: l.id,
+    leadId: l.leadId,
+    fullName: l.fullName,
+    email: l.email,
+    mobile: l.mobile,
+    service: l.service,
+    budget: l.budget || undefined,
+    source: l.source as LeadSource,
+    status: l.status as LeadStatus,
+    priority: l.priority as any,
+    assignedTo: l.assignedTo,
+    notes: l.notes || undefined,
+    lastContact: l.lastContact || undefined,
+    nextFollowUp: l.nextFollowUp || undefined,
+    closingNote: l.closingNote || undefined,
+    lostReason: l.lostReason as any,
+    createdAt: l.createdAt,
+    updatedAt: l.updatedAt,
+  }));
 }
 
 export async function getLeadById(id: string): Promise<Lead | null> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>(
-        "SELECT * FROM `htb_leads` WHERE `id` = ? OR `lead_id` = ? LIMIT 1",
-        [id, id]
-      );
-      if (rows.length > 0) return mapLead(rows[0]);
-      return null;
-    } catch (err) {
-      console.error("MySQL getLeadById error:", err);
-    }
-  }
+  const lead = await prisma.lead.findFirst({
+    where: {
+      OR: [{ id }, { leadId: id }],
+    },
+  });
 
-  const db = readDb();
-  return db.leads.find((l) => l.id === id || l.leadId === id) || null;
+  if (!lead) return null;
+
+  return {
+    id: lead.id,
+    leadId: lead.leadId,
+    fullName: lead.fullName,
+    email: lead.email,
+    mobile: lead.mobile,
+    service: lead.service,
+    budget: lead.budget || undefined,
+    source: lead.source as LeadSource,
+    status: lead.status as LeadStatus,
+    priority: lead.priority as any,
+    assignedTo: lead.assignedTo,
+    notes: lead.notes || undefined,
+    lastContact: lead.lastContact || undefined,
+    nextFollowUp: lead.nextFollowUp || undefined,
+    closingNote: lead.closingNote || undefined,
+    lostReason: lead.lostReason as any,
+    createdAt: lead.createdAt,
+    updatedAt: lead.updatedAt,
+  };
 }
 
-export async function createLead(data: Omit<Lead, "id" | "leadId" | "createdAt" | "updatedAt">): Promise<Lead> {
+export async function createLead(
+  data: Omit<Lead, "id" | "leadId" | "createdAt" | "updatedAt">
+): Promise<Lead> {
   const now = new Date().toISOString();
   const id = `lead-${Date.now()}`;
-  let leadId = "HTB-001";
 
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const [countRow] = await query<any[]>("SELECT COUNT(*) AS total FROM `htb_leads`");
-      const nextNum = (countRow?.total || 0) + 1;
-      leadId = `HTB-${String(nextNum).padStart(3, "0")}`;
+  const totalLeads = await prisma.lead.count();
+  const leadId = `WEB-${String(totalLeads + 1).padStart(3, "0")}`;
 
-      await execute(
-        "INSERT INTO `htb_leads` (id, lead_id, full_name, email, mobile, service, budget, source, status, priority, assigned_to, notes, last_contact, next_follow_up, closing_note, lost_reason, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          id,
-          leadId,
-          data.fullName,
-          data.email,
-          data.mobile,
-          data.service,
-          data.budget || null,
-          data.source,
-          data.status,
-          data.priority,
-          data.assignedTo,
-          data.notes || null,
-          data.lastContact || null,
-          data.nextFollowUp || null,
-          data.closingNote || null,
-          data.lostReason || null,
-          now,
-          now,
-        ]
-      );
+  const created = await prisma.lead.create({
+    data: {
+      id,
+      leadId,
+      fullName: data.fullName,
+      email: data.email || "",
+      mobile: data.mobile,
+      service: data.service,
+      budget: data.budget || null,
+      source: data.source,
+      status: data.status,
+      priority: data.priority,
+      assignedTo: data.assignedTo || "Unassigned",
+      notes: data.notes || null,
+      lastContact: data.lastContact || null,
+      nextFollowUp: data.nextFollowUp || null,
+      closingNote: data.closingNote || null,
+      lostReason: data.lostReason || null,
+      createdAt: now,
+      updatedAt: now,
+    },
+  });
 
-      // Add Lead Created Activity
-      await execute(
-        "INSERT INTO `htb_activities` (id, lead_id, lead_name, type, description, actor, created_at, date, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          `act-${Date.now()}`,
-          leadId,
-          data.fullName,
-          "Lead Created",
-          `New lead created for ${data.service} via ${data.source}.`,
-          data.assignedTo || "System",
-          now,
-          now.split("T")[0],
-          "Just now",
-        ]
-      );
+  // Record Lead Created Activity
+  await prisma.leadActivity.create({
+    data: {
+      id: `act-${Date.now()}`,
+      leadId,
+      leadName: data.fullName,
+      type: "Lead Created",
+      description: `New lead created for ${data.service} via ${data.source}.`,
+      actor: data.assignedTo || "System",
+      date: now.split("T")[0],
+      time: "Just now",
+      createdAt: now,
+    },
+  });
 
-      return {
-        ...data,
-        id,
-        leadId,
-        createdAt: now,
-        updatedAt: now,
-      };
-    } catch (err) {
-      console.error("MySQL createLead error:", err);
-    }
-  }
-
-  // Fallback JSON
-  const db = readDb();
-  leadId = `HTB-${String(db.leads.length + 1).padStart(3, "0")}`;
-  const newLead: Lead = {
+  return {
     ...data,
-    id,
-    leadId,
-    createdAt: now,
-    updatedAt: now,
+    id: created.id,
+    leadId: created.leadId,
+    createdAt: created.createdAt,
+    updatedAt: created.updatedAt,
   };
-  db.leads.unshift(newLead);
-  writeDb(db);
-  return newLead;
 }
 
-export async function updateLead(id: string, updates: Partial<Lead>, actor = "Admin"): Promise<Lead | null> {
+export async function updateLead(
+  id: string,
+  updates: Partial<Lead>,
+  actor = "Admin"
+): Promise<Lead | null> {
+  const existing = await getLeadById(id);
+  if (!existing) return null;
+
   const now = new Date().toISOString();
-  const mysqlUp = await isMySqlAvailable();
 
-  if (mysqlUp) {
-    try {
-      const existing = await getLeadById(id);
-      if (!existing) return null;
+  const updated = await prisma.lead.update({
+    where: { id: existing.id },
+    data: {
+      fullName: updates.fullName,
+      email: updates.email,
+      mobile: updates.mobile,
+      service: updates.service,
+      budget: updates.budget,
+      source: updates.source,
+      status: updates.status,
+      priority: updates.priority,
+      assignedTo: updates.assignedTo,
+      notes: updates.notes,
+      lastContact: updates.lastContact,
+      nextFollowUp: updates.nextFollowUp,
+      closingNote: updates.closingNote,
+      lostReason: updates.lostReason,
+      updatedAt: now,
+    },
+  });
 
-      const merged = { ...existing, ...updates, updatedAt: now };
-
-      await execute(
-        "UPDATE `htb_leads` SET `full_name`=?, `email`=?, `mobile`=?, `service`=?, `budget`=?, `source`=?, `status`=?, `priority`=?, `assigned_to`=?, `notes`=?, `last_contact`=?, `next_follow_up`=?, `closing_note`=?, `lost_reason`=?, `updated_at`=? WHERE `id`=? OR `lead_id`=?",
-        [
-          merged.fullName,
-          merged.email,
-          merged.mobile,
-          merged.service,
-          merged.budget || null,
-          merged.source,
-          merged.status,
-          merged.priority,
-          merged.assignedTo,
-          merged.notes || null,
-          merged.lastContact || null,
-          merged.nextFollowUp || null,
-          merged.closingNote || null,
-          merged.lostReason || null,
-          now,
-          id,
-          id,
-        ]
-      );
-
-      // If status changed, record activity
-      if (updates.status && updates.status !== existing.status) {
-        await execute(
-          "INSERT INTO `htb_activities` (id, lead_id, lead_name, type, description, actor, previous_status, new_status, date, time, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-          [
-            `act-${Date.now()}`,
-            existing.leadId,
-            existing.fullName,
-            "Status Changed",
-            `Status updated: ${existing.status} → ${updates.status}`,
-            actor,
-            existing.status,
-            updates.status,
-            now.split("T")[0],
-            "Just now",
-            now,
-          ]
-        );
-      }
-
-      return merged;
-    } catch (err) {
-      console.error("MySQL updateLead error:", err);
-    }
+  // If status changed, record activity
+  if (updates.status && updates.status !== existing.status) {
+    await prisma.leadActivity.create({
+      data: {
+        id: `act-${Date.now()}`,
+        leadId: existing.leadId,
+        leadName: existing.fullName,
+        type: "Status Changed",
+        description: `Status updated: ${existing.status} → ${updates.status}`,
+        actor,
+        previousStatus: existing.status,
+        newStatus: updates.status,
+        date: now.split("T")[0],
+        time: "Just now",
+        createdAt: now,
+      },
+    });
   }
 
-  // Fallback JSON
-  const db = readDb();
-  const index = db.leads.findIndex((l) => l.id === id || l.leadId === id);
-  if (index === -1) return null;
-  db.leads[index] = { ...db.leads[index], ...updates, updatedAt: now };
-  writeDb(db);
-  return db.leads[index];
+  return {
+    ...existing,
+    ...updates,
+    updatedAt: now,
+  };
 }
 
 export async function deleteLead(id: string): Promise<boolean> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      await execute("DELETE FROM `htb_leads` WHERE `id` = ? OR `lead_id` = ?", [id, id]);
-      return true;
-    } catch (err) {
-      console.error("MySQL deleteLead error:", err);
-    }
-  }
+  try {
+    const existing = await getLeadById(id);
+    if (!existing) return false;
 
-  const db = readDb();
-  const initial = db.leads.length;
-  db.leads = db.leads.filter((l) => l.id !== id && l.leadId !== id);
-  writeDb(db);
-  return db.leads.length < initial;
+    await prisma.lead.delete({
+      where: { id: existing.id },
+    });
+    return true;
+  } catch (err) {
+    console.error("deleteLead error:", err);
+    return false;
+  }
 }
 
-/* ----------------------------------------------------
-   Contact Enquiries API Methods
----------------------------------------------------- */
+// ----------------------------------------------------
+// Contact Enquiries
+// ----------------------------------------------------
+
 export async function getContactEnquiries(): Promise<ContactEnquiry[]> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>("SELECT * FROM `htb_contact_enquiries` ORDER BY `created_at` DESC");
-      return rows.map(mapEnquiry);
-    } catch (err) {
-      console.error("MySQL getContactEnquiries error:", err);
-    }
-  }
-  const db = readDb();
-  return db.contactEnquiries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const enquiries = await prisma.contactEnquiry.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
+  return enquiries.map((e) => ({
+    id: e.id,
+    enquiryId: e.enquiryId,
+    fullName: e.fullName,
+    email: e.email,
+    mobile: e.mobile,
+    service: e.service,
+    budget: e.budget || undefined,
+    message: e.message,
+    source: e.source,
+    status: e.status as any,
+    assignedTo: e.assignedTo,
+    leadId: e.leadId || undefined,
+    createdAt: e.createdAt,
+  }));
 }
 
 export async function createContactEnquiry(
   data: Omit<ContactEnquiry, "id" | "enquiryId" | "createdAt" | "status" | "assignedTo">
 ): Promise<ContactEnquiry & { enquiry: ContactEnquiry; lead: Lead }> {
-  // Create corresponding CRM Lead so it immediately shows up in pipeline
+  // 1. Create corresponding CRM Lead
   const lead = await createLead({
     fullName: data.fullName,
     email: data.email,
@@ -603,79 +421,51 @@ export async function createContactEnquiry(
 
   const now = new Date().toISOString();
   const id = `enq-${Date.now()}`;
-  let enquiryId = "ENQ-001";
+  const totalEnquiries = await prisma.contactEnquiry.count();
+  const enquiryId = `ENQ-${String(totalEnquiries + 1).padStart(3, "0")}`;
 
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const [countRow] = await query<any[]>("SELECT COUNT(*) AS total FROM `htb_contact_enquiries`");
-      const nextNum = (countRow?.total || 0) + 1;
-      enquiryId = `ENQ-${String(nextNum).padStart(3, "0")}`;
+  const enquiry = await prisma.contactEnquiry.create({
+    data: {
+      id,
+      enquiryId,
+      fullName: data.fullName,
+      email: data.email,
+      mobile: data.mobile,
+      service: data.service,
+      budget: data.budget || null,
+      message: data.message,
+      source: data.source || "Website Contact Form",
+      status: "New",
+      assignedTo: "Unassigned",
+      leadId: lead.id,
+      createdAt: now,
+    },
+  });
 
-      await execute(
-        "INSERT INTO `htb_contact_enquiries` (id, enquiry_id, full_name, email, mobile, service, budget, message, source, status, assigned_to, lead_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          id,
-          enquiryId,
-          data.fullName,
-          data.email,
-          data.mobile,
-          data.service,
-          data.budget || null,
-          data.message,
-          data.source,
-          "New",
-          "Unassigned",
-          lead.id,
-          now,
-        ]
-      );
+  // Notification for Admin
+  await prisma.notification.create({
+    data: {
+      id: `notif-${Date.now()}`,
+      title: "New Contact Enquiry",
+      message: `${data.fullName} submitted an enquiry for ${data.service}.`,
+      type: "enquiry",
+      isRead: false,
+      link: "/admin/contact-enquiries",
+      createdAt: now,
+    },
+  });
 
-      // Notification
-      await execute(
-        "INSERT INTO `htb_notifications` (id, title, message, type, is_read, link, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [
-          `notif-${Date.now()}`,
-          "New Contact Enquiry",
-          `${data.fullName} submitted an enquiry for ${data.service}.`,
-          "enquiry",
-          0,
-          "/admin/contact-enquiries",
-          now,
-        ]
-      );
-
-      const enquiry: ContactEnquiry = {
-        ...data,
-        id,
-        enquiryId,
-        status: "New",
-        assignedTo: "Unassigned",
-        leadId: lead.id,
-        createdAt: now,
-      };
-
-      return Object.assign(enquiry, { enquiry, lead });
-    } catch (err) {
-      console.error("MySQL createContactEnquiry error:", err);
-    }
-  }
-
-  // Fallback JSON
-  const db = readDb();
-  enquiryId = `ENQ-${String(db.contactEnquiries.length + 1).padStart(3, "0")}`;
-  const newEnq: ContactEnquiry = {
+  const resEnquiry: ContactEnquiry = {
     ...data,
-    id,
-    enquiryId,
+    id: enquiry.id,
+    enquiryId: enquiry.enquiryId,
     status: "New",
     assignedTo: "Unassigned",
     leadId: lead.id,
-    createdAt: now,
+    createdAt: enquiry.createdAt,
   };
-  db.contactEnquiries.unshift(newEnq);
-  writeDb(db);
-  return Object.assign(newEnq, { enquiry: newEnq, lead });
+
+  return Object.assign(resEnquiry, { enquiry: resEnquiry, lead });
 }
 
 export async function updateContactEnquiryStatus(
@@ -683,60 +473,69 @@ export async function updateContactEnquiryStatus(
   status: "New" | "Contacted" | "Converted" | "Archived",
   assignedTo?: string
 ): Promise<ContactEnquiry | null> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      if (assignedTo) {
-        await execute(
-          "UPDATE `htb_contact_enquiries` SET `status` = ?, `assigned_to` = ? WHERE `id` = ? OR `enquiry_id` = ?",
-          [status, assignedTo, id, id]
-        );
-      } else {
-        await execute(
-          "UPDATE `htb_contact_enquiries` SET `status` = ? WHERE `id` = ? OR `enquiry_id` = ?",
-          [status, id, id]
-        );
-      }
-      const rows = await query<any[]>("SELECT * FROM `htb_contact_enquiries` WHERE `id` = ? OR `enquiry_id` = ? LIMIT 1", [id, id]);
-      if (rows.length > 0) return mapEnquiry(rows[0]);
-      return null;
-    } catch (err) {
-      console.error("MySQL updateContactEnquiryStatus error:", err);
-    }
-  }
+  const existing = await prisma.contactEnquiry.findFirst({
+    where: { OR: [{ id }, { enquiryId: id }] },
+  });
 
-  const db = readDb();
-  const index = db.contactEnquiries.findIndex((e) => e.id === id || e.enquiryId === id);
-  if (index === -1) return null;
-  db.contactEnquiries[index].status = status;
-  if (assignedTo) db.contactEnquiries[index].assignedTo = assignedTo;
-  writeDb(db);
-  return db.contactEnquiries[index];
+  if (!existing) return null;
+
+  const updated = await prisma.contactEnquiry.update({
+    where: { id: existing.id },
+    data: {
+      status,
+      assignedTo: assignedTo || existing.assignedTo,
+    },
+  });
+
+  return {
+    id: updated.id,
+    enquiryId: updated.enquiryId,
+    fullName: updated.fullName,
+    email: updated.email,
+    mobile: updated.mobile,
+    service: updated.service,
+    budget: updated.budget || undefined,
+    message: updated.message,
+    source: updated.source,
+    status: updated.status as any,
+    assignedTo: updated.assignedTo,
+    leadId: updated.leadId || undefined,
+    createdAt: updated.createdAt,
+  };
 }
 
 export const updateEnquiryStatus = updateContactEnquiryStatus;
 
-/* ----------------------------------------------------
-   Scheduled Calls API Methods
----------------------------------------------------- */
+// ----------------------------------------------------
+// Scheduled Calls
+// ----------------------------------------------------
+
 export async function getScheduledCalls(): Promise<ScheduledCall[]> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>("SELECT * FROM `htb_scheduled_calls` ORDER BY `created_at` DESC");
-      return rows.map(mapScheduledCall);
-    } catch (err) {
-      console.error("MySQL getScheduledCalls error:", err);
-    }
-  }
-  const db = readDb();
-  return db.scheduledCalls.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const calls = await prisma.scheduledCall.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
+  return calls.map((c) => ({
+    id: c.id,
+    callId: c.callId,
+    fullName: c.fullName,
+    email: c.email,
+    mobile: c.mobile,
+    service: c.service,
+    date: c.date,
+    time: c.time,
+    timezone: c.timezone,
+    status: c.status as any,
+    notes: c.notes || undefined,
+    assignedTo: c.assignedTo,
+    leadId: c.leadId || undefined,
+    createdAt: c.createdAt,
+  }));
 }
 
 export async function createScheduledCall(
   data: Omit<ScheduledCall, "id" | "callId" | "createdAt" | "status" | "assignedTo">
 ): Promise<ScheduledCall & { call: ScheduledCall; lead: Lead }> {
-  // Create corresponding CRM Lead for the call
   const lead = await createLead({
     fullName: data.fullName,
     email: data.email,
@@ -751,853 +550,827 @@ export async function createScheduledCall(
 
   const now = new Date().toISOString();
   const id = `call-${Date.now()}`;
-  let callId = "CALL-001";
+  const totalCalls = await prisma.scheduledCall.count();
+  const callId = `CALL-${String(totalCalls + 1).padStart(3, "0")}`;
 
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const [countRow] = await query<any[]>("SELECT COUNT(*) AS total FROM `htb_scheduled_calls`");
-      const nextNum = (countRow?.total || 0) + 1;
-      callId = `CALL-${String(nextNum).padStart(3, "0")}`;
+  const call = await prisma.scheduledCall.create({
+    data: {
+      id,
+      callId,
+      fullName: data.fullName,
+      email: data.email,
+      mobile: data.mobile,
+      service: data.service,
+      date: data.date,
+      time: data.time,
+      timezone: data.timezone,
+      status: "Pending",
+      notes: data.notes || null,
+      assignedTo: "Unassigned",
+      leadId: lead.id,
+      createdAt: now,
+    },
+  });
 
-      await execute(
-        "INSERT INTO `htb_scheduled_calls` (id, call_id, full_name, email, mobile, service, date, time, timezone, status, notes, assigned_to, lead_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          id,
-          callId,
-          data.fullName,
-          data.email,
-          data.mobile,
-          data.service,
-          data.date,
-          data.time,
-          data.timezone,
-          "Pending",
-          data.notes || null,
-          "Unassigned",
-          lead.id,
-          now,
-        ]
-      );
+  await prisma.notification.create({
+    data: {
+      id: `notif-${Date.now()}`,
+      title: "New Call Booked",
+      message: `Consultation booked by ${data.fullName} for ${data.date} at ${data.time}.`,
+      type: "call",
+      isRead: false,
+      link: "/admin/scheduled-calls",
+      createdAt: now,
+    },
+  });
 
-      // Notification
-      await execute(
-        "INSERT INTO `htb_notifications` (id, title, message, type, is_read, link, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [
-          `notif-${Date.now()}`,
-          "New Call Booked",
-          `Consultation booked by ${data.fullName} for ${data.date} at ${data.time}.`,
-          "call",
-          0,
-          "/admin/scheduled-calls",
-          now,
-        ]
-      );
-
-      const call: ScheduledCall = {
-        ...data,
-        id,
-        callId,
-        status: "Pending",
-        assignedTo: "Unassigned",
-        leadId: lead.id,
-        createdAt: now,
-      };
-
-      return Object.assign(call, { call, lead });
-    } catch (err) {
-      console.error("MySQL createScheduledCall error:", err);
-    }
-  }
-
-  // Fallback JSON
-  const db = readDb();
-  callId = `CALL-${String(db.scheduledCalls.length + 1).padStart(3, "0")}`;
-  const newCall: ScheduledCall = {
+  const resCall: ScheduledCall = {
     ...data,
-    id,
-    callId,
+    id: call.id,
+    callId: call.callId,
     status: "Pending",
     assignedTo: "Unassigned",
     leadId: lead.id,
-    createdAt: now,
+    createdAt: call.createdAt,
   };
-  db.scheduledCalls.unshift(newCall);
-  writeDb(db);
-  return Object.assign(newCall, { call: newCall, lead });
+
+  return Object.assign(resCall, { call: resCall, lead });
 }
 
 export async function updateScheduledCallStatus(
   id: string,
-  status: ScheduledCall["status"],
-  notes?: string
+  status: "Pending" | "Confirmed" | "Completed" | "Rescheduled" | "Cancelled" | "No Show",
+  notes?: string,
+  assignedTo?: string
 ): Promise<ScheduledCall | null> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      if (notes !== undefined) {
-        await execute(
-          "UPDATE `htb_scheduled_calls` SET `status` = ?, `notes` = ? WHERE `id` = ? OR `call_id` = ?",
-          [status, notes, id, id]
-        );
-      } else {
-        await execute(
-          "UPDATE `htb_scheduled_calls` SET `status` = ? WHERE `id` = ? OR `call_id` = ?",
-          [status, id, id]
-        );
-      }
-      const rows = await query<any[]>("SELECT * FROM `htb_scheduled_calls` WHERE `id` = ? OR `call_id` = ? LIMIT 1", [id, id]);
-      if (rows.length > 0) return mapScheduledCall(rows[0]);
-      return null;
-    } catch (err) {
-      console.error("MySQL updateScheduledCallStatus error:", err);
-    }
-  }
+  const existing = await prisma.scheduledCall.findFirst({
+    where: { OR: [{ id }, { callId: id }] },
+  });
 
-  const db = readDb();
-  const index = db.scheduledCalls.findIndex((c) => c.id === id || c.callId === id);
-  if (index === -1) return null;
-  db.scheduledCalls[index].status = status;
-  if (notes !== undefined) db.scheduledCalls[index].notes = notes;
-  writeDb(db);
-  return db.scheduledCalls[index];
+  if (!existing) return null;
+
+  const updated = await prisma.scheduledCall.update({
+    where: { id: existing.id },
+    data: {
+      status,
+      notes: notes !== undefined ? notes : existing.notes,
+      assignedTo: assignedTo || existing.assignedTo,
+    },
+  });
+
+  return {
+    id: updated.id,
+    callId: updated.callId,
+    fullName: updated.fullName,
+    email: updated.email,
+    mobile: updated.mobile,
+    service: updated.service,
+    date: updated.date,
+    time: updated.time,
+    timezone: updated.timezone,
+    status: updated.status as any,
+    notes: updated.notes || undefined,
+    assignedTo: updated.assignedTo,
+    leadId: updated.leadId || undefined,
+    createdAt: updated.createdAt,
+  };
 }
 
-/* ----------------------------------------------------
-   Career Applications API Methods
----------------------------------------------------- */
+// ----------------------------------------------------
+// Career Applications
+// ----------------------------------------------------
+
 export async function getCareerApplications(): Promise<CareerApplication[]> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>("SELECT * FROM `htb_career_applications` ORDER BY `created_at` DESC");
-      return rows.map(mapCareer);
-    } catch (err) {
-      console.error("MySQL getCareerApplications error:", err);
-    }
-  }
-  const db = readDb();
-  return db.careerApplications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const apps = await prisma.careerApplication.findMany({
+    orderBy: { createdAt: "desc" },
+  });
+
+  return apps.map((a) => ({
+    id: a.id,
+    applicationId: a.applicationId,
+    applicantName: a.applicantName,
+    email: a.email,
+    mobile: a.mobile,
+    resumeFileName: a.resumeFileName,
+    resumeFilePath: a.resumeFilePath,
+    resumeSizeBytes: a.resumeSizeBytes,
+    resumeMimeType: a.resumeMimeType,
+    message: a.message,
+    status: a.status as any,
+    assignedTo: a.assignedTo,
+    notes: a.notes || undefined,
+    appliedDate: a.appliedDate,
+    createdAt: a.createdAt,
+  }));
 }
 
 export async function createCareerApplication(
   data: Omit<CareerApplication, "id" | "applicationId" | "createdAt" | "status" | "assignedTo" | "appliedDate">
 ): Promise<CareerApplication> {
   const now = new Date().toISOString();
-  const todayStr = now.split("T")[0];
   const id = `app-${Date.now()}`;
-  let applicationId = "APP-001";
+  const totalApps = await prisma.careerApplication.count();
+  const applicationId = `APP-${String(totalApps + 1).padStart(3, "0")}`;
 
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const [countRow] = await query<any[]>("SELECT COUNT(*) AS total FROM `htb_career_applications`");
-      const nextNum = (countRow?.total || 0) + 1;
-      applicationId = `APP-${String(nextNum).padStart(3, "0")}`;
+  const app = await prisma.careerApplication.create({
+    data: {
+      id,
+      applicationId,
+      applicantName: data.applicantName,
+      email: data.email,
+      mobile: data.mobile,
+      resumeFileName: data.resumeFileName,
+      resumeFilePath: data.resumeFilePath,
+      resumeSizeBytes: data.resumeSizeBytes,
+      resumeMimeType: data.resumeMimeType,
+      message: data.message,
+      status: "New",
+      assignedTo: "HR Team",
+      notes: null,
+      appliedDate: now.split("T")[0],
+      createdAt: now,
+    },
+  });
 
-      await execute(
-        "INSERT INTO `htb_career_applications` (id, application_id, applicant_name, email, mobile, resume_file_name, resume_file_path, resume_size_bytes, resume_mime_type, message, status, assigned_to, notes, applied_date, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          id,
-          applicationId,
-          data.applicantName,
-          data.email,
-          data.mobile,
-          data.resumeFileName,
-          data.resumeFilePath,
-          data.resumeSizeBytes,
-          data.resumeMimeType,
-          data.message,
-          "New",
-          "HR Desk",
-          null,
-          todayStr,
-          now,
-        ]
-      );
+  await prisma.notification.create({
+    data: {
+      id: `notif-${Date.now()}`,
+      title: "New Career Application",
+      message: `${data.applicantName} submitted their resume application.`,
+      type: "career",
+      isRead: false,
+      link: "/admin/career-applications",
+      createdAt: now,
+    },
+  });
 
-      // Notification
-      await execute(
-        "INSERT INTO `htb_notifications` (id, title, message, type, is_read, link, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [
-          `notif-${Date.now()}`,
-          "New Career Application",
-          `${data.applicantName} submitted their resume application.`,
-          "career",
-          0,
-          "/admin/career-applications",
-          now,
-        ]
-      );
-
-      return {
-        ...data,
-        id,
-        applicationId,
-        status: "New",
-        assignedTo: "HR Desk",
-        appliedDate: todayStr,
-        createdAt: now,
-      };
-    } catch (err) {
-      console.error("MySQL createCareerApplication error:", err);
-    }
-  }
-
-  // Fallback JSON
-  const db = readDb();
-  applicationId = `APP-${String(db.careerApplications.length + 1).padStart(3, "0")}`;
-  const newApp: CareerApplication = {
+  return {
     ...data,
-    id,
-    applicationId,
+    id: app.id,
+    applicationId: app.applicationId,
     status: "New",
-    assignedTo: "HR Desk",
-    appliedDate: todayStr,
-    createdAt: now,
+    assignedTo: "HR Team",
+    appliedDate: app.appliedDate,
+    createdAt: app.createdAt,
   };
-  db.careerApplications.unshift(newApp);
-  writeDb(db);
-  return newApp;
 }
 
 export async function updateCareerApplicationStatus(
   id: string,
-  status: CareerApplication["status"],
-  notes?: string
+  status: "New" | "Under Review" | "Shortlisted" | "Interview" | "Selected" | "Rejected",
+  notes?: string,
+  assignedTo?: string
 ): Promise<CareerApplication | null> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      if (notes !== undefined) {
-        await execute(
-          "UPDATE `htb_career_applications` SET `status` = ?, `notes` = ? WHERE `id` = ? OR `application_id` = ?",
-          [status, notes, id, id]
-        );
-      } else {
-        await execute(
-          "UPDATE `htb_career_applications` SET `status` = ? WHERE `id` = ? OR `application_id` = ?",
-          [status, id, id]
-        );
-      }
-      const rows = await query<any[]>("SELECT * FROM `htb_career_applications` WHERE `id` = ? OR `application_id` = ? LIMIT 1", [id, id]);
-      if (rows.length > 0) return mapCareer(rows[0]);
-      return null;
-    } catch (err) {
-      console.error("MySQL updateCareerApplicationStatus error:", err);
-    }
-  }
+  const existing = await prisma.careerApplication.findFirst({
+    where: { OR: [{ id }, { applicationId: id }] },
+  });
 
-  const db = readDb();
-  const index = db.careerApplications.findIndex((a) => a.id === id || a.applicationId === id);
-  if (index === -1) return null;
-  db.careerApplications[index].status = status;
-  if (notes !== undefined) db.careerApplications[index].notes = notes;
-  writeDb(db);
-  return db.careerApplications[index];
+  if (!existing) return null;
+
+  const updated = await prisma.careerApplication.update({
+    where: { id: existing.id },
+    data: {
+      status,
+      notes: notes !== undefined ? notes : existing.notes,
+      assignedTo: assignedTo || existing.assignedTo,
+    },
+  });
+
+  return {
+    id: updated.id,
+    applicationId: updated.applicationId,
+    applicantName: updated.applicantName,
+    email: updated.email,
+    mobile: updated.mobile,
+    resumeFileName: updated.resumeFileName,
+    resumeFilePath: updated.resumeFilePath,
+    resumeSizeBytes: updated.resumeSizeBytes,
+    resumeMimeType: updated.resumeMimeType,
+    message: updated.message,
+    status: updated.status as any,
+    assignedTo: updated.assignedTo,
+    notes: updated.notes || undefined,
+    appliedDate: updated.appliedDate,
+    createdAt: updated.createdAt,
+  };
 }
 
-/* ----------------------------------------------------
-   Follow-ups API Methods
----------------------------------------------------- */
-export async function getFollowUps(): Promise<FollowUp[]> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>("SELECT * FROM `htb_follow_ups` ORDER BY `date` ASC, `time` ASC");
-      return rows.map(mapFollowUp);
-    } catch (err) {
-      console.error("MySQL getFollowUps error:", err);
-    }
+// ----------------------------------------------------
+// Follow-ups
+// ----------------------------------------------------
+
+export async function getFollowUps(
+  tab?: "all" | "overdue" | "today" | "upcoming" | "completed"
+): Promise<FollowUp[]> {
+  const todayStr = new Date().toISOString().split("T")[0];
+  const where: any = {};
+
+  if (tab === "overdue") {
+    where.status = { not: "Completed" };
+    where.date = { lt: todayStr };
+  } else if (tab === "today") {
+    where.date = todayStr;
+    where.status = { not: "Completed" };
+  } else if (tab === "upcoming") {
+    where.status = { not: "Completed" };
+    where.date = { gt: todayStr };
+  } else if (tab === "completed") {
+    where.status = "Completed";
   }
-  const db = readDb();
-  return db.followUps.sort((a, b) => new Date(a.date + " " + a.time).getTime() - new Date(b.date + " " + b.time).getTime());
+
+  const followUps = await prisma.followUp.findMany({
+    where,
+    orderBy: [{ date: "asc" }, { time: "asc" }],
+  });
+
+  return followUps.map((f) => ({
+    id: f.id,
+    followUpId: f.followUpId,
+    leadId: f.leadId,
+    leadName: f.leadName,
+    leadMobile: f.leadMobile,
+    date: f.date,
+    time: f.time,
+    type: f.type as any,
+    assignedTo: f.assignedTo,
+    status: f.status as any,
+    notes: f.notes,
+    completedAt: f.completedAt || undefined,
+    createdAt: f.createdAt,
+  }));
 }
 
 export async function createFollowUp(
-  data: Omit<FollowUp, "id" | "followUpId" | "createdAt" | "status">
+  data: Omit<FollowUp, "id" | "followUpId" | "createdAt">
 ): Promise<FollowUp> {
   const now = new Date().toISOString();
   const id = `flp-${Date.now()}`;
-  let followUpId = "FLP-001";
+  const total = await prisma.followUp.count();
+  const followUpId = `FLP-${String(total + 1).padStart(3, "0")}`;
 
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const [countRow] = await query<any[]>("SELECT COUNT(*) AS total FROM `htb_follow_ups`");
-      const nextNum = (countRow?.total || 0) + 1;
-      followUpId = `FLP-${String(nextNum).padStart(3, "0")}`;
+  // Resolve canonical leadId in case database ID (lead-xxx) was passed
+  const lead = await prisma.lead.findFirst({
+    where: {
+      OR: [{ leadId: data.leadId }, { id: data.leadId }],
+    },
+  });
 
-      await execute(
-        "INSERT INTO `htb_follow_ups` (id, follow_up_id, lead_id, lead_name, lead_mobile, date, time, type, assigned_to, status, notes, completed_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          id,
-          followUpId,
-          data.leadId,
-          data.leadName,
-          data.leadMobile,
-          data.date,
-          data.time,
-          data.type,
-          data.assignedTo,
-          "Upcoming",
-          data.notes,
-          null,
-          now,
-        ]
-      );
+  const canonicalLeadId = lead ? lead.leadId : data.leadId;
+  const leadName = lead ? lead.fullName : data.leadName;
+  const leadMobile = lead ? lead.mobile : data.leadMobile;
 
-      return {
-        ...data,
-        id,
-        followUpId,
-        status: "Upcoming",
-        createdAt: now,
-      };
-    } catch (err) {
-      console.error("MySQL createFollowUp error:", err);
-    }
+  const created = await prisma.followUp.create({
+    data: {
+      id,
+      followUpId,
+      leadId: canonicalLeadId,
+      leadName,
+      leadMobile,
+      date: data.date,
+      time: data.time || "10:00 AM",
+      type: data.type || "Call",
+      assignedTo: data.assignedTo || "Unassigned",
+      status: data.status || "Upcoming",
+      notes: data.notes,
+      createdAt: now,
+    },
+  });
+
+  // Automatically update lead's nextFollowUp field
+  if (lead) {
+    await prisma.lead
+      .update({
+        where: { leadId: canonicalLeadId },
+        data: {
+          nextFollowUp: `${data.date} (${data.time || "10:00 AM"})`,
+          updatedAt: now,
+        },
+      })
+      .catch(() => null);
   }
 
-  // Fallback JSON
-  const db = readDb();
-  followUpId = `FLP-${String(db.followUps.length + 1).padStart(3, "0")}`;
-  const newFollowUp: FollowUp = {
+  await prisma.leadActivity.create({
+    data: {
+      id: `act-${Date.now()}`,
+      leadId: canonicalLeadId,
+      leadName,
+      type: "Follow-up Scheduled",
+      description: `${data.type} touchpoint scheduled for ${data.date} at ${data.time || "10:00 AM"}. Goal: ${data.notes}`,
+      actor: data.assignedTo || "Admin",
+      date: now.split("T")[0],
+      time: "Just now",
+      createdAt: now,
+    },
+  });
+
+  return {
     ...data,
-    id,
-    followUpId,
-    status: "Upcoming",
-    createdAt: now,
+    leadId: canonicalLeadId,
+    leadName,
+    leadMobile,
+    id: created.id,
+    followUpId: created.followUpId,
+    createdAt: created.createdAt,
   };
-  db.followUps.push(newFollowUp);
-  writeDb(db);
-  return newFollowUp;
 }
 
 export async function completeFollowUp(id: string, notes?: string): Promise<FollowUp | null> {
+  const existing = await prisma.followUp.findFirst({
+    where: { OR: [{ id }, { followUpId: id }] },
+  });
+
+  if (!existing) return null;
+
   const now = new Date().toISOString();
-  const mysqlUp = await isMySqlAvailable();
 
-  if (mysqlUp) {
-    try {
-      if (notes) {
-        await execute(
-          "UPDATE `htb_follow_ups` SET `status` = 'Completed', `completed_at` = ?, `notes` = ? WHERE `id` = ? OR `follow_up_id` = ?",
-          [now, notes, id, id]
-        );
-      } else {
-        await execute(
-          "UPDATE `htb_follow_ups` SET `status` = 'Completed', `completed_at` = ? WHERE `id` = ? OR `follow_up_id` = ?",
-          [now, id, id]
-        );
-      }
-      const rows = await query<any[]>("SELECT * FROM `htb_follow_ups` WHERE `id` = ? OR `follow_up_id` = ? LIMIT 1", [id, id]);
-      if (rows.length > 0) return mapFollowUp(rows[0]);
-      return null;
-    } catch (err) {
-      console.error("MySQL completeFollowUp error:", err);
-    }
-  }
+  const updated = await prisma.followUp.update({
+    where: { id: existing.id },
+    data: {
+      status: "Completed",
+      completedAt: now,
+      notes: notes ? `${existing.notes}\n[Completed Note]: ${notes}` : existing.notes,
+    },
+  });
 
-  const db = readDb();
-  const index = db.followUps.findIndex((f) => f.id === id || f.followUpId === id);
-  if (index === -1) return null;
-  db.followUps[index].status = "Completed";
-  db.followUps[index].completedAt = now;
-  if (notes) db.followUps[index].notes = notes;
-  writeDb(db);
-  return db.followUps[index];
+  // Check if there is another upcoming follow-up for this lead
+  const nextUpcoming = await prisma.followUp.findFirst({
+    where: {
+      leadId: existing.leadId,
+      status: "Upcoming",
+      id: { not: existing.id },
+    },
+    orderBy: { date: "asc" },
+  });
+
+  await prisma.lead
+    .update({
+      where: { leadId: existing.leadId },
+      data: {
+        nextFollowUp: nextUpcoming ? `${nextUpcoming.date} (${nextUpcoming.time})` : null,
+        lastContact: now.split("T")[0],
+        updatedAt: now,
+      },
+    })
+    .catch(() => null);
+
+  await prisma.leadActivity.create({
+    data: {
+      id: `act-${Date.now()}`,
+      leadId: existing.leadId,
+      leadName: existing.leadName,
+      type: "Follow-up Completed",
+      description: `Follow-up marked as completed. ${notes || ""}`,
+      actor: existing.assignedTo || "Admin",
+      date: now.split("T")[0],
+      time: "Just now",
+      createdAt: now,
+    },
+  });
+
+  return {
+    id: updated.id,
+    followUpId: updated.followUpId,
+    leadId: updated.leadId,
+    leadName: updated.leadName,
+    leadMobile: updated.leadMobile,
+    date: updated.date,
+    time: updated.time,
+    type: updated.type as any,
+    assignedTo: updated.assignedTo,
+    status: updated.status as any,
+    notes: updated.notes,
+    completedAt: updated.completedAt || undefined,
+    createdAt: updated.createdAt,
+  };
 }
 
-/* ----------------------------------------------------
-   Activities & Notes Methods
----------------------------------------------------- */
-export async function getActivities(limit = 20): Promise<LeadActivity[]> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>(
-        "SELECT * FROM `htb_activities` ORDER BY `created_at` DESC LIMIT ?",
-        [limit]
-      );
-      return rows.map(mapActivity);
-    } catch (err) {
-      console.error("MySQL getActivities error:", err);
-    }
-  }
-  const db = readDb();
-  return db.activities.slice(0, limit);
+// ----------------------------------------------------
+// Activities & Notes
+// ----------------------------------------------------
+
+export async function getActivities(limit = 20, leadId?: string): Promise<LeadActivity[]> {
+  const activities = await prisma.leadActivity.findMany({
+    where: leadId ? { leadId } : undefined,
+    orderBy: { createdAt: "desc" },
+    take: limit,
+  });
+
+  return activities.map((a) => ({
+    id: a.id,
+    leadId: a.leadId || undefined,
+    leadName: a.leadName || undefined,
+    type: a.type as any,
+    description: a.description,
+    actor: a.actor,
+    previousStatus: a.previousStatus || undefined,
+    newStatus: a.newStatus || undefined,
+    date: a.date,
+    time: a.time,
+    createdAt: a.createdAt,
+  }));
 }
 
 export async function getLeadNotes(leadId: string): Promise<LeadNote[]> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>(
-        "SELECT * FROM `htb_notes` WHERE `lead_id` = ? ORDER BY `created_at` DESC",
-        [leadId]
-      );
-      return rows.map(mapNote);
-    } catch (err) {
-      console.error("MySQL getLeadNotes error:", err);
-    }
-  }
-  const db = readDb();
-  return db.notes.filter((n) => n.leadId === leadId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const notes = await prisma.leadNote.findMany({
+    where: { leadId },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return notes.map((n) => ({
+    id: n.id,
+    leadId: n.leadId,
+    category: n.category || "General Update",
+    status: n.status || undefined,
+    note: n.note,
+    actor: n.actor,
+    createdAt: n.createdAt,
+  }));
 }
 
-export async function addLeadNote(leadId: string, note: string, actor = "Admin"): Promise<LeadNote> {
+export async function addLeadNote(
+  leadId: string,
+  note: string,
+  actor = "Admin",
+  category = "General Update",
+  status?: string
+): Promise<LeadNote> {
   const now = new Date().toISOString();
   const id = `note-${Date.now()}`;
 
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      await execute(
-        "INSERT INTO `htb_notes` (id, lead_id, note, actor, created_at) VALUES (?, ?, ?, ?, ?)",
-        [id, leadId, note, actor, now]
-      );
+  const created = await prisma.leadNote.create({
+    data: {
+      id,
+      leadId,
+      category,
+      status: status || null,
+      note,
+      actor,
+      createdAt: now,
+    },
+  });
 
-      const lead = await getLeadById(leadId);
-      await execute(
-        "INSERT INTO `htb_activities` (id, lead_id, lead_name, type, description, actor, date, time, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          `act-${Date.now()}`,
-          leadId,
-          lead?.fullName || null,
-          "Note Added",
-          `Added note: "${note.substring(0, 60)}${note.length > 60 ? "..." : ""}"`,
-          actor,
-          now.split("T")[0],
-          "Just now",
-          now,
-        ]
-      );
+  // Update lead's notes summary, updatedAt, and optional status
+  await prisma.lead
+    .update({
+      where: { leadId },
+      data: {
+        notes: note,
+        updatedAt: now,
+        ...(status ? { status } : {}),
+      },
+    })
+    .catch(() => null);
 
-      return { id, leadId, note, actor, createdAt: now };
-    } catch (err) {
-      console.error("MySQL addLeadNote error:", err);
-    }
-  }
+  await prisma.leadActivity.create({
+    data: {
+      id: `act-${Date.now()}`,
+      leadId,
+      type: `${category} Logged`,
+      description: `[${category}] ${note.length > 80 ? note.slice(0, 80) + "..." : note}`,
+      actor,
+      date: now.split("T")[0],
+      time: "Just now",
+      createdAt: now,
+    },
+  });
 
-  // Fallback JSON
-  const db = readDb();
-  const newNote: LeadNote = { id, leadId, note, actor, createdAt: now };
-  db.notes.unshift(newNote);
-  writeDb(db);
-  return newNote;
+  return {
+    id: created.id,
+    leadId: created.leadId,
+    category: created.category,
+    status: created.status || undefined,
+    note: created.note,
+    actor: created.actor,
+    createdAt: created.createdAt,
+  };
 }
 
-/* ----------------------------------------------------
-   Notifications API Methods
----------------------------------------------------- */
+// ----------------------------------------------------
+// Notifications
+// ----------------------------------------------------
+
 export async function getNotifications(): Promise<Notification[]> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>("SELECT * FROM `htb_notifications` ORDER BY `created_at` DESC");
-      return rows.map(mapNotification);
-    } catch (err) {
-      console.error("MySQL getNotifications error:", err);
-    }
-  }
-  const db = readDb();
-  return db.notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const notifs = await prisma.notification.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  });
+
+  return notifs.map((n) => ({
+    id: n.id,
+    title: n.title,
+    message: n.message,
+    type: n.type as any,
+    read: n.isRead,
+    link: n.link,
+    createdAt: n.createdAt,
+  }));
 }
 
 export async function markNotificationRead(id: string): Promise<boolean> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      await execute("UPDATE `htb_notifications` SET `is_read` = 1 WHERE `id` = ?", [id]);
-      return true;
-    } catch (err) {
-      console.error("MySQL markNotificationRead error:", err);
-    }
-  }
-  const db = readDb();
-  const notif = db.notifications.find((n) => n.id === id);
-  if (notif) {
-    notif.read = true;
-    writeDb(db);
+  try {
+    await prisma.notification.update({
+      where: { id },
+      data: { isRead: true },
+    });
     return true;
+  } catch {
+    return false;
   }
-  return false;
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      await execute("UPDATE `htb_notifications` SET `is_read` = 1");
-      return;
-    } catch (err) {
-      console.error("MySQL markAllNotificationsRead error:", err);
-    }
-  }
-  const db = readDb();
-  db.notifications.forEach((n) => (n.read = true));
-  writeDb(db);
+  await prisma.notification.updateMany({
+    data: { isRead: true },
+  });
 }
 
-/* ----------------------------------------------------
-   Team & User Authentication Methods
----------------------------------------------------- */
+// ----------------------------------------------------
+// Team Management
+// ----------------------------------------------------
+
 export async function getTeam(): Promise<TeamMember[]> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>("SELECT * FROM `htb_team` ORDER BY `created_at` ASC");
-      return rows.map(mapTeamMember);
-    } catch (err) {
-      console.error("MySQL getTeam error:", err);
-    }
-  }
-  const db = readDb();
-  return db.team;
+  await seedDatabaseIfEmpty();
+
+  const members = await prisma.teamMember.findMany({
+    orderBy: { createdAt: "asc" },
+  });
+
+  return members.map((m) => ({
+    id: m.id,
+    name: m.name,
+    email: m.email,
+    role: m.role as AdminRole,
+    password: m.password,
+    avatar: m.avatar || undefined,
+    status: m.status as any,
+    phone: m.phone,
+    lastLogin: m.lastLogin || undefined,
+    createdAt: m.createdAt,
+  }));
 }
 
-export async function createTeamMember(data: Omit<TeamMember, "id" | "createdAt">): Promise<TeamMember> {
+export async function createTeamMember(
+  data: Omit<TeamMember, "id" | "createdAt">
+): Promise<TeamMember> {
   const now = new Date().toISOString();
   const id = `team-${Date.now()}`;
 
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      await execute(
-        "INSERT INTO `htb_team` (id, name, email, role, password, avatar, status, phone, last_login, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        [
-          id,
-          data.name,
-          data.email,
-          data.role,
-          data.password || "Admin@123",
-          data.avatar || null,
-          data.status || "Active",
-          data.phone,
-          data.lastLogin || null,
-          now,
-        ]
-      );
-      return { ...data, id, createdAt: now };
-    } catch (err) {
-      console.error("MySQL createTeamMember error:", err);
-    }
-  }
+  const created = await prisma.teamMember.create({
+    data: {
+      id,
+      name: data.name,
+      email: data.email.toLowerCase().trim(),
+      role: data.role,
+      password: data.password || "Admin@123",
+      avatar: data.avatar || null,
+      status: data.status || "Active",
+      phone: data.phone,
+      createdAt: now,
+    },
+  });
 
-  const db = readDb();
-  const newMember: TeamMember = { ...data, id, createdAt: now };
-  db.team.push(newMember);
-  writeDb(db);
-  return newMember;
+  return {
+    id: created.id,
+    name: created.name,
+    email: created.email,
+    role: created.role as AdminRole,
+    status: created.status as any,
+    phone: created.phone,
+    avatar: created.avatar || undefined,
+    createdAt: created.createdAt,
+  };
 }
 
-export async function updateTeamMember(id: string, data: Partial<TeamMember>): Promise<TeamMember | null> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const existing = await getTeam();
-      const target = existing.find((t) => t.id === id);
-      if (!target) return null;
+export async function updateTeamMember(
+  id: string,
+  data: Partial<TeamMember>
+): Promise<TeamMember | null> {
+  try {
+    const updated = await prisma.teamMember.update({
+      where: { id },
+      data: {
+        name: data.name,
+        email: data.email ? data.email.toLowerCase().trim() : undefined,
+        role: data.role,
+        phone: data.phone,
+        status: data.status,
+        password: data.password,
+      },
+    });
 
-      const merged = { ...target, ...data };
-      await execute(
-        "UPDATE `htb_team` SET `name`=?, `email`=?, `role`=?, `password`=?, `avatar`=?, `status`=?, `phone`=?, `last_login`=? WHERE `id`=?",
-        [
-          merged.name,
-          merged.email,
-          merged.role,
-          merged.password || "Admin@123",
-          merged.avatar || null,
-          merged.status,
-          merged.phone,
-          merged.lastLogin || null,
-          id,
-        ]
-      );
-      return merged;
-    } catch (err) {
-      console.error("MySQL updateTeamMember error:", err);
-    }
+    return {
+      id: updated.id,
+      name: updated.name,
+      email: updated.email,
+      role: updated.role as AdminRole,
+      status: updated.status as any,
+      phone: updated.phone,
+      avatar: updated.avatar || undefined,
+      lastLogin: updated.lastLogin || undefined,
+      createdAt: updated.createdAt,
+    };
+  } catch {
+    return null;
   }
-
-  const db = readDb();
-  const index = db.team.findIndex((t) => t.id === id);
-  if (index === -1) return null;
-  db.team[index] = { ...db.team[index], ...data };
-  writeDb(db);
-  return db.team[index];
 }
 
 export async function getUserPassword(email: string): Promise<string> {
-  const normalized = email.toLowerCase().trim();
-  const mysqlUp = await isMySqlAvailable();
+  const member = await prisma.teamMember.findUnique({
+    where: { email: email.toLowerCase().trim() },
+  });
 
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>("SELECT `password` FROM `htb_team` WHERE LOWER(`email`) = ? LIMIT 1", [normalized]);
-      if (rows.length > 0 && rows[0].password) {
-        return rows[0].password;
-      }
-      return "Admin@123";
-    } catch (err) {
-      console.error("MySQL getUserPassword error:", err);
-    }
-  }
-
-  const db = readDb();
-  const member = db.team.find((t) => t.email.toLowerCase() === normalized);
-  if (member && member.password) return member.password;
-  return "Admin@123";
+  if (member) return member.password;
+  if (email.toLowerCase().trim() === "admin@web.com") return "Admin@123";
+  return "";
 }
 
-export async function updateUserPassword(email: string, newPassword: string): Promise<boolean> {
-  const normalized = email.toLowerCase().trim();
-  const now = new Date().toISOString();
-  const mysqlUp = await isMySqlAvailable();
-
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>("SELECT * FROM `htb_team` WHERE LOWER(`email`) = ? LIMIT 1", [normalized]);
-      if (rows.length > 0) {
-        await execute("UPDATE `htb_team` SET `password` = ? WHERE LOWER(`email`) = ?", [newPassword, normalized]);
-      } else if (normalized === "admin@hightechbirds.com" || normalized === "dev.omkar05@gmail.com") {
-        await execute(
-          "INSERT INTO `htb_team` (id, name, email, role, password, status, phone, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-          [
-            "team-super",
-            "Omkar Bhoir",
-            normalized,
-            "Super Admin",
-            newPassword,
-            "Active",
-            "+91 99208 18481",
-            now,
-          ]
-        );
-      } else {
-        return false;
-      }
-
-      await execute(
-        "INSERT INTO `htb_activities` (id, type, description, actor, date, time, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [
-          `act-${Date.now()}`,
-          "Team Action",
-          `Security: Password updated in MySQL for administrator account (${normalized}).`,
-          normalized,
-          now.split("T")[0],
-          "Just now",
-          now,
-        ]
-      );
-      return true;
-    } catch (err) {
-      console.error("MySQL updateUserPassword error:", err);
-    }
-  }
-
-  // Fallback JSON
-  const db = readDb();
-  const index = db.team.findIndex((t) => t.email.toLowerCase() === normalized);
-  if (index !== -1) {
-    db.team[index].password = newPassword;
-  } else if (normalized === "admin@hightechbirds.com" || normalized === "dev.omkar05@gmail.com") {
-    db.team.push({
-      id: "team-super",
-      name: "Omkar Bhoir",
-      email: normalized,
-      role: "Super Admin",
-      status: "Active",
-      phone: "+91 99208 18481",
-      password: newPassword,
-      createdAt: now,
+export async function updateUserPassword(email: string, newPass: string): Promise<boolean> {
+  try {
+    await prisma.teamMember.update({
+      where: { email: email.toLowerCase().trim() },
+      data: { password: newPass },
     });
-  } else {
+    return true;
+  } catch {
     return false;
   }
-  writeDb(db);
-  return true;
 }
+
+export async function deleteTeamMember(id: string): Promise<boolean> {
+  try {
+    await prisma.teamMember.delete({
+      where: { id },
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// ----------------------------------------------------
+// Password Reset OTP Flow
+// ----------------------------------------------------
 
 export async function createPasswordReset(
   email: string
 ): Promise<{ otp: string; token: string; expiresAt: string } | null> {
-  const normalized = email.toLowerCase().trim();
-  const now = new Date().toISOString();
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const token = `rst_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      const isMaster = normalized === "admin@hightechbirds.com" || normalized === "dev.omkar05@gmail.com";
-      const teamRows = await query<any[]>("SELECT id FROM `htb_team` WHERE LOWER(`email`) = ? LIMIT 1", [normalized]);
-
-      if (teamRows.length === 0 && !isMaster) {
-        return null;
-      }
-
-      // Remove existing resets
-      await execute("DELETE FROM `htb_password_resets` WHERE LOWER(`email`) = ?", [normalized]);
-
-      await execute(
-        "INSERT INTO `htb_password_resets` (id, email, otp, token, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-        [`reset-${Date.now()}`, normalized, otp, token, expiresAt, now]
-      );
-
-      return { otp, token, expiresAt };
-    } catch (err) {
-      console.error("MySQL createPasswordReset error:", err);
-    }
-  }
-
-  // Fallback JSON
-  const db = readDb();
-  if (!db.passwordResets) db.passwordResets = [];
-  db.passwordResets = db.passwordResets.filter((r) => r.email.toLowerCase() !== normalized);
-  db.passwordResets.push({
-    id: `reset-${Date.now()}`,
-    email: normalized,
-    otp,
-    token,
-    expiresAt,
-    createdAt: now,
+  const user = await prisma.teamMember.findUnique({
+    where: { email: email.toLowerCase().trim() },
   });
-  writeDb(db);
+
+  if (!user) return null;
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const token = `reset_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString(); // 15 minutes
+  const now = new Date().toISOString();
+
+  await prisma.passwordReset.create({
+    data: {
+      id: `pr-${Date.now()}`,
+      email: email.toLowerCase().trim(),
+      otp,
+      token,
+      expiresAt,
+      createdAt: now,
+    },
+  });
+
   return { otp, token, expiresAt };
 }
 
 export async function resetPasswordWithOtp(
   email: string,
   otp: string,
-  newPassword: string
+  newPass: string
 ): Promise<{ success: boolean; error?: string }> {
-  const normalized = email.toLowerCase().trim();
-  const mysqlUp = await isMySqlAvailable();
+  const normalizedEmail = email.toLowerCase().trim();
+  const now = new Date().toISOString();
 
-  if (mysqlUp) {
-    try {
-      const rows = await query<any[]>(
-        "SELECT * FROM `htb_password_resets` WHERE LOWER(`email`) = ? AND `otp` = ? LIMIT 1",
-        [normalized, otp.trim()]
-      );
+  const reset = await prisma.passwordReset.findFirst({
+    where: {
+      email: normalizedEmail,
+      otp,
+      expiresAt: { gt: now },
+    },
+    orderBy: { createdAt: "desc" },
+  });
 
-      if (rows.length === 0) {
-        return { success: false, error: "Invalid verification code. Please check and try again." };
-      }
-
-      const record = rows[0];
-      if (new Date(record.expires_at).getTime() < Date.now()) {
-        await execute("DELETE FROM `htb_password_resets` WHERE `id` = ?", [record.id]);
-        return { success: false, error: "Verification code has expired. Please request a new one." };
-      }
-
-      // Update password
-      const updated = await updateUserPassword(normalized, newPassword);
-      if (!updated) {
-        return { success: false, error: "Could not find account to update password." };
-      }
-
-      // Delete used reset
-      await execute("DELETE FROM `htb_password_resets` WHERE LOWER(`email`) = ?", [normalized]);
-      return { success: true };
-    } catch (err) {
-      console.error("MySQL resetPasswordWithOtp error:", err);
-    }
+  if (!reset) {
+    return { success: false, error: "Invalid or expired verification code." };
   }
 
-  // Fallback JSON
-  const db = readDb();
-  if (!db.passwordResets || db.passwordResets.length === 0) {
-    return { success: false, error: "No reset request found for this email." };
-  }
-  const recordIndex = db.passwordResets.findIndex(
-    (r) => r.email.toLowerCase() === normalized && r.otp.trim() === otp.trim()
-  );
-  if (recordIndex === -1) {
-    return { success: false, error: "Invalid verification code. Please check and try again." };
-  }
-  const record = db.passwordResets[recordIndex];
-  if (new Date(record.expiresAt).getTime() < Date.now()) {
-    db.passwordResets.splice(recordIndex, 1);
-    writeDb(db);
-    return { success: false, error: "Verification code has expired. Please request a new one." };
+  const updated = await updateUserPassword(normalizedEmail, newPass);
+  if (updated) {
+    await prisma.passwordReset.deleteMany({
+      where: { email: normalizedEmail },
+    });
+    return { success: true };
   }
 
-  await updateUserPassword(normalized, newPassword);
-  db.passwordResets.splice(recordIndex, 1);
-  writeDb(db);
-  return { success: true };
+  return { success: false, error: "Failed to update account password." };
 }
 
-/* ----------------------------------------------------
-   Settings Methods
----------------------------------------------------- */
+// ----------------------------------------------------
+// Settings Management
+// ----------------------------------------------------
+
 export async function getSettings(): Promise<Settings> {
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
+  await seedDatabaseIfEmpty();
+
+  const setting = await prisma.setting.findUnique({
+    where: { keyName: "app_settings" },
+  });
+
+  if (setting) {
     try {
-      const rows = await query<any[]>("SELECT `value_json` FROM `htb_settings` WHERE `key_name` = 'app_settings' LIMIT 1");
-      if (rows.length > 0 && rows[0].value_json) {
-        return JSON.parse(rows[0].value_json);
-      }
-    } catch (err) {
-      console.error("MySQL getSettings error:", err);
-    }
+      return JSON.parse(setting.valueJson);
+    } catch {}
   }
-  const db = readDb();
-  return db.settings || INITIAL_SETTINGS;
+
+  return INITIAL_SETTINGS;
 }
 
 export async function updateSettings(updates: Partial<Settings>): Promise<Settings> {
   const current = await getSettings();
   const merged = { ...current, ...updates };
+  const now = new Date().toISOString();
 
-  const mysqlUp = await isMySqlAvailable();
-  if (mysqlUp) {
-    try {
-      await execute(
-        "INSERT INTO `htb_settings` (`key_name`, `value_json`, `updated_at`) VALUES ('app_settings', ?, ?) ON DUPLICATE KEY UPDATE `value_json` = VALUES(`value_json`), `updated_at` = VALUES(`updated_at`)",
-        [JSON.stringify(merged), new Date().toISOString()]
-      );
-      return merged;
-    } catch (err) {
-      console.error("MySQL updateSettings error:", err);
-    }
-  }
+  await prisma.setting.upsert({
+    where: { keyName: "app_settings" },
+    update: {
+      valueJson: JSON.stringify(merged),
+      updatedAt: now,
+    },
+    create: {
+      keyName: "app_settings",
+      valueJson: JSON.stringify(merged),
+      updatedAt: now,
+    },
+  });
 
-  const db = readDb();
-  db.settings = merged;
-  writeDb(db);
   return merged;
 }
 
-/* ----------------------------------------------------
-   Dashboard Metrics
----------------------------------------------------- */
+// ----------------------------------------------------
+// High-Performance Dashboard Aggregations
+// ----------------------------------------------------
+
 export async function getDashboardStats(): Promise<DashboardStats> {
-  const leads = await getLeads();
-  const followUps = await getFollowUps();
-  const scheduledCalls = await getScheduledCalls();
-  const careerApplications = await getCareerApplications();
-  const activities = await getActivities(10);
+  await seedDatabaseIfEmpty();
 
   const todayStr = new Date().toISOString().split("T")[0];
 
-  const totalLeads = leads.length;
-  const newLeadsToday = leads.filter((l) => l.createdAt.startsWith(todayStr)).length;
-  const followUpsDueToday = followUps.filter(
-    (f) => f.status !== "Completed" && f.date === todayStr
-  ).length;
-
-  const scheduledCallsUpcoming = scheduledCalls.filter(
-    (c) => c.status === "Confirmed" || c.status === "Pending"
-  ).length;
-
-  const wonLeadsMonth = leads.filter((l) => l.status === "WON").length;
-  const careerCount = careerApplications.length;
+  // Run optimized aggregation queries in parallel
+  const [
+    totalLeads,
+    newLeadsToday,
+    followUpsDueToday,
+    scheduledCallsUpcoming,
+    wonLeadsMonth,
+    careerCount,
+    statusGroups,
+    followUpList,
+    leadsBySourceGroup,
+    serviceGroup,
+    upcomingCalls,
+    todayFollowUps,
+    recentLeads,
+    recentActivities,
+  ] = await Promise.all([
+    prisma.lead.count(),
+    prisma.lead.count({ where: { createdAt: { startsWith: todayStr } } }),
+    prisma.followUp.count({ where: { date: todayStr, status: { not: "Completed" } } }),
+    prisma.scheduledCall.count({
+      where: { status: { in: ["Confirmed", "Pending"] } },
+    }),
+    prisma.lead.count({ where: { status: "WON" } }),
+    prisma.careerApplication.count(),
+    prisma.lead.groupBy({ by: ["status"], _count: { status: true } }),
+    prisma.followUp.findMany({
+      select: { date: true, status: true },
+    }),
+    prisma.lead.groupBy({ by: ["source"], _count: { source: true } }),
+    prisma.lead.groupBy({ by: ["service"], _count: { service: true } }),
+    prisma.scheduledCall.findMany({
+      where: { status: { notIn: ["Completed", "Cancelled"] } },
+      orderBy: { createdAt: "desc" },
+      take: 4,
+    }),
+    prisma.followUp.findMany({
+      where: { date: todayStr },
+      orderBy: { createdAt: "desc" },
+      take: 5,
+    }),
+    prisma.lead.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    }),
+    prisma.leadActivity.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 7,
+    }),
+  ]);
 
   const pipelineCounts: Record<LeadStatus, number> = {
     NEW: 0,
@@ -1611,59 +1384,109 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     LOST: 0,
   };
 
-  leads.forEach((lead) => {
-    if (pipelineCounts[lead.status] !== undefined) {
-      pipelineCounts[lead.status]++;
+  statusGroups.forEach((g) => {
+    if (pipelineCounts[g.status as LeadStatus] !== undefined) {
+      pipelineCounts[g.status as LeadStatus] = g._count.status;
     }
   });
 
   const followUpCounts = {
-    overdue: followUps.filter((f) => f.status !== "Completed" && f.date < todayStr).length,
+    overdue: followUpList.filter((f) => f.status !== "Completed" && f.date < todayStr).length,
     today: followUpsDueToday,
-    upcoming: followUps.filter((f) => f.status !== "Completed" && f.date > todayStr).length,
-    completed: followUps.filter((f) => f.status === "Completed").length,
+    upcoming: followUpList.filter((f) => f.status !== "Completed" && f.date > todayStr).length,
+    completed: followUpList.filter((f) => f.status === "Completed").length,
   };
 
-  const sourceMap: Record<string, number> = {};
-  leads.forEach((l) => {
-    sourceMap[l.source] = (sourceMap[l.source] || 0) + 1;
-  });
-
-  const leadsBySource = Object.entries(sourceMap).map(([src, count]) => ({
-    source: src as LeadSource,
-    count,
-    percentage: Math.round((count / (totalLeads || 1)) * 100),
+  const leadsBySource = leadsBySourceGroup.map((g) => ({
+    source: g.source as LeadSource,
+    count: g._count.source,
+    percentage: Math.round((g._count.source / (totalLeads || 1)) * 100),
   }));
 
-  const serviceMap: Record<string, number> = {};
-  leads.forEach((l) => {
-    serviceMap[l.service] = (serviceMap[l.service] || 0) + 1;
-  });
-
-  const mostRequestedServices = Object.entries(serviceMap)
-    .map(([service, count]) => ({ service, count }))
+  const mostRequestedServices = serviceGroup
+    .map((g) => ({ service: g.service, count: g._count.service }))
     .sort((a, b) => b.count - a.count);
 
   return {
     totalLeads,
-    totalLeadsTrend: "↑ 12%",
+    totalLeadsTrend: "Real-time",
     newLeadsToday,
-    newLeadsTrend: "↑ 24%",
+    newLeadsTrend: "Today",
     followUpsDueToday,
-    followUpsTrend: "↑ 5%",
+    followUpsTrend: "Due",
     scheduledCallsUpcoming,
-    scheduledCallsTrend: "↑ 12%",
+    scheduledCallsTrend: "Upcoming",
     wonLeadsMonth,
-    wonLeadsTrend: "↑ 18%",
+    wonLeadsTrend: "Won",
     careerApplications: careerCount,
-    careerApplicationsTrend: "↑ 8%",
+    careerApplicationsTrend: "Total",
     pipelineCounts,
     followUpCounts,
     leadsBySource,
     mostRequestedServices,
-    upcomingCalls: scheduledCalls.filter((c) => c.status !== "Completed" && c.status !== "Cancelled").slice(0, 4),
-    todayFollowUps: followUps.filter((f) => f.date === todayStr).slice(0, 5),
-    recentLeads: leads.slice(0, 8),
-    recentActivities: activities.slice(0, 7),
+    upcomingCalls: upcomingCalls.map((c) => ({
+      id: c.id,
+      callId: c.callId,
+      fullName: c.fullName,
+      email: c.email,
+      mobile: c.mobile,
+      service: c.service,
+      date: c.date,
+      time: c.time,
+      timezone: c.timezone,
+      status: c.status as any,
+      notes: c.notes || undefined,
+      assignedTo: c.assignedTo,
+      leadId: c.leadId || undefined,
+      createdAt: c.createdAt,
+    })),
+    todayFollowUps: todayFollowUps.map((f) => ({
+      id: f.id,
+      followUpId: f.followUpId,
+      leadId: f.leadId,
+      leadName: f.leadName,
+      leadMobile: f.leadMobile,
+      date: f.date,
+      time: f.time,
+      type: f.type as any,
+      assignedTo: f.assignedTo,
+      status: f.status as any,
+      notes: f.notes,
+      completedAt: f.completedAt || undefined,
+      createdAt: f.createdAt,
+    })),
+    recentLeads: recentLeads.map((l) => ({
+      id: l.id,
+      leadId: l.leadId,
+      fullName: l.fullName,
+      email: l.email,
+      mobile: l.mobile,
+      service: l.service,
+      budget: l.budget || undefined,
+      source: l.source as LeadSource,
+      status: l.status as LeadStatus,
+      priority: l.priority as any,
+      assignedTo: l.assignedTo,
+      notes: l.notes || undefined,
+      lastContact: l.lastContact || undefined,
+      nextFollowUp: l.nextFollowUp || undefined,
+      closingNote: l.closingNote || undefined,
+      lostReason: l.lostReason as any,
+      createdAt: l.createdAt,
+      updatedAt: l.updatedAt,
+    })),
+    recentActivities: recentActivities.map((a) => ({
+      id: a.id,
+      leadId: a.leadId || undefined,
+      leadName: a.leadName || undefined,
+      type: a.type as any,
+      description: a.description,
+      actor: a.actor,
+      previousStatus: a.previousStatus || undefined,
+      newStatus: a.newStatus || undefined,
+      date: a.date,
+      time: a.time,
+      createdAt: a.createdAt,
+    })),
   };
 }

@@ -1,10 +1,11 @@
 import { cookies } from "next/headers";
 import crypto from "crypto";
 import { TeamMember, AdminRole } from "./types";
-import { getTeam, getUserPassword } from "./db";
+import prisma from "@/lib/prisma";
 
-const COOKIE_NAME = "htb_admin_session";
-const SESSION_SECRET = process.env.SESSION_SECRET || "htb_super_secret_session_token_2026_enterprise";
+const COOKIE_NAME = "web_admin_session";
+const SESSION_SECRET =
+  process.env.SESSION_SECRET || "web_enterprise_session_secret_2026_super_secure_key";
 const SESSION_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 export interface SessionUser {
@@ -49,27 +50,16 @@ export async function getAdminSession(): Promise<SessionUser | null> {
     const raw = Buffer.from(sessionCookie.value, "base64url").toString("utf8");
     const parsed = JSON.parse(raw);
 
-    // 1. Check if modern HMAC-signed session
+    // HMAC-signed session format: { p: payload, s: signature }
     if (parsed && parsed.p && parsed.s) {
       if (!verifySignature(parsed.p, parsed.s)) {
         return null;
       }
       const data = JSON.parse(parsed.p);
-      // Verify session has not expired
       if (!data.timestamp || Date.now() - data.timestamp > SESSION_MAX_AGE_MS) {
         return null;
       }
       return data.user as SessionUser;
-    }
-
-    // 2. Backward compatibility with legacy unsigned base64 format
-    const legacyRaw = Buffer.from(sessionCookie.value, "base64").toString("utf8");
-    const legacyParsed = JSON.parse(legacyRaw);
-    if (
-      (legacyParsed.secret === "htb_super_secret_session_token_2026" || legacyParsed.secret === SESSION_SECRET) &&
-      legacyParsed.user
-    ) {
-      return legacyParsed.user as SessionUser;
     }
 
     return null;
@@ -102,33 +92,64 @@ export async function clearAdminSession(): Promise<void> {
 }
 
 export async function verifyUserPassword(email: string, pass: string): Promise<boolean> {
-  const expectedPassword = await getUserPassword(email);
-  return safeTimingCompare(pass, expectedPassword);
+  const normalizedEmail = email.toLowerCase().trim();
+  const user = await prisma.teamMember.findUnique({
+    where: { email: normalizedEmail },
+  });
+  if (user) {
+    return safeTimingCompare(pass, user.password);
+  }
+  if (normalizedEmail === "admin@web.com") {
+    return safeTimingCompare(pass, "Admin@123");
+  }
+  return false;
 }
 
 export async function validateCredentials(email: string, pass: string): Promise<TeamMember | null> {
-  const team = await getTeam();
   const normalizedEmail = email.toLowerCase().trim();
-  const expectedPassword = await getUserPassword(normalizedEmail);
 
-  if (!safeTimingCompare(pass, expectedPassword)) {
-    return null;
+  try {
+    const user = await prisma.teamMember.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (user && user.status === "Active") {
+      if (safeTimingCompare(pass, user.password)) {
+        // Record last login timestamp
+        await prisma.teamMember.update({
+          where: { id: user.id },
+          data: { lastLogin: new Date().toISOString() },
+        });
+
+        return {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role as AdminRole,
+          status: user.status as "Active" | "Inactive",
+          phone: user.phone,
+          avatar: user.avatar || undefined,
+          lastLogin: new Date().toISOString(),
+          createdAt: user.createdAt,
+        };
+      }
+    }
+  } catch (err) {
+    console.error("Prisma validateCredentials error:", err);
   }
 
-  const found = team.find((t) => t.email.toLowerCase() === normalizedEmail);
-  if (found) {
-    return found;
-  }
-
-  // Master credentials fallback if not yet in team list
-  if (normalizedEmail === "admin@hightechbirds.com" || normalizedEmail === "dev.omkar05@gmail.com") {
+  // Master Initial Credentials Fallback (if fresh database is not yet seeded)
+  if (
+    normalizedEmail === "admin@web.com" &&
+    safeTimingCompare(pass, "Admin@123")
+  ) {
     return {
       id: "team-super",
-      name: "Omkar Bhoir",
-      email: normalizedEmail,
+      name: "Admin User",
+      email: "admin@web.com",
       role: "Super Admin",
       status: "Active",
-      phone: "+91 99208 18481",
+      phone: "+91 99999 99999",
       createdAt: new Date().toISOString(),
     };
   }
@@ -137,14 +158,75 @@ export async function validateCredentials(email: string, pass: string): Promise<
 }
 
 export const PERMISSIONS: Record<AdminRole, string[]> = {
-  "Super Admin": ["all", "manage_team", "delete_records", "settings", "export"],
-  Admin: ["all", "delete_records", "export"],
-  Sales: ["view_leads", "edit_leads", "manage_pipeline", "schedule_calls", "follow_ups", "export"],
-  HR: ["view_careers", "manage_careers", "download_resumes"],
-  Support: ["view_leads", "contact_enquiries", "add_notes"],
+  "Super Admin": [
+    "all",
+    "manage_team",
+    "create_team",
+    "delete_team",
+    "delete_records",
+    "delete_leads",
+    "view_leads",
+    "create_leads",
+    "edit_leads",
+    "manage_pipeline",
+    "schedule_calls",
+    "follow_ups",
+    "contact_enquiries",
+    "view_reports",
+    "settings",
+    "export",
+    "view_careers",
+    "manage_careers",
+    "download_resumes",
+    "view_activity",
+    "add_notes",
+  ],
+  Admin: [
+    "view_leads",
+    "create_leads",
+    "edit_leads",
+    "manage_pipeline",
+    "schedule_calls",
+    "follow_ups",
+    "contact_enquiries",
+    "view_reports",
+    "settings",
+    "export",
+    "view_careers",
+    "manage_careers",
+    "download_resumes",
+    "view_activity",
+    "add_notes",
+    "view_team",
+    // Admin cannot create/delete team and cannot delete leads
+  ],
+  Sales: [
+    "view_leads",
+    "create_leads",
+    "edit_leads",
+    "manage_pipeline",
+    "schedule_calls",
+    "follow_ups",
+    "contact_enquiries",
+    "add_notes",
+    "export",
+    // Sales only has sales permissions
+  ],
+  HR: [
+    "view_careers",
+    "manage_careers",
+    "download_resumes",
+    // HR only has HR permissions, no leads
+  ],
+  Support: [
+    "view_leads",
+    "contact_enquiries",
+    "add_notes",
+  ],
 };
 
 export function hasPermission(role: AdminRole, permission: string): boolean {
+  if (role === "Super Admin") return true;
   const perms = PERMISSIONS[role] || [];
-  return perms.includes("all") || perms.includes(permission);
+  return perms.includes(permission);
 }

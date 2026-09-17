@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/admin/auth";
-import { readDb } from "@/lib/admin/db";
+import { getAdminSession, hasPermission } from "@/lib/admin/auth";
+import prisma from "@/lib/prisma";
 
 export async function GET(request: Request) {
   const session = await getAdminSession();
@@ -8,12 +8,14 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!hasPermission(session.role, "view_reports")) {
+    return NextResponse.json({ error: "Forbidden: Access restricted to Super Admin and Admin" }, { status: 403 });
+  }
+
   const { searchParams } = new URL(request.url);
   const range = searchParams.get("range") || "30days";
 
-  const db = readDb();
   const now = new Date();
-
   let daysBack = 30;
   if (range === "today") daysBack = 1;
   if (range === "7days") daysBack = 7;
@@ -21,48 +23,60 @@ export async function GET(request: Request) {
   if (range === "thisMonth") daysBack = now.getDate();
 
   const cutoff = new Date(now.getTime() - daysBack * 24 * 3600 * 1000).toISOString();
-  const filteredLeads = db.leads.filter((l) => l.createdAt >= cutoff);
 
-  const total = filteredLeads.length;
-  const won = filteredLeads.filter((l) => l.status === "WON").length;
-  const lost = filteredLeads.filter((l) => l.status === "LOST").length;
-  const active = total - won - lost;
+  const [
+    totalLeads,
+    wonLeads,
+    lostLeads,
+    sourceGroups,
+    serviceGroups,
+    scheduledCallsCount,
+    completedFollowUps,
+    overdueFollowUps,
+  ] = await Promise.all([
+    prisma.lead.count({ where: { createdAt: { gte: cutoff } } }),
+    prisma.lead.count({ where: { createdAt: { gte: cutoff }, status: "WON" } }),
+    prisma.lead.count({ where: { createdAt: { gte: cutoff }, status: "LOST" } }),
+    prisma.lead.groupBy({
+      by: ["source"],
+      where: { createdAt: { gte: cutoff } },
+      _count: { source: true },
+    }),
+    prisma.lead.groupBy({
+      by: ["service"],
+      where: { createdAt: { gte: cutoff } },
+      _count: { service: true },
+    }),
+    prisma.scheduledCall.count(),
+    prisma.followUp.count({ where: { status: "Completed" } }),
+    prisma.followUp.count({
+      where: {
+        status: { not: "Completed" },
+        date: { lt: now.toISOString().split("T")[0] },
+      },
+    }),
+  ]);
 
-  const winRate = total > 0 ? Math.round((won / total) * 100) : 0;
-
-  // Source distribution
-  const sources: Record<string, number> = {};
-  filteredLeads.forEach((l) => {
-    sources[l.source] = (sources[l.source] || 0) + 1;
-  });
-
-  // Service demand
-  const services: Record<string, number> = {};
-  filteredLeads.forEach((l) => {
-    services[l.service] = (services[l.service] || 0) + 1;
-  });
-
-  // Follow-up performance
-  const completedFollowUps = db.followUps.filter((f) => f.status === "Completed").length;
-  const overdueFollowUps = db.followUps.filter((f) => f.status === "Overdue").length;
+  const activeLeads = totalLeads - wonLeads - lostLeads;
+  const winRate = totalLeads > 0 ? Math.round((wonLeads / totalLeads) * 100) : 0;
 
   return NextResponse.json({
     success: true,
     range,
     metrics: {
-      totalLeads: total,
-      wonLeads: won,
-      lostLeads: lost,
-      activeLeads: active,
+      totalLeads,
+      wonLeads,
+      lostLeads,
+      activeLeads,
       winRate: `${winRate}%`,
       conversionDaysAvg: "14 Days",
-      scheduledCalls: db.scheduledCalls.length,
+      scheduledCalls: scheduledCallsCount,
       completedFollowUps,
       overdueFollowUps,
     },
-    sources: Object.entries(sources).map(([source, count]) => ({ source, count })),
-    services: Object.entries(services)
-      .map(([service, count]) => ({ service, count }))
+    sources: sourceGroups.map((g) => ({ source: g.source, count: g._count.source })),
+    services: serviceGroups
+      .map((g) => ({ service: g.service, count: g._count.service }))
       .sort((a, b) => b.count - a.count),
   });
 }
