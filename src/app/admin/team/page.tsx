@@ -278,12 +278,12 @@ export default function TeamManagementPage() {
                 <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
                 <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
               </tr>
-              <tr>
-                <td className="py-3 px-4 font-medium text-slate-800">
+              <tr className="bg-emerald-50/30">
+                <td className="py-3 px-4 font-bold text-slate-900">
                   Company Settings & Preferences
                 </td>
-                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
-                <td className="py-3 px-3 text-center text-emerald-600 font-bold">✓ Full</td>
+                <td className="py-3 px-3 text-center text-emerald-700 font-extrabold">✓ Exclusive</td>
+                <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
                 <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
                 <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>
                 <td className="py-3 px-3 text-center text-slate-400 font-bold">✗ No</td>

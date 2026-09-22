@@ -110,18 +110,19 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // - Team management: Super Admin ONLY (Admin cannot create/manage team)
-  if (pathname.startsWith("/admin/team")) {
+  // - System settings & Team management: Super Admin ONLY (Admin, Sales, HR, Support blocked)
+  if (pathname.startsWith("/admin/team") || pathname.startsWith("/admin/settings")) {
     if (role !== "Super Admin") {
       return NextResponse.redirect(new URL("/admin?error=forbidden", request.url));
     }
   }
 
-  // - System settings, Reports & Blog Management: Super Admin & Admin only (Sales & HR blocked)
+  // - Reports & Content Management: Super Admin & Admin only (Sales & HR blocked)
   if (
-    pathname.startsWith("/admin/settings") ||
     pathname.startsWith("/admin/reports") ||
-    pathname.startsWith("/admin/blogs")
+    pathname.startsWith("/admin/blogs") ||
+    pathname.startsWith("/admin/portfolio") ||
+    pathname.startsWith("/admin/services")
   ) {
     if (role !== "Super Admin" && role !== "Admin") {
       return NextResponse.redirect(new URL("/admin?error=forbidden", request.url));

@@ -233,7 +233,7 @@ export function AdminSidebar({ mobileOpen, setMobileOpen, user: propUser }: Admi
   // RBAC Navigation Filtering:
   // 1. HR: Only CAREERS (no leads, no dashboard, no team, no settings)
   // 2. Sales: Only MAIN, LEADS, COMMUNICATION (no careers, no reports, no team, no settings)
-  // 3. Admin: MAIN, LEADS, CAREERS, COMMUNICATION, REPORTS, and in MANAGEMENT only Settings (no Team creation/management)
+  // 3. Admin: MAIN, LEADS, CAREERS, COMMUNICATION, CONTENT, REPORTS (no MANAGEMENT: Team and Settings are Super Admin only)
   // 4. Super Admin: ALL groups and links
   const navGroups = React.useMemo(() => {
     if (role === "HR") {
@@ -245,15 +245,7 @@ export function AdminSidebar({ mobileOpen, setMobileOpen, user: propUser }: Admi
       );
     }
     if (role === "Admin") {
-      return allNavGroups.map((g) => {
-        if (g.group === "MANAGEMENT") {
-          return {
-            ...g,
-            items: g.items.filter((item) => item.name === "Settings"),
-          };
-        }
-        return g;
-      });
+      return allNavGroups.filter((g) => g.group !== "MANAGEMENT");
     }
     return allNavGroups;
   }, [role]);

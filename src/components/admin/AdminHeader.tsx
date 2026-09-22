@@ -398,8 +398,8 @@ export function AdminHeader({ onOpenMobileMenu, onOpenQuickAdd, user: propUser }
               </div>
 
               <div className="py-1">
-                {/* Settings: Super Admin & Admin only */}
-                {(role === "Super Admin" || role === "Admin") && (
+                {/* Settings: Super Admin only */}
+                {role === "Super Admin" && (
                   <Link
                     href="/admin/settings"
                     onClick={() => setShowProfileMenu(false)}
