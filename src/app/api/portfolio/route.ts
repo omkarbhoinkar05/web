@@ -7,8 +7,9 @@ export async function GET(request: Request) {
     const slug = searchParams.get("slug") || undefined;
     const category = searchParams.get("category") || undefined;
     const search = searchParams.get("search") || undefined;
+    const home = searchParams.get("home") === "true" || searchParams.get("featured") === "true";
     const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "50", 10);
+    const limit = home ? 4 : parseInt(searchParams.get("limit") || "50", 10);
     const skip = (page - 1) * limit;
 
     // Single item by slug
@@ -20,13 +21,15 @@ export async function GET(request: Request) {
       return NextResponse.json({ success: true, project });
     }
 
-    // Public endpoint strictly returns Active projects only
+    // Public endpoint strictly returns Active projects only.
+    // When home=true, strictly returns only projects configured with showOnHome = true (up to 4 max).
     const { portfolios, total } = await getPortfolios({
       status: "Active",
       category,
       search,
-      limit,
-      skip,
+      showOnHome: home ? true : undefined,
+      limit: home ? 4 : limit,
+      skip: home ? 0 : skip,
     });
 
     return NextResponse.json({

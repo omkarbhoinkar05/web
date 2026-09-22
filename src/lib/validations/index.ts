@@ -245,6 +245,7 @@ export const portfolioItemSchema = z.object({
   tags: z.union([z.string(), z.array(z.string())]).default("All Projects, Web App"),
   displayOrder: z.coerce.number().int().default(0),
   status: z.enum(["Active", "Inactive"]).default("Active"),
+  showOnHome: z.boolean().default(false),
   techStack: z.string().trim().optional().nullable(),
   impactMetric: z.string().trim().optional().nullable(),
   impactLabel: z.string().trim().optional().nullable(),

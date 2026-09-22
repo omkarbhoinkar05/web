@@ -22,12 +22,13 @@ export async function GET(request: Request) {
   const limit = parseInt(searchParams.get("limit") || "100", 10);
   const skip = (page - 1) * limit;
 
-  const [{ portfolios, total }, totalAll, activeCount, inactiveCount, allCategories] =
+  const [{ portfolios, total }, totalAll, activeCount, inactiveCount, homeCount, allCategories] =
     await Promise.all([
       getPortfolios({ search, status, category, limit, skip }),
       prisma.portfolioItem.count(),
       prisma.portfolioItem.count({ where: { status: "Active" } }),
       prisma.portfolioItem.count({ where: { status: "Inactive" } }),
+      prisma.portfolioItem.count({ where: { showOnHome: true } }),
       prisma.portfolioItem.findMany({
         select: { category: true },
         distinct: ["category"],
@@ -38,6 +39,7 @@ export async function GET(request: Request) {
     total: totalAll,
     active: activeCount,
     inactive: inactiveCount,
+    homeCount,
     categoriesCount: allCategories.length,
     categories: allCategories.map((c) => c.category),
   };
@@ -86,6 +88,7 @@ export async function POST(request: Request) {
       tags: data.tags,
       displayOrder: data.displayOrder,
       status: data.status,
+      showOnHome: data.showOnHome,
       techStack: data.techStack,
       impactMetric: data.impactMetric,
       impactLabel: data.impactLabel,
@@ -98,9 +101,10 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     console.error("POST /api/admin/portfolio error:", error);
+    const isQuotaError = error.message?.includes("Only 4 portfolio projects");
     return NextResponse.json(
       { success: false, error: error.message || "Failed to create portfolio project" },
-      { status: 500 }
+      { status: isQuotaError ? 400 : 500 }
     );
   }
 }

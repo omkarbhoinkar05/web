@@ -61,9 +61,10 @@ export async function PUT(request: Request, { params }: RouteParams) {
     });
   } catch (error: any) {
     console.error("PUT /api/admin/portfolio/[id] error:", error);
+    const isQuotaError = error.message?.includes("Only 4 portfolio projects");
     return NextResponse.json(
       { success: false, error: error.message || "Failed to update portfolio project" },
-      { status: 500 }
+      { status: isQuotaError ? 400 : 500 }
     );
   }
 }

@@ -236,6 +236,7 @@ model PortfolioItem {
   tags         String   @db.VarChar(255)
   displayOrder Int      @default(0) @map("display_order")
   status       String   @default("Active") @db.VarChar(50)
+  showOnHome   Boolean  @default(false) @map("show_on_home")
   techStack    String?  @map("tech_stack") @db.VarChar(255)
   impactMetric String?  @map("impact_metric") @db.VarChar(50)
   impactLabel  String?  @map("impact_label") @db.VarChar(100)
@@ -245,6 +246,7 @@ model PortfolioItem {
   @@index([status], map: "idx_portfolios_status")
   @@index([category], map: "idx_portfolios_category")
   @@index([displayOrder], map: "idx_portfolios_order")
+  @@index([showOnHome], map: "idx_portfolios_home")
   @@map("web_portfolios")
 }
 

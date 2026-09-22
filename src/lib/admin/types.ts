@@ -278,6 +278,7 @@ export interface PortfolioItem {
   tags: string;
   displayOrder: number;
   status: PortfolioStatus;
+  showOnHome: boolean;
   techStack?: string | null;
   impactMetric?: string | null;
   impactLabel?: string | null;

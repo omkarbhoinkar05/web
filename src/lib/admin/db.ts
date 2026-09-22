@@ -1812,6 +1812,7 @@ export const INITIAL_PORTFOLIO_PROJECTS: Array<{
   tags: string;
   displayOrder: number;
   status: "Active" | "Inactive";
+  showOnHome: boolean;
   techStack?: string;
   impactMetric?: string;
   impactLabel?: string;
@@ -1830,6 +1831,7 @@ export const INITIAL_PORTFOLIO_PROJECTS: Array<{
     tags: "All Projects, Web App, Dynamic Website, Web Design",
     displayOrder: 1,
     status: "Active",
+    showOnHome: true,
     techStack: "Next.js 16, WebRTC, PostgreSQL, Tailwind CSS",
     impactMetric: "+310%",
     impactLabel: "Student Enrollment",
@@ -1848,6 +1850,7 @@ export const INITIAL_PORTFOLIO_PROJECTS: Array<{
     tags: "All Projects, E-Commerce, Web App, Web Design",
     displayOrder: 2,
     status: "Active",
+    showOnHome: true,
     techStack: "Next.js 16, Redis, Stripe Connect, Prisma ORM",
     impactMetric: "$2.4M+",
     impactLabel: "Annual GMV",
@@ -1866,6 +1869,7 @@ export const INITIAL_PORTFOLIO_PROJECTS: Array<{
     tags: "All Projects, SaaS App, Web App, Web Design",
     displayOrder: 3,
     status: "Active",
+    showOnHome: true,
     techStack: "React 19, Node.js, WebSockets, Tailwind CSS",
     impactMetric: "+45%",
     impactLabel: "Team Productivity",
@@ -1884,6 +1888,7 @@ export const INITIAL_PORTFOLIO_PROJECTS: Array<{
     tags: "All Projects, ERP Software, Web App, Dynamic Website",
     displayOrder: 4,
     status: "Active",
+    showOnHome: true,
     techStack: "Next.js, GraphQL, PostgreSQL, Tailwind CSS",
     impactMetric: "-62%",
     impactLabel: "Operational Overhead",
@@ -1902,6 +1907,7 @@ export const INITIAL_PORTFOLIO_PROJECTS: Array<{
     tags: "All Projects, Web App, SaaS App, Dynamic Website",
     displayOrder: 5,
     status: "Active",
+    showOnHome: false,
     techStack: "Next.js 16, WebRTC, HIPAA Cloud, Tailwind CSS",
     impactMetric: "40K+",
     impactLabel: "Monthly Consultations",
@@ -1920,6 +1926,7 @@ export const INITIAL_PORTFOLIO_PROJECTS: Array<{
     tags: "All Projects, Dynamic Website, Web Design, Web App",
     displayOrder: 6,
     status: "Active",
+    showOnHome: false,
     techStack: "Next.js 16, Mapbox GL, Node.js, Tailwind CSS",
     impactMetric: "8.4x",
     impactLabel: "Qualified Inquiries",
@@ -1938,6 +1945,7 @@ export const INITIAL_PORTFOLIO_PROJECTS: Array<{
     tags: "All Projects, SaaS App, Web App, ERP Software",
     displayOrder: 7,
     status: "Active",
+    showOnHome: false,
     techStack: "Next.js, FastAPI, WebSockets, Tailwind CSS",
     impactMetric: "$120M+",
     impactLabel: "Assets Tracked",
@@ -1956,6 +1964,7 @@ export const INITIAL_PORTFOLIO_PROJECTS: Array<{
     tags: "All Projects, Web App, E-Commerce, Dynamic Website",
     displayOrder: 8,
     status: "Active",
+    showOnHome: false,
     techStack: "Next.js 16, Socket.io, Stripe Terminal, Tailwind CSS",
     impactMetric: "3.2x",
     impactLabel: "Faster Table Turns",
@@ -1982,6 +1991,7 @@ export async function seedPortfolios(): Promise<void> {
           tags: p.tags,
           displayOrder: p.displayOrder,
           status: p.status,
+          showOnHome: p.showOnHome,
           techStack: p.techStack || null,
           impactMetric: p.impactMetric || null,
           impactLabel: p.impactLabel || null,
@@ -1999,6 +2009,7 @@ export interface PortfolioFilters {
   status?: string;
   category?: string;
   search?: string;
+  showOnHome?: boolean;
   limit?: number;
   skip?: number;
 }
@@ -2015,6 +2026,9 @@ export async function getPortfolios(
   }
   if (filters?.category && filters.category !== "All") {
     where.category = filters.category;
+  }
+  if (typeof filters?.showOnHome === "boolean") {
+    where.showOnHome = filters.showOnHome;
   }
   if (filters?.search) {
     const q = filters.search.trim();
@@ -2053,6 +2067,7 @@ export async function getPortfolios(
       tags: p.tags,
       displayOrder: p.displayOrder,
       status: p.status as any,
+      showOnHome: p.showOnHome ?? false,
       techStack: p.techStack,
       impactMetric: p.impactMetric,
       impactLabel: p.impactLabel,
@@ -2080,6 +2095,7 @@ export async function getPortfolioById(id: string): Promise<PortfolioItem | null
     tags: p.tags,
     displayOrder: p.displayOrder,
     status: p.status as any,
+    showOnHome: p.showOnHome ?? false,
     techStack: p.techStack,
     impactMetric: p.impactMetric,
     impactLabel: p.impactLabel,
@@ -2105,6 +2121,7 @@ export async function getPortfolioBySlug(slug: string): Promise<PortfolioItem | 
     tags: p.tags,
     displayOrder: p.displayOrder,
     status: p.status as any,
+    showOnHome: p.showOnHome ?? false,
     techStack: p.techStack,
     impactMetric: p.impactMetric,
     impactLabel: p.impactLabel,
@@ -2125,10 +2142,21 @@ export async function createPortfolio(data: {
   tags: string | string[];
   displayOrder?: number;
   status?: "Active" | "Inactive";
+  showOnHome?: boolean;
   techStack?: string | null;
   impactMetric?: string | null;
   impactLabel?: string | null;
 }): Promise<PortfolioItem> {
+  // Enforce Home Page quota: max 4 projects can have showOnHome = true
+  if (data.showOnHome) {
+    const homeCount = await prisma.portfolioItem.count({ where: { showOnHome: true } });
+    if (homeCount >= 4) {
+      throw new Error(
+        "Only 4 portfolio projects can be displayed on the Home Page. Please remove one existing project before selecting another."
+      );
+    }
+  }
+
   const id = "port-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
   let baseSlug = data.slug ? generateSlug(data.slug) : generateSlug(data.title);
   if (!baseSlug) baseSlug = "project-" + Date.now();
@@ -2158,6 +2186,7 @@ export async function createPortfolio(data: {
       tags: tagsStr,
       displayOrder: data.displayOrder ?? 0,
       status: data.status || "Active",
+      showOnHome: data.showOnHome ?? false,
       techStack: data.techStack || null,
       impactMetric: data.impactMetric || null,
       impactLabel: data.impactLabel || null,
@@ -2180,6 +2209,7 @@ export async function createPortfolio(data: {
     tags: p.tags,
     displayOrder: p.displayOrder,
     status: p.status as any,
+    showOnHome: p.showOnHome ?? false,
     techStack: p.techStack,
     impactMetric: p.impactMetric,
     impactLabel: p.impactLabel,
@@ -2202,6 +2232,7 @@ export async function updatePortfolio(
     tags?: string | string[];
     displayOrder?: number;
     status?: "Active" | "Inactive";
+    showOnHome?: boolean;
     techStack?: string | null;
     impactMetric?: string | null;
     impactLabel?: string | null;
@@ -2210,6 +2241,18 @@ export async function updatePortfolio(
   try {
     const existing = await prisma.portfolioItem.findUnique({ where: { id } });
     if (!existing) return null;
+
+    // Enforce Home Page quota: max 4 projects can have showOnHome = true
+    if (updates.showOnHome === true && !existing.showOnHome) {
+      const homeCount = await prisma.portfolioItem.count({
+        where: { showOnHome: true, NOT: { id } },
+      });
+      if (homeCount >= 4) {
+        throw new Error(
+          "Only 4 portfolio projects can be displayed on the Home Page. Please remove one existing project before selecting another."
+        );
+      }
+    }
 
     let newSlug = existing.slug;
     if (updates.slug && updates.slug !== existing.slug) {
@@ -2250,6 +2293,7 @@ export async function updatePortfolio(
         tags: tagsStr,
         displayOrder: updates.displayOrder !== undefined ? updates.displayOrder : existing.displayOrder,
         status: updates.status ?? existing.status,
+        showOnHome: updates.showOnHome !== undefined ? updates.showOnHome : existing.showOnHome,
         techStack: updates.techStack !== undefined ? updates.techStack : existing.techStack,
         impactMetric: updates.impactMetric !== undefined ? updates.impactMetric : existing.impactMetric,
         impactLabel: updates.impactLabel !== undefined ? updates.impactLabel : existing.impactLabel,
@@ -2271,6 +2315,7 @@ export async function updatePortfolio(
       tags: p.tags,
       displayOrder: p.displayOrder,
       status: p.status as any,
+      showOnHome: p.showOnHome ?? false,
       techStack: p.techStack,
       impactMetric: p.impactMetric,
       impactLabel: p.impactLabel,
@@ -2279,7 +2324,7 @@ export async function updatePortfolio(
     };
   } catch (error) {
     console.error("Error updating portfolio project:", error);
-    return null;
+    throw error;
   }
 }
 

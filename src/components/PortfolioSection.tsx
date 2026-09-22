@@ -319,17 +319,17 @@ export function PortfolioSection() {
   const [activeFilter, setActiveFilter] = useState("All Projects");
   const [projects, setProjects] = useState<ProjectItem[]>(STATIC_FALLBACK_PROJECTS);
 
-  // Fetch dynamic portfolio projects from backend API
+  // Fetch dynamic portfolio projects configured for the Home Page from backend API
   useEffect(() => {
     let isMounted = true;
     async function loadPortfolio() {
       try {
-        const res = await fetch("/api/portfolio");
+        const res = await fetch("/api/portfolio?home=true");
         if (res.ok) {
           const data = await res.json();
-          if (data.success && Array.isArray(data.projects) && data.projects.length > 0) {
+          if (data.success && Array.isArray(data.projects)) {
             if (isMounted) {
-              const mapped: ProjectItem[] = data.projects.map((p: any) => ({
+              const mapped: ProjectItem[] = data.projects.slice(0, 4).map((p: any) => ({
                 id: p.id,
                 slug: p.slug,
                 name: p.title || p.name,

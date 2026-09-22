@@ -8,6 +8,7 @@ interface PortfolioStats {
   total: number;
   active: number;
   inactive: number;
+  homeCount?: number;
   categoriesCount: number;
   categories: string[];
 }
@@ -33,10 +34,12 @@ export default function AdminPortfolioPage() {
     total: 0,
     active: 0,
     inactive: 0,
+    homeCount: 0,
     categoriesCount: 0,
     categories: [],
   });
   const [loading, setLoading] = useState(true);
+  const [quotaAlert, setQuotaAlert] = useState<string>("");
 
   // Filters
   const [search, setSearch] = useState("");
@@ -61,6 +64,7 @@ export default function AdminPortfolioPage() {
   const [formTags, setFormTags] = useState("");
   const [formDisplayOrder, setFormDisplayOrder] = useState<number>(0);
   const [formStatus, setFormStatus] = useState<PortfolioStatus>("Active");
+  const [formShowOnHome, setFormShowOnHome] = useState(false);
   const [formTechStack, setFormTechStack] = useState("");
   const [formImpactMetric, setFormImpactMetric] = useState("");
   const [formImpactLabel, setFormImpactLabel] = useState("");
@@ -110,6 +114,7 @@ export default function AdminPortfolioPage() {
     setFormTags("All Projects, Web App, Dynamic Website");
     setFormDisplayOrder(projects.length + 1);
     setFormStatus("Active");
+    setFormShowOnHome(false);
     setFormTechStack("Next.js 16, TypeScript, Tailwind CSS");
     setFormImpactMetric("");
     setFormImpactLabel("");
@@ -132,6 +137,7 @@ export default function AdminPortfolioPage() {
     setFormTags(project.tags);
     setFormDisplayOrder(project.displayOrder);
     setFormStatus(project.status);
+    setFormShowOnHome(project.showOnHome ?? false);
     setFormTechStack(project.techStack || "");
     setFormImpactMetric(project.impactMetric || "");
     setFormImpactLabel(project.impactLabel || "");
@@ -207,6 +213,7 @@ export default function AdminPortfolioPage() {
         tags: formTags.trim(),
         displayOrder: Number(formDisplayOrder) || 0,
         status: formStatus,
+        showOnHome: formShowOnHome,
         techStack: formTechStack.trim() ? formTechStack.trim() : null,
         impactMetric: formImpactMetric.trim() ? formImpactMetric.trim() : null,
         impactLabel: formImpactLabel.trim() ? formImpactLabel.trim() : null,
@@ -251,6 +258,41 @@ export default function AdminPortfolioPage() {
       }
     } catch (err) {
       console.error("Failed to toggle status:", err);
+    }
+  };
+
+  // Quick Toggle Home Page Feature (Strictly max 4 allowed)
+  const handleToggleHome = async (project: PortfolioItem) => {
+    setQuotaAlert("");
+    const willEnable = !project.showOnHome;
+
+    if (willEnable && (stats.homeCount ?? 0) >= 4) {
+      setQuotaAlert(
+        "Only 4 portfolio projects can be displayed on the Home Page. Please remove one existing project before selecting another."
+      );
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/portfolio/${project.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ showOnHome: willEnable }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setQuotaAlert(
+          data.error ||
+            "Only 4 portfolio projects can be displayed on the Home Page. Please remove one existing project before selecting another."
+        );
+        return;
+      }
+
+      fetchPortfolios();
+    } catch (err: any) {
+      console.error("Failed to toggle home status:", err);
+      setQuotaAlert(err.message || "Failed to update project status");
     }
   };
 
@@ -323,7 +365,7 @@ export default function AdminPortfolioPage() {
       </div>
 
       {/* KPI Stats Counters */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-xs">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-[11px] font-bold uppercase tracking-wider">Total Projects</span>
@@ -340,6 +382,30 @@ export default function AdminPortfolioPage() {
           </div>
           <div className="text-2xl font-black text-emerald-600 mt-2">{stats.active}</div>
           <div className="text-[10px] text-emerald-600/80 mt-0.5">Visible on website</div>
+        </div>
+
+        {/* Dedicated Home Page Slots KPI Card */}
+        <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-xs">
+          <div className="flex items-center justify-between text-emerald-600">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Home Page Slots</span>
+            <span
+              className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                (stats.homeCount || 0) === 4
+                  ? "bg-emerald-100 text-emerald-800"
+                  : "bg-slate-100 text-slate-700"
+              }`}
+            >
+              {(stats.homeCount || 0) === 4 ? "4/4 FULL" : `${stats.homeCount || 0} / 4`}
+            </span>
+          </div>
+          <div className="text-2xl font-black text-slate-900 mt-2">
+            {stats.homeCount || 0} <span className="text-sm font-semibold text-slate-400">/ 4</span>
+          </div>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            {(stats.homeCount || 0) === 4
+              ? "All 4 slots active on Home"
+              : `${4 - (stats.homeCount || 0)} slot${4 - (stats.homeCount || 0) === 1 ? "" : "s"} available`}
+          </div>
         </div>
 
         <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-xs">
@@ -360,6 +426,23 @@ export default function AdminPortfolioPage() {
           <div className="text-[10px] text-slate-400 mt-0.5">Dynamic sectors</div>
         </div>
       </div>
+
+      {/* Quota Warning / Notification Alert Banner */}
+      {quotaAlert && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-300/80 text-amber-950 text-xs font-semibold flex items-center justify-between shadow-xs transition-all animate-in fade-in">
+          <div className="flex items-center gap-2.5">
+            <span className="text-base">⚠️</span>
+            <span>{quotaAlert}</span>
+          </div>
+          <button
+            onClick={() => setQuotaAlert("")}
+            className="text-amber-800 hover:text-amber-950 font-bold px-2 py-1 rounded-lg hover:bg-amber-100 cursor-pointer"
+            title="Dismiss notification"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Filter and Search Bar */}
       <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-xs flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
@@ -434,6 +517,7 @@ export default function AdminPortfolioPage() {
                 <th className="py-3.5 px-4">Preview</th>
                 <th className="py-3.5 px-4">Project Name &amp; Slug</th>
                 <th className="py-3.5 px-4">Category / Type</th>
+                <th className="py-3.5 px-4">Home Page (Max 4)</th>
                 <th className="py-3.5 px-4">Status</th>
                 <th className="py-3.5 px-4">Created Date</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
@@ -442,14 +526,14 @@ export default function AdminPortfolioPage() {
             <tbody className="divide-y divide-slate-100 text-slate-600 font-medium">
               {loading ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
                     <div className="inline-block animate-spin w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full mb-2" />
                     <p className="text-xs">Loading portfolio projects...</p>
                   </td>
                 </tr>
               ) : projects.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center text-slate-400">
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
                     <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2 text-xl font-bold">
                       📁
                     </div>
@@ -503,6 +587,29 @@ export default function AdminPortfolioPage() {
                         {project.category}
                       </span>
                       <div className="text-[11px] text-slate-500 mt-1 truncate max-w-xs">{project.type}</div>
+                    </td>
+
+                    {/* Home Page Featured Toggle */}
+                    <td className="py-3.5 px-4 whitespace-nowrap">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleHome(project)}
+                        title={
+                          project.showOnHome
+                            ? "Currently featured on Home Page (Slot active). Click to remove."
+                            : (stats.homeCount || 0) >= 4
+                            ? "Home slots full (4/4). Remove another project to feature this."
+                            : "Click to feature this project on the Home Page"
+                        }
+                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold cursor-pointer transition-all ${
+                          project.showOnHome
+                            ? "bg-emerald-500 text-white shadow-xs hover:bg-emerald-600"
+                            : "bg-slate-100 text-slate-500 border border-slate-200 hover:border-emerald-300 hover:text-emerald-700 hover:bg-emerald-50/40"
+                        }`}
+                      >
+                        <span>{project.showOnHome ? "★" : "☆"}</span>
+                        <span>{project.showOnHome ? "On Home" : "Off Home"}</span>
+                      </button>
                     </td>
 
                     {/* Status with Quick Toggle */}
@@ -841,6 +948,47 @@ export default function AdminPortfolioPage() {
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-hidden"
                   />
                 </div>
+              </div>
+
+              {/* Home Page Featured Selection Toggle */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="font-bold text-slate-900 flex items-center gap-2">
+                    <span>Feature on Home Page</span>
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                        formShowOnHome
+                          ? "bg-emerald-100 text-emerald-800"
+                          : "bg-slate-200 text-slate-600"
+                      }`}
+                    >
+                      {formShowOnHome ? "Selected for Home" : "Not on Home"}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    Display this project in the Home Page 4-project portfolio grid.
+                    Current status: <strong className="text-slate-800 font-semibold">{stats.homeCount || 0} / 4 slots used</strong>.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={formShowOnHome}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      if (checked && !editingProject?.showOnHome && (stats.homeCount || 0) >= 4) {
+                        setFormError(
+                          "Only 4 portfolio projects can be displayed on the Home Page. Please remove one existing project before selecting another."
+                        );
+                        return;
+                      }
+                      setFormError("");
+                      setFormShowOnHome(checked);
+                    }}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                </label>
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
