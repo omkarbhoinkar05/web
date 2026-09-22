@@ -6,9 +6,9 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "Cookie Policy | PixelForge — Building a Brighter Web",
+  title: "Cookie Policy | KeyCodeWeb — Building a Brighter Web",
   description:
-    "Understand how PixelForge uses cookies, local storage and technical session tokens to ensure fast, secure and reliable browsing.",
+    "Understand how KeyCodeWeb uses cookies, local storage and technical session tokens to ensure fast, secure and reliable browsing.",
   alternates: {
     canonical: "/cookie-policy",
   },
@@ -47,7 +47,7 @@ export default function CookiePolicyPage() {
             </h1>
 
             <p className="text-sm sm:text-base text-zinc-600 mt-3 max-w-3xl leading-relaxed">
-              This Cookie Policy explains how PixelForge uses cookies, local browser storage, and related tracking technologies to optimize website load speeds, manage user sessions, and deliver a smooth browsing experience.
+              This Cookie Policy explains how KeyCodeWeb uses cookies, local browser storage, and related tracking technologies to optimize website load speeds, manage user sessions, and deliver a smooth browsing experience.
             </p>
 
             <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-zinc-500 mt-4 pt-4 border-t border-zinc-200/60">
@@ -193,7 +193,7 @@ export default function CookiePolicyPage() {
 
                 <div className="mt-4 p-5 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-2 text-xs sm:text-sm">
                   <div>
-                    <strong>Company:</strong> PixelForge Software &amp; Digital Solutions
+                    <strong>Company:</strong> KeyCodeWeb Software &amp; Digital Solutions
                   </div>
                   <div>
                     <strong>Email:</strong>{" "}

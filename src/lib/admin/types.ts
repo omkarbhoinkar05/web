@@ -23,7 +23,7 @@ export type LeadSource =
 
 export interface Lead {
   id: string;
-  leadId: string; // e.g. HTB-001
+  leadId: string; // e.g. KCW-001
   fullName: string;
   email: string;
   mobile: string;

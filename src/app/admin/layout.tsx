@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 
 export const metadata: Metadata = {
-  title: "Admin Command Center | Web",
-  description: "Web Operations Command Center & Dashboard",
+  title: "Admin Command Center | KeyCodeWeb",
+  description: "KeyCodeWeb Operations Command Center & Dashboard",
   robots: {
     index: false,
     follow: false,

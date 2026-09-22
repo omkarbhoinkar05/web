@@ -32,7 +32,7 @@ export function AboutHero() {
           {/* Description & CTAs Right */}
           <div className="lg:col-span-5 flex flex-col justify-between pt-2 space-y-6">
             <p className="text-base sm:text-lg text-zinc-600 font-normal leading-relaxed">
-              At PixelForge, we believe in the power of ideas, design and technology to create a better digital future. Here&apos;s our journey, our purpose and the people behind it.
+              At KeyCodeWeb, we believe in the power of ideas, design and technology to create a better digital future. Here&apos;s our journey, our purpose and the people behind it.
             </p>
 
             {/* CTAs */}

@@ -220,7 +220,7 @@ export default function CareersPage() {
 
                 {/* 6. INTRODUCTION TEXT */}
                 <p className="text-base sm:text-lg text-zinc-600 font-normal leading-relaxed max-w-[550px] mt-4 sm:mt-5">
-                  At our company, we believe great people create great products. Join our team and be part of a culture that values innovation, collaboration and continuous growth.
+                  At KeyCodeWeb, we believe great people create great products. Join our team and be part of a culture that values innovation, collaboration and continuous growth.
                 </p>
 
                 {/* 7. CAREER BENEFITS (4 Items) */}
@@ -300,7 +300,7 @@ export default function CareersPage() {
                   <div className="relative w-full h-64 sm:h-80 md:h-96">
                     <Image
                       src="/careers-team.jpg"
-                      alt="PixelForge team of software engineers and designers collaborating in office"
+                      alt="KeyCodeWeb team of software engineers and designers collaborating in office"
                       fill
                       priority
                       sizes="(max-width: 768px) 100vw, 50vw"
@@ -324,7 +324,7 @@ export default function CareersPage() {
                           A great place to grow, create and make an impact.
                         </p>
                         <span className="text-[10px] font-mono text-emerald-700 uppercase tracking-wider block mt-1">
-                          PixelForge Engineering &amp; Design Culture
+                          KeyCodeWeb Engineering &amp; Design Culture
                         </span>
                       </div>
                     </div>
@@ -389,7 +389,7 @@ export default function CareersPage() {
                             Application Submitted Successfully!
                           </h5>
                           <p className="text-xs text-emerald-800 mt-1 leading-relaxed">
-                            Thank you for your interest in joining PixelForge. Our talent acquisition team will review your application and contact you shortly.
+                            Thank you for your interest in joining KeyCodeWeb. Our talent acquisition team will review your application and contact you shortly.
                           </p>
                           <button
                             type="button"

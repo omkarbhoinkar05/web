@@ -282,11 +282,11 @@ export function AdminSidebar({ mobileOpen, setMobileOpen, user: propUser }: Admi
         <div className="h-20 flex items-center justify-between px-6 border-b border-emerald-800/40 bg-[#032a20]">
           <Link href={homeHref} className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-md shadow-emerald-500/20">
-              W
+              K
             </div>
             <div>
               <span className="text-base font-black tracking-tight text-white block leading-tight">
-                Web
+                KeyCodeWeb
               </span>
               <span className="text-[10px] font-medium text-emerald-300/80 tracking-wider uppercase block">
                 Ideas | Innovation | Growth

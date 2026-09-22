@@ -56,7 +56,7 @@ export function TestimonialsSection() {
       rating: 5.0,
       initials: "NK",
       review:
-        "“Working with PixelForge was a breeze. They turned our complex SaaS workflows into an intuitive, high-velocity platform that our global users absolutely adore.”",
+        "“Working with KeyCodeWeb was a breeze. They turned our complex SaaS workflows into an intuitive, high-velocity platform that our global users absolutely adore.”",
       tags: ["SaaS Platform", "Team Management", "Analytics"],
     },
     {

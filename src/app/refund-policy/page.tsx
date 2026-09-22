@@ -6,9 +6,9 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "Refund & Cancellation Policy | PixelForge — Building a Brighter Web",
+  title: "Refund & Cancellation Policy | KeyCodeWeb — Building a Brighter Web",
   description:
-    "Review PixelForge's clear, transparent refund, milestone cancellation, and billing adjustment policies for software and web development services.",
+    "Review KeyCodeWeb's clear, transparent refund, milestone cancellation, and billing adjustment policies for software and web development services.",
   alternates: {
     canonical: "/refund-policy",
   },
@@ -96,7 +96,7 @@ export default function RefundPolicyPage() {
                   1. Policy Overview
                 </h2>
                 <p>
-                  As an elite software development company, PixelForge allocates dedicated senior software architects, UI/UX designers, and cloud engineers to each commissioned project. Because custom software engineering involves dedicated labor hours and intellectual capital, our refund policy is linked directly to completed work milestones.
+                  As an elite software development company, KeyCodeWeb allocates dedicated senior software architects, UI/UX designers, and cloud engineers to each commissioned project. Because custom software engineering involves dedicated labor hours and intellectual capital, our refund policy is linked directly to completed work milestones.
                 </p>
               </section>
 
@@ -193,7 +193,7 @@ export default function RefundPolicyPage() {
 
                 <div className="mt-4 p-5 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-2 text-xs sm:text-sm">
                   <div>
-                    <strong>Accounts Team:</strong> PixelForge Billing &amp; Finance
+                    <strong>Accounts Team:</strong> KeyCodeWeb Billing &amp; Finance
                   </div>
                   <div>
                     <strong>Direct Email:</strong>{" "}

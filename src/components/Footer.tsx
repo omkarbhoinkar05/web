@@ -279,16 +279,14 @@ export function Footer() {
               href="/"
               onClick={(e) => handleLinkClick(e, "/")}
               className="inline-flex items-center gap-3 group focus:outline-none"
-              aria-label="PixelForge Homepage"
+              aria-label="KeyCodeWeb Homepage"
             >
               <div className="w-10 h-10 flex items-center justify-center shrink-0">
                 <svg className="w-9 h-9" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="40" height="40" rx="10" fill="transparent" />
-                  <path
-                    d="M10 8H23C27.9706 8 32 12.0294 32 17C32 21.9706 27.9706 26 23 26H17V33C17 34.1046 16.1046 35 15 35H12C10.8954 35 10 34.1046 10 33V8Z"
-                    fill="url(#footer_logo_gradient_white)"
-                  />
-                  <path d="M17 14H22.5C24.433 14 26 15.567 26 17.5C26 19.433 24.433 21 22.5 21H17V14Z" fill="white" />
+                  <rect width="40" height="40" rx="10" fill="url(#footer_logo_gradient_white)" />
+                  {/* Modern Tech K Mark */}
+                  <path d="M12 10H16.5V30H12V10Z" fill="white" />
+                  <path d="M16 21.5L24.5 10H29L19.5 22.5L29 30H24.5L16 21.5Z" fill="white" />
                   <defs>
                     <linearGradient id="footer_logo_gradient_white" x1="10" y1="8" x2="32" y2="35" gradientUnits="userSpaceOnUse">
                       <stop stopColor="#10b981" />
@@ -299,7 +297,7 @@ export function Footer() {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black tracking-tight text-zinc-900 leading-none">
-                  PixelForge
+                  KeyCodeWeb
                 </span>
                 <span className="text-[9px] font-bold tracking-[0.22em] text-zinc-400 uppercase mt-1">
                   BUILDING A BRIGHTER WEB
@@ -644,7 +642,7 @@ export function Footer() {
         {/* BOTTOM FOOTER BAR with SCROLL TO TOP */}
         <div className="mt-12 pt-6 border-t border-zinc-100 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-zinc-500">
           <div>
-            <span>© 2026 PixelForge. All rights reserved.</span>
+            <span>© 2026 KeyCodeWeb. All rights reserved.</span>
           </div>
 
           <div className="text-center font-medium">

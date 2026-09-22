@@ -6,9 +6,9 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | PixelForge — Building a Brighter Web",
+  title: "Privacy Policy | KeyCodeWeb — Building a Brighter Web",
   description:
-    "Learn how PixelForge collects, utilizes, protects and manages client and visitor data in compliance with modern privacy standards.",
+    "Learn how KeyCodeWeb collects, utilizes, protects and manages client and visitor data in compliance with modern privacy standards.",
   alternates: {
     canonical: "/privacy-policy",
   },
@@ -49,7 +49,7 @@ export default function PrivacyPolicyPage() {
             </h1>
 
             <p className="text-sm sm:text-base text-zinc-600 mt-3 max-w-3xl leading-relaxed">
-              At PixelForge, we value your privacy and are committed to protecting your personal data and proprietary business ideas. This policy explains what information we collect, how it is safeguarded, and how you can exercise your privacy rights.
+              At KeyCodeWeb, we value your privacy and are committed to protecting your personal data and proprietary business ideas. This policy explains what information we collect, how it is safeguarded, and how you can exercise your privacy rights.
             </p>
 
             <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-zinc-500 mt-4 pt-4 border-t border-zinc-200/60">
@@ -98,7 +98,7 @@ export default function PrivacyPolicyPage() {
                   1. Privacy Commitment
                 </h2>
                 <p>
-                  PixelForge (&ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;us&rdquo;) operates as a trusted software engineering and web design partner for businesses worldwide. We strictly adhere to principles of transparency, minimal data collection, purpose limitation, and rigorous technical security.
+                  KeyCodeWeb (&ldquo;we&rdquo;, &ldquo;our&rdquo;, &ldquo;us&rdquo;) operates as a trusted software engineering and web design partner for businesses worldwide. We strictly adhere to principles of transparency, minimal data collection, purpose limitation, and rigorous technical security.
                 </p>
                 <p className="mt-2.5">
                   <strong>We do NOT sell, rent, or trade your personal information</strong> with third-party advertisers or data brokers under any circumstances.
@@ -147,7 +147,7 @@ export default function PrivacyPolicyPage() {
                 </h2>
                 <div className="p-4 rounded-xl bg-emerald-50/60 border border-emerald-200/80 text-xs sm:text-sm text-emerald-950">
                   <span className="font-extrabold text-emerald-900 block mb-0.5">✦ Built-in NDA Protection</span>
-                  All client ideas, business plans, software logic, designs, and proprietary code shared with PixelForge are treated as strictly confidential. We readily execute formal Non-Disclosure Agreements (NDAs) prior to receiving proprietary specifications.
+                  All client ideas, business plans, software logic, designs, and proprietary code shared with KeyCodeWeb are treated as strictly confidential. We readily execute formal Non-Disclosure Agreements (NDAs) prior to receiving proprietary specifications.
                 </div>
               </section>
 
@@ -223,7 +223,7 @@ export default function PrivacyPolicyPage() {
                     <strong>Data Protection Officer:</strong> Omkar Bhoinkar
                   </div>
                   <div>
-                    <strong>Company:</strong> PixelForge Software &amp; Digital Solutions
+                    <strong>Company:</strong> KeyCodeWeb Software &amp; Digital Solutions
                   </div>
                   <div>
                     <strong>Office Location:</strong> Kharghar, Navi Mumbai, Maharashtra, India

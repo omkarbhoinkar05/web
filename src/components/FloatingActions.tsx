@@ -9,7 +9,7 @@ interface FloatingActionsProps {
 
 export function FloatingActions({
   whatsappNumber = "919920818481",
-  whatsappMessage = "Hello PixelForge, I would like to inquire about a project.",
+  whatsappMessage = "Hello KeyCodeWeb, I would like to inquire about a project.",
 }: FloatingActionsProps) {
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -63,7 +63,7 @@ export function FloatingActions({
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Chat with PixelForge on WhatsApp"
+          aria-label="Chat with KeyCodeWeb on WhatsApp"
           className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-[#25D366] to-[#128C7E] hover:from-[#20ba59] hover:to-[#075E54] text-white flex items-center justify-center shadow-lg shadow-[#25D366]/35 hover:shadow-xl hover:shadow-[#25D366]/45 hover:scale-108 active:scale-95 transition-all duration-300"
         >
           {/* Official WhatsApp SVG Icon */}

@@ -7,7 +7,7 @@ export const bookingConfig: BookingConfig = {
   slotDuration: 30, // 30-minute intervals
   timezone: "Asia/Kolkata",
   timezoneLabel: "All times are in IST (UTC+5:30)",
-  companyName: "PixelForge",
+  companyName: "KeyCodeWeb",
   whatsappNumber: "919920818481",
   contactEmail: "dev.omkar05@gmail.com",
   meetingType: "Online Call (Google Meet) / Phone",

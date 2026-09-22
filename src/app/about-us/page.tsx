@@ -11,18 +11,18 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "About Us | PixelForge — Building a Brighter Web",
+  title: "About Us | KeyCodeWeb — Building a Brighter Web",
   description:
-    "Discover the story, vision, mission and people behind PixelForge — a creative web development company building modern digital experiences for growing businesses.",
+    "Discover the story, vision, mission and people behind KeyCodeWeb — a creative web development company building modern digital experiences for growing businesses.",
   alternates: {
     canonical: "/about-us",
   },
   openGraph: {
-    title: "About Us | PixelForge — Building a Brighter Web",
+    title: "About Us | KeyCodeWeb — Building a Brighter Web",
     description:
-      "Discover the story, vision, mission and people behind PixelForge — a creative web development company building modern digital experiences for growing businesses.",
-    url: "https://pixelforge.design/about-us",
-    siteName: "PixelForge",
+      "Discover the story, vision, mission and people behind KeyCodeWeb — a creative web development company building modern digital experiences for growing businesses.",
+    url: "https://keycodeweb.com/about-us",
+    siteName: "KeyCodeWeb",
   },
 };
 

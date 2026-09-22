@@ -55,15 +55,15 @@ export function WhyPixelForge() {
           </h2>
 
           <p className="text-sm sm:text-base text-zinc-600 font-normal leading-relaxed mt-4">
-            PixelForge started with a conviction that web development was losing its human craft. Clunky templates and cookie-cutter agencies were treating visionary founders like just another ticket. We set out to change that by fusing bespoke aesthetic artistry with cutting-edge engineering rigor. Today, we empower bold brands with high-performance digital flagships that command trust, drive conversions, and stand the test of time.
+            KeyCodeWeb started with a conviction that web development was losing its human craft. Clunky templates and cookie-cutter agencies were treating visionary founders like just another ticket. We set out to change that by fusing bespoke aesthetic artistry with cutting-edge engineering rigor. Today, we empower bold brands with high-performance digital flagships that command trust, drive conversions, and stand the test of time.
           </p>
         </div>
 
-        {/* Why PixelForge 5 Points Grid */}
+        {/* Why KeyCodeWeb 5 Points Grid */}
         <div className="pt-8 border-t border-zinc-200/80">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-8">
             <h3 className="text-2xl sm:text-3xl font-black text-zinc-950 tracking-tight">
-              Why PixelForge?
+              Why KeyCodeWeb?
             </h3>
             <span className="text-xs sm:text-sm font-semibold text-[#059669] uppercase tracking-wider mt-1 sm:mt-0">
               5 Principles of Excellence

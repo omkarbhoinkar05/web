@@ -340,18 +340,18 @@ export async function generateMetadata({ params }: CaseStudyPageProps) {
       const dbProject = await prisma.portfolioItem.findUnique({ where: { slug } });
       if (dbProject) {
         return {
-          title: `${dbProject.title} Case Study | PixelForge`,
+          title: `${dbProject.title} Case Study | KeyCodeWeb`,
           description: dbProject.description,
         };
       }
     } catch {}
     return {
-      title: "Case Study | PixelForge",
+      title: "Case Study | KeyCodeWeb",
       description: "Detailed client case study and project breakdown.",
     };
   }
   return {
-    title: `${project.name} Case Study | PixelForge`,
+    title: `${project.name} Case Study | KeyCodeWeb`,
     description: project.overview,
   };
 }

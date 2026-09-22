@@ -102,7 +102,7 @@ export function InsidePixelForge() {
         {/* Section Header */}
         <div className="mb-8 lg:mb-10">
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-zinc-950">
-            Inside PixelForge
+            Inside KeyCodeWeb
           </h2>
           <p className="text-zinc-500 text-sm sm:text-base mt-1">
             The purpose, people and principles behind our work.

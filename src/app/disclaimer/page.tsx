@@ -6,9 +6,9 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "Disclaimer | PixelForge — Building a Brighter Web",
+  title: "Disclaimer | KeyCodeWeb — Building a Brighter Web",
   description:
-    "Read the legal disclaimer, liability limitations, and case study notices regarding information presented by PixelForge.",
+    "Read the legal disclaimer, liability limitations, and case study notices regarding information presented by KeyCodeWeb.",
   alternates: {
     canonical: "/disclaimer",
   },
@@ -95,7 +95,7 @@ export default function DisclaimerPage() {
                   1. General Information Only
                 </h2>
                 <p>
-                  The information provided on this website by PixelForge (&ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) is for general informational and demonstration purposes only. While we endeavor to keep all code samples, service descriptions, and technical specifications up to date and correct, we make no representations or warranties of any kind, express or implied, regarding completeness or availability.
+                  The information provided on this website by KeyCodeWeb (&ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) is for general informational and demonstration purposes only. While we endeavor to keep all code samples, service descriptions, and technical specifications up to date and correct, we make no representations or warranties of any kind, express or implied, regarding completeness or availability.
                 </p>
               </section>
 
@@ -167,7 +167,7 @@ export default function DisclaimerPage() {
 
                 <div className="mt-4 p-5 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-2 text-xs sm:text-sm">
                   <div>
-                    <strong>Organization:</strong> PixelForge Software &amp; Digital Solutions
+                    <strong>Organization:</strong> KeyCodeWeb Software &amp; Digital Solutions
                   </div>
                   <div>
                     <strong>Location:</strong> Kharghar, Navi Mumbai, Maharashtra, India

@@ -6,9 +6,9 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "Terms & Conditions | PixelForge — Building a Brighter Web",
+  title: "Terms & Conditions | KeyCodeWeb — Building a Brighter Web",
   description:
-    "Review the terms and conditions governing web development, SaaS applications, custom ERP, and IT software services provided by PixelForge.",
+    "Review the terms and conditions governing web development, SaaS applications, custom ERP, and IT software services provided by KeyCodeWeb.",
   alternates: {
     canonical: "/terms-and-conditions",
   },
@@ -51,7 +51,7 @@ export default function TermsAndConditionsPage() {
             </h1>
 
             <p className="text-sm sm:text-base text-zinc-600 mt-3 max-w-3xl leading-relaxed">
-              These Terms and Conditions govern the engagement between PixelForge (&ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;) and clients or visitors (&ldquo;Client&rdquo;, &ldquo;you&rdquo;) accessing our website or contracting our software design, development, and digital services.
+              These Terms and Conditions govern the engagement between KeyCodeWeb (&ldquo;Company&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;) and clients or visitors (&ldquo;Client&rdquo;, &ldquo;you&rdquo;) accessing our website or contracting our software design, development, and digital services.
             </p>
 
             <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-zinc-500 mt-4 pt-4 border-t border-zinc-200/60">
@@ -101,7 +101,7 @@ export default function TermsAndConditionsPage() {
                   1. Acceptance of Terms
                 </h2>
                 <p>
-                  By accessing the PixelForge website, commissioning any digital development project, signing a Statement of Work (SOW), or submitting payment for software consulting, you explicitly confirm that you have read, understood, and agreed to be legally bound by these Terms and Conditions.
+                  By accessing the KeyCodeWeb website, commissioning any digital development project, signing a Statement of Work (SOW), or submitting payment for software consulting, you explicitly confirm that you have read, understood, and agreed to be legally bound by these Terms and Conditions.
                 </p>
                 <p className="mt-2.5">
                   If you do not agree to all terms stated herein, you must refrain from utilizing our services and accessing this website.
@@ -114,7 +114,7 @@ export default function TermsAndConditionsPage() {
                   2. Scope of Services
                 </h2>
                 <p>
-                  PixelForge delivers end-to-end digital technology solutions, including but not limited to:
+                  KeyCodeWeb delivers end-to-end digital technology solutions, including but not limited to:
                 </p>
                 <ul className="list-disc pl-5 mt-2 space-y-1.5 text-sm">
                   <li>Custom Web Design, UI/UX Prototyping, and Design Systems</li>
@@ -205,7 +205,7 @@ export default function TermsAndConditionsPage() {
                   9. Warranty &amp; Bug-Fix Period
                 </h2>
                 <p>
-                  PixelForge provides a complimentary <strong>thirty (30) day warranty period</strong> following final production deployment. During this window, any defects or bugs directly attributed to the contracted scope will be remediated at no additional charge.
+                  KeyCodeWeb provides a complimentary <strong>thirty (30) day warranty period</strong> following final production deployment. During this window, any defects or bugs directly attributed to the contracted scope will be remediated at no additional charge.
                 </p>
               </section>
 
@@ -215,7 +215,7 @@ export default function TermsAndConditionsPage() {
                   10. Limitation of Liability
                 </h2>
                 <p>
-                  In no event shall PixelForge, its directors, developers, or affiliates be liable for indirect, incidental, punitive, or consequential damages (including loss of business profits or data interruption) arising out of third-party cloud outages, hosting downtime, or unauthorized external breaches. Our aggregate liability is limited to the total fees paid by the client under the specific SOW.
+                  In no event shall KeyCodeWeb, its directors, developers, or affiliates be liable for indirect, incidental, punitive, or consequential damages (including loss of business profits or data interruption) arising out of third-party cloud outages, hosting downtime, or unauthorized external breaches. Our aggregate liability is limited to the total fees paid by the client under the specific SOW.
                 </p>
               </section>
 
@@ -225,7 +225,7 @@ export default function TermsAndConditionsPage() {
                   11. Termination of Agreement
                 </h2>
                 <p>
-                  Either party may terminate an ongoing engagement with fourteen (14) days written notice. In such case, the Client will pay for all work completed up to the date of notice, and PixelForge will release all completed assets and documentation corresponding to paid milestones.
+                  Either party may terminate an ongoing engagement with fourteen (14) days written notice. In such case, the Client will pay for all work completed up to the date of notice, and KeyCodeWeb will release all completed assets and documentation corresponding to paid milestones.
                 </p>
               </section>
 
@@ -250,7 +250,7 @@ export default function TermsAndConditionsPage() {
 
                 <div className="mt-4 p-5 rounded-2xl bg-zinc-50 border border-zinc-200/80 space-y-2 text-xs sm:text-sm">
                   <div>
-                    <strong>Company:</strong> PixelForge Software &amp; Digital Solutions
+                    <strong>Company:</strong> KeyCodeWeb Software &amp; Digital Solutions
                   </div>
                   <div>
                     <strong>Operations Center:</strong> Kharghar, Navi Mumbai, Maharashtra, India

@@ -6,8 +6,8 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "Sitemap | PixelForge",
-  description: "Complete navigation index of all pages, features and sections on PixelForge.",
+  title: "Sitemap | KeyCodeWeb",
+  description: "Complete navigation index of all pages, features and sections on KeyCodeWeb.",
 };
 
 export default function SitemapPage() {
@@ -68,7 +68,7 @@ export default function SitemapPage() {
             SITE DIRECTORY
           </span>
           <h1 className="text-3xl sm:text-5xl font-black text-zinc-900 mt-2 tracking-tight">
-            PixelForge Sitemap
+            KeyCodeWeb Sitemap
           </h1>
           <p className="text-sm text-zinc-600 mt-3 font-normal">
             Quickly navigate to any page, service offering, or resource across our entire platform.

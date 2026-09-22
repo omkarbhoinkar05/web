@@ -93,7 +93,7 @@ export function JourneyTimeline() {
           <div className="absolute inset-0 z-0">
             <Image
               src="/about-mountain.jpg"
-              alt="PixelForge Journey Landscape with Mountain Peaks and Emerald Valley"
+              alt="KeyCodeWeb Journey Landscape with Mountain Peaks and Emerald Valley"
               fill
               priority
               sizes="100vw"

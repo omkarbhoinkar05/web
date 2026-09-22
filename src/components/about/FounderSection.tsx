@@ -116,7 +116,7 @@ export function FounderSection() {
             <div className="relative w-44 h-52 sm:w-48 sm:h-56 rounded-2xl overflow-hidden shadow-md shadow-zinc-950/10 border-2 border-white bg-zinc-200">
               <Image
                 src="/founder-portrait.png"
-                alt="Omkar Bhokar — Founder & CEO of PixelForge"
+                alt="Omkar Bhokar — Founder & CEO of KeyCodeWeb"
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 192px, 208px"
@@ -127,7 +127,7 @@ export function FounderSection() {
           {/* Column 2: Founder Quote & Bio */}
           <div className="lg:col-span-5 flex flex-col justify-center space-y-4 text-center lg:text-left">
             <p className="text-base sm:text-lg text-zinc-700 font-medium leading-relaxed italic">
-              &ldquo;I started PixelForge with a simple belief — that every business, big or small, deserves a powerful online presence. Today, we&apos;re helping brands turn their vision into digital reality.&rdquo;
+              &ldquo;I started KeyCodeWeb with a simple belief — that every business, big or small, deserves a powerful online presence. Today, we&apos;re helping brands turn their vision into digital reality.&rdquo;
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2 border-t border-zinc-200/60">

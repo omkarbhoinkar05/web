@@ -5,7 +5,7 @@ import { Settings } from "@/lib/admin/types";
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Settings>({
-    companyName: "Web",
+    companyName: "KeyCodeWeb",
     tagline: "Ideas | Innovation | Growth",
     supportEmail: "dev.omkar05@gmail.com",
     supportPhone: "9920818481",

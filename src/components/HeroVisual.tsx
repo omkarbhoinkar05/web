@@ -16,7 +16,7 @@ export function HeroVisual() {
       <div className="relative w-full flex items-center justify-center transition-transform duration-500 ease-out group-hover:scale-[1.015]">
         <Image
           src="/hero-image.png"
-          alt="PixelForge - Creative Digital Agency Website on MacBook Pro with Emerald Illuminated Stone"
+          alt="KeyCodeWeb - Creative Digital Agency Website on MacBook Pro with Emerald Illuminated Stone"
           width={1024}
           height={819}
           priority

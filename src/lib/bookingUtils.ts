@@ -172,11 +172,11 @@ export function generateIcsFileContent(booking: ConfirmedBooking): string {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//PixelForge//Schedule Call Booking//EN",
+    "PRODID:-//KeyCodeWeb//Schedule Call Booking//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:REQUEST",
     "BEGIN:VEVENT",
-    `UID:${booking.bookingId}@pixelforge.design`,
+    `UID:${booking.bookingId}@keycodeweb.com`,
     `DTSTAMP:${nowUtc}`,
     `DTSTART:${startUtc}`,
     `DTEND:${endUtc}`,
@@ -200,7 +200,7 @@ export function downloadIcsFile(booking: ConfirmedBooking) {
   const url = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.setAttribute("download", `pixelforge-call-${booking.bookingId}.ics`);
+  link.setAttribute("download", `keycodeweb-call-${booking.bookingId}.ics`);
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);

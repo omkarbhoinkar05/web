@@ -157,7 +157,7 @@ export function HomeAboutSection() {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                 </span>
                 <span className="text-[10px] sm:text-[11px] font-extrabold tracking-[0.16em] sm:tracking-[0.18em] uppercase text-emerald-800">
-                  ABOUT PIXELFORGE · DIGITAL STUDIO
+                  ABOUT KEYCODEWEB · DIGITAL STUDIO
                 </span>
               </div>
             </div>
@@ -403,7 +403,7 @@ export function HomeAboutSection() {
                   <div className="flex items-center gap-1 px-2 sm:px-3 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-[9px] sm:text-[10px] text-zinc-400">
                     <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0" />
                     <span className="font-mono text-[8px] sm:text-[9px] text-zinc-300 truncate max-w-[120px] sm:max-w-none">
-                      pixelforge.design/live
+                      keycodeweb.com/live
                     </span>
                   </div>
 

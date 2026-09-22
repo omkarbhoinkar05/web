@@ -6,7 +6,7 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "404 - Page Not Found | PixelForge",
+  title: "404 - Page Not Found | KeyCodeWeb",
   description: "The page you are looking for does not exist or has been moved.",
 };
 

@@ -23,9 +23,9 @@ import {
 } from "./types";
 
 export const INITIAL_SETTINGS: Settings = {
-  companyName: "Web",
+  companyName: "KeyCodeWeb",
   tagline: "Ideas | Innovation | Growth",
-  supportEmail: "support@web.com",
+  supportEmail: "support@keycodeweb.com",
   supportPhone: "+91 99999 99999",
   bookingSettings: {
     workingDays: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],

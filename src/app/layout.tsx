@@ -18,21 +18,21 @@ const caveat = Caveat({
 });
 
 export const metadata: Metadata = {
-  title: "Web — Modern Web Architecture & Digital Experiences",
+  title: "KeyCodeWeb — Modern Web Architecture & Digital Experiences",
   description:
     "We design and develop high-performance websites and digital experiences that help businesses stand out, grow and scale.",
   metadataBase: new URL("http://localhost:3000"),
   openGraph: {
-    title: "Web — Modern Web Architecture & Digital Experiences",
+    title: "KeyCodeWeb — Modern Web Architecture & Digital Experiences",
     description:
       "We design and develop high-performance websites and digital experiences that help businesses stand out, grow and scale.",
-    siteName: "Web",
+    siteName: "KeyCodeWeb",
     locale: "en_US",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Web — Modern Web Architecture & Digital Experiences",
+    title: "KeyCodeWeb — Modern Web Architecture & Digital Experiences",
     description:
       "We design and develop high-performance websites and digital experiences that help businesses stand out, grow and scale.",
   },

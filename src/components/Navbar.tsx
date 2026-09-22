@@ -154,9 +154,9 @@ export function Navbar() {
             href="/"
             onClick={handleHomeClick}
             className="flex items-center gap-3 group focus:outline-none focus-visible:ring-2 focus-visible:ring-[#10b981] rounded-lg"
-            aria-label="PixelForge Homepage"
+            aria-label="KeyCodeWeb Homepage"
           >
-            {/* Stylized Emerald 'P' Mark */}
+            {/* Stylized Emerald 'K' Mark */}
             <div className="w-10 h-10 flex items-center justify-center shrink-0">
               <svg
                 className="w-9 h-9"
@@ -164,19 +164,13 @@ export function Navbar() {
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
               >
-                <rect width="40" height="40" rx="10" fill="transparent" />
-                {/* Modern Ribbon P Icon */}
-                <path
-                  d="M10 8H23C27.9706 8 32 12.0294 32 17C32 21.9706 27.9706 26 23 26H17V33C17 34.1046 16.1046 35 15 35H12C10.8954 35 10 34.1046 10 33V8Z"
-                  fill="url(#paint0_linear)"
-                />
-                <path
-                  d="M17 14H22.5C24.433 14 26 15.567 26 17.5C26 19.433 24.433 21 22.5 21H17V14Z"
-                  fill="white"
-                />
+                <rect width="40" height="40" rx="10" fill="url(#nav_logo_gradient)" />
+                {/* Modern Tech K Mark */}
+                <path d="M12 10H16.5V30H12V10Z" fill="white" />
+                <path d="M16 21.5L24.5 10H29L19.5 22.5L29 30H24.5L16 21.5Z" fill="white" />
                 <defs>
                   <linearGradient
-                    id="paint0_linear"
+                    id="nav_logo_gradient"
                     x1="10"
                     y1="8"
                     x2="32"
@@ -191,7 +185,7 @@ export function Navbar() {
             </div>
             <div className="flex flex-col">
               <span className="text-xl sm:text-2xl font-black tracking-tight text-zinc-900 leading-none">
-                PixelForge
+                KeyCodeWeb
               </span>
               <span className="text-[8px] sm:text-[9px] font-bold tracking-[0.22em] text-zinc-400 uppercase mt-1">
                 BUILDING A BRIGHTER WEB
@@ -235,7 +229,7 @@ export function Navbar() {
             <a
               href="tel:+919920818481"
               className="hidden sm:inline-flex items-center gap-2 text-xs sm:text-sm font-semibold px-5 sm:px-6 py-2.5 rounded-full text-white bg-gradient-to-r from-[#10b981] to-[#059669] hover:from-[#059669] hover:to-[#047857] shadow-md shadow-emerald-500/25 hover:shadow-emerald-500/35 hover:-translate-y-0.5 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#10b981] active:scale-95"
-              aria-label="Call PixelForge directly at +91 99208 18481"
+              aria-label="Call KeyCodeWeb directly at +91 99208 18481"
             >
               <svg
                 className="w-4 h-4 text-white"
