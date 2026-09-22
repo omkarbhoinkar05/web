@@ -261,3 +261,27 @@ export interface BlogPost {
   createdAt: string;
   updatedAt: string;
 }
+
+export type PortfolioStatus = "Active" | "Inactive";
+
+export interface PortfolioItem {
+  id: string;
+  slug: string;
+  title: string;
+  name?: string; // alias for title
+  category: string;
+  type: string;
+  description: string;
+  image?: string | null;
+  projectUrl?: string | null;
+  features: string;
+  tags: string;
+  displayOrder: number;
+  status: PortfolioStatus;
+  techStack?: string | null;
+  impactMetric?: string | null;
+  impactLabel?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+

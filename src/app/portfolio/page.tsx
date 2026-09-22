@@ -31,7 +31,7 @@ const filterCategories = [
   "Dynamic Website",
 ];
 
-const projects: ProjectItem[] = [
+const staticProjects: ProjectItem[] = [
   {
     id: "edulearn",
     slug: "edulearn",
@@ -497,11 +497,91 @@ const projects: ProjectItem[] = [
 ];
 
 export default function PortfolioPage() {
+  const [projects, setProjects] = useState<ProjectItem[]>(staticProjects);
   const [activeFilter, setActiveFilter] = useState("All Projects");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [navVisible, setNavVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+    fetch("/api/portfolio")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (isMounted && data?.success && Array.isArray(data.projects) && data.projects.length > 0) {
+          const dynamicList: ProjectItem[] = data.projects.map((p: any) => {
+            const existingStatic = staticProjects.find((s) => s.slug === p.slug);
+            return {
+              id: p.id,
+              slug: p.slug,
+              name: p.title || p.name,
+              category: p.category,
+              type: p.type,
+              description: p.description,
+              features: Array.isArray(p.features)
+                ? p.features
+                : p.features
+                ? p.features.split(",").map((s: string) => s.trim()).filter(Boolean)
+                : [],
+              techStack: Array.isArray(p.techStack)
+                ? p.techStack
+                : p.techStack
+                ? p.techStack.split(",").map((s: string) => s.trim()).filter(Boolean)
+                : ["Next.js 16", "TypeScript", "Tailwind CSS"],
+              impactMetric: p.impactMetric || "+100%",
+              impactLabel: p.impactLabel || "Efficiency",
+              tags: Array.isArray(p.tags)
+                ? p.tags
+                : p.tags
+                ? p.tags.split(",").map((s: string) => s.trim()).filter(Boolean)
+                : ["All Projects"],
+              mockup: p.image ? (
+                <div className="w-full h-48 rounded-t-2xl bg-zinc-950 overflow-hidden relative group/mockup border-b border-zinc-800">
+                  <img
+                    src={p.image}
+                    alt={p.title}
+                    className="w-full h-full object-cover object-top transition-transform duration-300 group-hover/mockup:scale-105"
+                  />
+                </div>
+              ) : (
+                existingStatic?.mockup || (
+                  <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
+                    <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
+                        <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
+                        <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
+                      </div>
+                      <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
+                        {p.slug}.io
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        LIVE
+                      </span>
+                    </div>
+                    <div className="my-auto py-2 text-center">
+                      <div className="text-sm font-bold text-white">{p.title || p.name}</div>
+                      <div className="text-[10px] text-emerald-400 mt-1">{p.type}</div>
+                    </div>
+                    <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
+                      <span>⚡ Enterprise UI</span>
+                      <span className="text-emerald-300 font-semibold">{p.category}</span>
+                    </div>
+                  </div>
+                )
+              ),
+            };
+          });
+          setProjects(dynamicList);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Sync sticky offset with Navbar's smart hide/show scroll behavior
   useEffect(() => {

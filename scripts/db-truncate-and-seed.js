@@ -27,6 +27,7 @@ async function truncateAndSeed() {
       "web_team",
       "web_settings",
       "web_blogs",
+      "web_portfolios",
     ];
 
     for (const table of tables) {
@@ -99,19 +100,19 @@ async function truncateAndSeed() {
         role: "HR",
         password: "Admin@123",
         status: "Active",
-        phone: "+91 98330 55667",
+        phone: "+91 97115 66778",
         createdAt: now,
       },
     ];
 
     for (const member of teamMembers) {
       await prisma.teamMember.create({ data: member });
-      console.log(`  ✓ Created team member: ${member.name} (${member.role}) -> ${member.email}`);
+      console.log(`  ✓ Seeded ${member.role}: ${member.name} (${member.email})`);
     }
 
-    // 4. Seed Clean Production Settings
-    console.log("\n[4] Seeding default system settings...");
-    const defaultSettings = {
+    // 4. Default Enterprise CRM & Booking Settings
+    console.log("\n[4] Seeding core enterprise CRM configuration...");
+    const initialSettings = {
       companyName: "Web",
       tagline: "Ideas | Innovation | Growth",
       supportEmail: "support@web.com",
@@ -152,7 +153,9 @@ async function truncateAndSeed() {
           "ERP Software",
           "E-Commerce",
           "Custom Web App",
-          "Mobile App",
+          "Dynamic Website",
+          "Hosting & Domain",
+          "Maintenance & Support",
         ],
       },
       notificationSettings: {
@@ -167,28 +170,17 @@ async function truncateAndSeed() {
 
     await prisma.setting.create({
       data: {
-        keyName: "global_settings",
-        valueJson: JSON.stringify(defaultSettings),
+        keyName: "app_settings",
+        valueJson: JSON.stringify(initialSettings),
         updatedAt: now,
       },
     });
-    console.log("  ✓ Default global_settings created.");
+    console.log("  ✓ Seeded default enterprise settings.");
 
-    // 5. Seed Initial Engineering Blog Articles
-    console.log("\n[5] Seeding initial engineering blog posts...");
+    // 5. Seed Initial Engineering Articles
+    console.log("\n[5] Seeding core engineering & architecture publications...");
     const initialArticles = [
       {
-        id: "blog-saas-arch",
-        slug: "building-resilient-saas-architectures",
-        title: "Building Resilient SaaS Architectures with Next.js and Micro-Frontends",
-        excerpt:
-          "A deep dive into how modern engineering teams architect scalable multi-tenant web applications without sacrificing performance or maintainability.",
-        content: `Modern software systems demand high availability, multi-tenant isolation, and zero-downtime deployment pipelines. When engineering high-traffic SaaS products, architecture decisions made in early phases directly dictate organizational agility 12 months down the road.
-
-### Key Architectural Pillars
-
-1. **Domain-Driven Modularization**: Rather than tightly coupling business domains into a single monolithic bundle, we split critical workflows into isolated, independently testable feature modules.
-2. **Stateless Authentication with Edge Tokens**: By leveraging cryptographically signed HMAC tokens, sessions can be verified instantaneously across regional serverless runtimes without hitting central database bottlenecks on every request.
 3. **Optimistic UI with Background Invalidation**: React 19 transitions and server actions allow enterprise users to experience zero perceived latency while mutations synchronize reliably in the background.
 
 ### Operational Resilience
@@ -284,6 +276,176 @@ Reduce intake form fields to the absolute minimum required to start a meaningful
     for (const art of initialArticles) {
       await prisma.blogPost.create({ data: art });
       console.log("  ✓ Seeded article: " + art.title);
+    }
+
+    // 6. Seed Initial Portfolio Projects
+    console.log("\n[6] Seeding initial portfolio projects...");
+    const initialPortfolios = [
+      {
+        id: "port-edulearn",
+        slug: "edulearn",
+        title: "EduLearn",
+        category: "Education",
+        type: "Online Learning Platform",
+        description:
+          "A modern e-learning platform with live classes, course management, student dashboard and secure payment integration.",
+        image: null,
+        projectUrl: "https://edulearn.io",
+        features: "Web App, Payment Integration, Admin Panel, Live Video Classes, Student LMS",
+        tags: "All Projects, Web App, Dynamic Website, Web Design",
+        displayOrder: 1,
+        status: "Active",
+        techStack: "Next.js 16, WebRTC, PostgreSQL, Tailwind CSS",
+        impactMetric: "+310%",
+        impactLabel: "Student Enrollment",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "port-shopkart",
+        slug: "shopkart",
+        title: "ShopKart",
+        category: "E-Commerce",
+        type: "Multi-Vendor E-Commerce",
+        description:
+          "A feature-rich marketplace with multiple sellers, secure payments, order management and real-time tracking.",
+        image: null,
+        projectUrl: "https://shopkart.store",
+        features: "Multi-Vendor, Payment Gateway, Order Management, Seller Portal",
+        tags: "All Projects, E-Commerce, Web App, Web Design",
+        displayOrder: 2,
+        status: "Active",
+        techStack: "Next.js 16, Redis, Stripe Connect, Prisma ORM",
+        impactMetric: "$2.4M+",
+        impactLabel: "Annual GMV",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "port-taskpro",
+        slug: "taskpro",
+        title: "TaskPro",
+        category: "SaaS App",
+        type: "Project Management SaaS",
+        description:
+          "A SaaS platform to manage projects, teams, tasks and productivity with a clean and intuitive interface.",
+        image: null,
+        projectUrl: "https://app.taskpro.io",
+        features: "SaaS Platform, Team Management, Analytics, Kanban Sprints, Automations",
+        tags: "All Projects, SaaS App, Web App, Web Design",
+        displayOrder: 3,
+        status: "Active",
+        techStack: "React 19, Node.js, WebSockets, Tailwind CSS",
+        impactMetric: "+45%",
+        impactLabel: "Team Productivity",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "port-bizerp",
+        slug: "bizerp",
+        title: "BizERP",
+        category: "ERP Software",
+        type: "Complete Business Management",
+        description:
+          "A custom ERP solution for inventory, sales, purchase, HR, finance and more — all in one powerful platform.",
+        image: null,
+        projectUrl: "https://bizerp.cloud",
+        features: "Inventory, HR Management, Reports, Tax Compliance, Audit Trail",
+        tags: "All Projects, ERP Software, Web App, Dynamic Website",
+        displayOrder: 4,
+        status: "Active",
+        techStack: "Next.js, GraphQL, PostgreSQL, Tailwind CSS",
+        impactMetric: "-62%",
+        impactLabel: "Operational Overhead",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "port-healthpulse",
+        slug: "healthpulse",
+        title: "HealthPulse",
+        category: "Healthcare",
+        type: "Telemedicine & EHR Portal",
+        description:
+          "HIPAA-compliant telehealth platform with secure video appointments, electronic health record vault, and digital prescription routing.",
+        image: null,
+        projectUrl: "https://healthpulse.med",
+        features: "Video Consultations, EHR Records, Prescription Routing, Doctor Calendar",
+        tags: "All Projects, Web App, SaaS App, Dynamic Website",
+        displayOrder: 5,
+        status: "Active",
+        techStack: "Next.js 16, WebRTC, HIPAA Cloud, Tailwind CSS",
+        impactMetric: "40K+",
+        impactLabel: "Monthly Consultations",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "port-propnest",
+        slug: "propnest",
+        title: "PropNest",
+        category: "Real Estate",
+        type: "Property Discovery Engine",
+        description:
+          "High-conversion luxury property portal featuring automated MLS feed sync, dynamic map exploration, 3D tours, and lead CRM.",
+        image: null,
+        projectUrl: "https://propnest.estate",
+        features: "MLS Feed Sync, Interactive Maps, Virtual 3D Tours, Mortgage Calculator",
+        tags: "All Projects, Dynamic Website, Web Design, Web App",
+        displayOrder: 6,
+        status: "Active",
+        techStack: "Next.js 16, Mapbox GL, Node.js, Tailwind CSS",
+        impactMetric: "8.4x",
+        impactLabel: "Qualified Inquiries",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "port-finedge",
+        slug: "finedge",
+        title: "FinEdge",
+        category: "FinTech",
+        type: "Wealth & Portfolio Tracker",
+        description:
+          "Institutional-grade portfolio management and wealth dashboard with real-time market data, risk models, and automated tax reporting.",
+        image: null,
+        projectUrl: "https://finedge.capital",
+        features: "Live Market Stream, Asset Allocation, Risk Analytics, Tax Optimization",
+        tags: "All Projects, SaaS App, Web App, ERP Software",
+        displayOrder: 7,
+        status: "Active",
+        techStack: "Next.js, FastAPI, WebSockets, Tailwind CSS",
+        impactMetric: "$120M+",
+        impactLabel: "Assets Tracked",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "port-dineflow",
+        slug: "dineflow",
+        title: "DineFlow",
+        category: "Hospitality",
+        type: "Restaurant Cloud POS & KDS",
+        description:
+          "End-to-end restaurant automation suite with contactless QR menus, kitchen display system (KDS), delivery aggregator sync, and table inventory.",
+        image: null,
+        projectUrl: "https://dineflow.pos",
+        features: "QR Menu & Pay, Kitchen Display (KDS), Table Turnover, Delivery Sync",
+        tags: "All Projects, Web App, E-Commerce, Dynamic Website",
+        displayOrder: 8,
+        status: "Active",
+        techStack: "Next.js 16, Socket.io, Stripe Terminal, Tailwind CSS",
+        impactMetric: "3.2x",
+        impactLabel: "Faster Table Turns",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
+
+    for (const port of initialPortfolios) {
+      await prisma.portfolioItem.create({ data: port });
+      console.log("  ✓ Seeded portfolio: " + port.title);
     }
 
     // 6. System Initial Notification

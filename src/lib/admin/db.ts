@@ -16,6 +16,8 @@ import {
   PasswordResetRecord,
   AdminRole,
   BlogPost,
+  PortfolioItem,
+  PortfolioStatus,
 } from "./types";
 
 export const INITIAL_SETTINGS: Settings = {
@@ -137,6 +139,11 @@ export async function seedDatabaseIfEmpty(): Promise<void> {
           updatedAt: now,
         },
       });
+    }
+
+    const portfolioCount = await prisma.portfolioItem.count();
+    if (portfolioCount === 0) {
+      await seedPortfolios();
     }
   } catch (err) {
     console.error("Database seeding check:", err);
@@ -1787,3 +1794,502 @@ export async function incrementBlogViews(slug: string): Promise<void> {
     console.error("Error incrementing blog views:", error);
   }
 }
+
+// ----------------------------------------------------
+// Portfolio Management
+// ----------------------------------------------------
+
+export const INITIAL_PORTFOLIO_PROJECTS: Array<{
+  id: string;
+  slug: string;
+  title: string;
+  category: string;
+  type: string;
+  description: string;
+  image: string | null;
+  projectUrl: string;
+  features: string;
+  tags: string;
+  displayOrder: number;
+  status: "Active" | "Inactive";
+  techStack?: string;
+  impactMetric?: string;
+  impactLabel?: string;
+}> = [
+  {
+    id: "port-edulearn",
+    slug: "edulearn",
+    title: "EduLearn",
+    category: "Education",
+    type: "Online Learning Platform",
+    description:
+      "A modern e-learning platform with live classes, course management, student dashboard and secure payment integration.",
+    image: null,
+    projectUrl: "https://edulearn.io",
+    features: "Web App, Payment Integration, Admin Panel, Live Video Classes, Student LMS",
+    tags: "All Projects, Web App, Dynamic Website, Web Design",
+    displayOrder: 1,
+    status: "Active",
+    techStack: "Next.js 16, WebRTC, PostgreSQL, Tailwind CSS",
+    impactMetric: "+310%",
+    impactLabel: "Student Enrollment",
+  },
+  {
+    id: "port-shopkart",
+    slug: "shopkart",
+    title: "ShopKart",
+    category: "E-Commerce",
+    type: "Multi-Vendor E-Commerce",
+    description:
+      "A feature-rich marketplace with multiple sellers, secure payments, order management and real-time tracking.",
+    image: null,
+    projectUrl: "https://shopkart.store",
+    features: "Multi-Vendor, Payment Gateway, Order Management, Seller Portal",
+    tags: "All Projects, E-Commerce, Web App, Web Design",
+    displayOrder: 2,
+    status: "Active",
+    techStack: "Next.js 16, Redis, Stripe Connect, Prisma ORM",
+    impactMetric: "$2.4M+",
+    impactLabel: "Annual GMV",
+  },
+  {
+    id: "port-taskpro",
+    slug: "taskpro",
+    title: "TaskPro",
+    category: "SaaS App",
+    type: "Project Management SaaS",
+    description:
+      "A SaaS platform to manage projects, teams, tasks and productivity with a clean and intuitive interface.",
+    image: null,
+    projectUrl: "https://app.taskpro.io",
+    features: "SaaS Platform, Team Management, Analytics, Kanban Sprints, Automations",
+    tags: "All Projects, SaaS App, Web App, Web Design",
+    displayOrder: 3,
+    status: "Active",
+    techStack: "React 19, Node.js, WebSockets, Tailwind CSS",
+    impactMetric: "+45%",
+    impactLabel: "Team Productivity",
+  },
+  {
+    id: "port-bizerp",
+    slug: "bizerp",
+    title: "BizERP",
+    category: "ERP Software",
+    type: "Complete Business Management",
+    description:
+      "A custom ERP solution for inventory, sales, purchase, HR, finance and more — all in one powerful platform.",
+    image: null,
+    projectUrl: "https://bizerp.cloud",
+    features: "Inventory, HR Management, Reports, Tax Compliance, Audit Trail",
+    tags: "All Projects, ERP Software, Web App, Dynamic Website",
+    displayOrder: 4,
+    status: "Active",
+    techStack: "Next.js, GraphQL, PostgreSQL, Tailwind CSS",
+    impactMetric: "-62%",
+    impactLabel: "Operational Overhead",
+  },
+  {
+    id: "port-healthpulse",
+    slug: "healthpulse",
+    title: "HealthPulse",
+    category: "Healthcare",
+    type: "Telemedicine & EHR Portal",
+    description:
+      "HIPAA-compliant telehealth platform with secure video appointments, electronic health record vault, and digital prescription routing.",
+    image: null,
+    projectUrl: "https://healthpulse.med",
+    features: "Video Consultations, EHR Records, Prescription Routing, Doctor Calendar",
+    tags: "All Projects, Web App, SaaS App, Dynamic Website",
+    displayOrder: 5,
+    status: "Active",
+    techStack: "Next.js 16, WebRTC, HIPAA Cloud, Tailwind CSS",
+    impactMetric: "40K+",
+    impactLabel: "Monthly Consultations",
+  },
+  {
+    id: "port-propnest",
+    slug: "propnest",
+    title: "PropNest",
+    category: "Real Estate",
+    type: "Property Discovery Engine",
+    description:
+      "High-conversion luxury property portal featuring automated MLS feed sync, dynamic map exploration, 3D tours, and lead CRM.",
+    image: null,
+    projectUrl: "https://propnest.estate",
+    features: "MLS Feed Sync, Interactive Maps, Virtual 3D Tours, Mortgage Calculator",
+    tags: "All Projects, Dynamic Website, Web Design, Web App",
+    displayOrder: 6,
+    status: "Active",
+    techStack: "Next.js 16, Mapbox GL, Node.js, Tailwind CSS",
+    impactMetric: "8.4x",
+    impactLabel: "Qualified Inquiries",
+  },
+  {
+    id: "port-finedge",
+    slug: "finedge",
+    title: "FinEdge",
+    category: "FinTech",
+    type: "Wealth & Portfolio Tracker",
+    description:
+      "Institutional-grade portfolio management and wealth dashboard with real-time market data, risk models, and automated tax reporting.",
+    image: null,
+    projectUrl: "https://finedge.capital",
+    features: "Live Market Stream, Asset Allocation, Risk Analytics, Tax Optimization",
+    tags: "All Projects, SaaS App, Web App, ERP Software",
+    displayOrder: 7,
+    status: "Active",
+    techStack: "Next.js, FastAPI, WebSockets, Tailwind CSS",
+    impactMetric: "$120M+",
+    impactLabel: "Assets Tracked",
+  },
+  {
+    id: "port-dineflow",
+    slug: "dineflow",
+    title: "DineFlow",
+    category: "Hospitality",
+    type: "Restaurant Cloud POS & KDS",
+    description:
+      "End-to-end restaurant automation suite with contactless QR menus, kitchen display system (KDS), delivery aggregator sync, and table inventory.",
+    image: null,
+    projectUrl: "https://dineflow.pos",
+    features: "QR Menu & Pay, Kitchen Display (KDS), Table Turnover, Delivery Sync",
+    tags: "All Projects, Web App, E-Commerce, Dynamic Website",
+    displayOrder: 8,
+    status: "Active",
+    techStack: "Next.js 16, Socket.io, Stripe Terminal, Tailwind CSS",
+    impactMetric: "3.2x",
+    impactLabel: "Faster Table Turns",
+  },
+];
+
+export async function seedPortfolios(): Promise<void> {
+  try {
+    const now = new Date().toISOString();
+    for (const p of INITIAL_PORTFOLIO_PROJECTS) {
+      await prisma.portfolioItem.upsert({
+        where: { slug: p.slug },
+        update: {},
+        create: {
+          id: p.id,
+          slug: p.slug,
+          title: p.title,
+          category: p.category,
+          type: p.type,
+          description: p.description,
+          image: p.image,
+          projectUrl: p.projectUrl,
+          features: p.features,
+          tags: p.tags,
+          displayOrder: p.displayOrder,
+          status: p.status,
+          techStack: p.techStack || null,
+          impactMetric: p.impactMetric || null,
+          impactLabel: p.impactLabel || null,
+          createdAt: now,
+          updatedAt: now,
+        },
+      });
+    }
+  } catch (err) {
+    console.error("Error seeding initial portfolio projects:", err);
+  }
+}
+
+export interface PortfolioFilters {
+  status?: string;
+  category?: string;
+  search?: string;
+  limit?: number;
+  skip?: number;
+}
+
+export async function getPortfolios(
+  filters?: PortfolioFilters
+): Promise<{ portfolios: PortfolioItem[]; total: number }> {
+  await seedDatabaseIfEmpty();
+
+  const where: any = {};
+
+  if (filters?.status && filters.status !== "All") {
+    where.status = filters.status;
+  }
+  if (filters?.category && filters.category !== "All") {
+    where.category = filters.category;
+  }
+  if (filters?.search) {
+    const q = filters.search.trim();
+    where.OR = [
+      { title: { contains: q } },
+      { description: { contains: q } },
+      { category: { contains: q } },
+      { type: { contains: q } },
+      { tags: { contains: q } },
+      { features: { contains: q } },
+    ];
+  }
+
+  const [portfolios, total] = await Promise.all([
+    prisma.portfolioItem.findMany({
+      where,
+      orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
+      take: filters?.limit,
+      skip: filters?.skip,
+    }),
+    prisma.portfolioItem.count({ where }),
+  ]);
+
+  return {
+    portfolios: portfolios.map((p) => ({
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      name: p.title, // alias for frontend compatibility
+      category: p.category,
+      type: p.type,
+      description: p.description,
+      image: p.image,
+      projectUrl: p.projectUrl,
+      features: p.features,
+      tags: p.tags,
+      displayOrder: p.displayOrder,
+      status: p.status as any,
+      techStack: p.techStack,
+      impactMetric: p.impactMetric,
+      impactLabel: p.impactLabel,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    })),
+    total,
+  };
+}
+
+export async function getPortfolioById(id: string): Promise<PortfolioItem | null> {
+  const p = await prisma.portfolioItem.findUnique({ where: { id } });
+  if (!p) return null;
+  return {
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    name: p.title,
+    category: p.category,
+    type: p.type,
+    description: p.description,
+    image: p.image,
+    projectUrl: p.projectUrl,
+    features: p.features,
+    tags: p.tags,
+    displayOrder: p.displayOrder,
+    status: p.status as any,
+    techStack: p.techStack,
+    impactMetric: p.impactMetric,
+    impactLabel: p.impactLabel,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  };
+}
+
+export async function getPortfolioBySlug(slug: string): Promise<PortfolioItem | null> {
+  const p = await prisma.portfolioItem.findUnique({ where: { slug } });
+  if (!p) return null;
+  return {
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    name: p.title,
+    category: p.category,
+    type: p.type,
+    description: p.description,
+    image: p.image,
+    projectUrl: p.projectUrl,
+    features: p.features,
+    tags: p.tags,
+    displayOrder: p.displayOrder,
+    status: p.status as any,
+    techStack: p.techStack,
+    impactMetric: p.impactMetric,
+    impactLabel: p.impactLabel,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  };
+}
+
+export async function createPortfolio(data: {
+  title: string;
+  slug?: string;
+  category: string;
+  type: string;
+  description: string;
+  image?: string | null;
+  projectUrl?: string | null;
+  features: string | string[];
+  tags: string | string[];
+  displayOrder?: number;
+  status?: "Active" | "Inactive";
+  techStack?: string | null;
+  impactMetric?: string | null;
+  impactLabel?: string | null;
+}): Promise<PortfolioItem> {
+  const id = "port-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+  let baseSlug = data.slug ? generateSlug(data.slug) : generateSlug(data.title);
+  if (!baseSlug) baseSlug = "project-" + Date.now();
+
+  let slug = baseSlug;
+  let counter = 1;
+  while (await prisma.portfolioItem.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  const featuresStr = Array.isArray(data.features) ? data.features.join(", ") : data.features;
+  const tagsStr = Array.isArray(data.tags) ? data.tags.join(", ") : data.tags;
+  const now = new Date().toISOString();
+
+  const p = await prisma.portfolioItem.create({
+    data: {
+      id,
+      slug,
+      title: data.title,
+      category: data.category,
+      type: data.type,
+      description: data.description,
+      image: data.image || null,
+      projectUrl: data.projectUrl || null,
+      features: featuresStr,
+      tags: tagsStr,
+      displayOrder: data.displayOrder ?? 0,
+      status: data.status || "Active",
+      techStack: data.techStack || null,
+      impactMetric: data.impactMetric || null,
+      impactLabel: data.impactLabel || null,
+      createdAt: now,
+      updatedAt: now,
+    },
+  });
+
+  return {
+    id: p.id,
+    slug: p.slug,
+    title: p.title,
+    name: p.title,
+    category: p.category,
+    type: p.type,
+    description: p.description,
+    image: p.image,
+    projectUrl: p.projectUrl,
+    features: p.features,
+    tags: p.tags,
+    displayOrder: p.displayOrder,
+    status: p.status as any,
+    techStack: p.techStack,
+    impactMetric: p.impactMetric,
+    impactLabel: p.impactLabel,
+    createdAt: p.createdAt,
+    updatedAt: p.updatedAt,
+  };
+}
+
+export async function updatePortfolio(
+  id: string,
+  updates: {
+    title?: string;
+    slug?: string;
+    category?: string;
+    type?: string;
+    description?: string;
+    image?: string | null;
+    projectUrl?: string | null;
+    features?: string | string[];
+    tags?: string | string[];
+    displayOrder?: number;
+    status?: "Active" | "Inactive";
+    techStack?: string | null;
+    impactMetric?: string | null;
+    impactLabel?: string | null;
+  }
+): Promise<PortfolioItem | null> {
+  try {
+    const existing = await prisma.portfolioItem.findUnique({ where: { id } });
+    if (!existing) return null;
+
+    let newSlug = existing.slug;
+    if (updates.slug && updates.slug !== existing.slug) {
+      const generated = generateSlug(updates.slug);
+      const conflict = await prisma.portfolioItem.findFirst({
+        where: { slug: generated, NOT: { id } },
+      });
+      newSlug = conflict ? `${generated}-${Date.now().toString().slice(-4)}` : generated;
+    }
+
+    const featuresStr =
+      updates.features !== undefined
+        ? Array.isArray(updates.features)
+          ? updates.features.join(", ")
+          : updates.features
+        : existing.features;
+
+    const tagsStr =
+      updates.tags !== undefined
+        ? Array.isArray(updates.tags)
+          ? updates.tags.join(", ")
+          : updates.tags
+        : existing.tags;
+
+    const now = new Date().toISOString();
+
+    const p = await prisma.portfolioItem.update({
+      where: { id },
+      data: {
+        title: updates.title ?? existing.title,
+        slug: newSlug,
+        category: updates.category ?? existing.category,
+        type: updates.type ?? existing.type,
+        description: updates.description ?? existing.description,
+        image: updates.image !== undefined ? updates.image : existing.image,
+        projectUrl: updates.projectUrl !== undefined ? updates.projectUrl : existing.projectUrl,
+        features: featuresStr,
+        tags: tagsStr,
+        displayOrder: updates.displayOrder !== undefined ? updates.displayOrder : existing.displayOrder,
+        status: updates.status ?? existing.status,
+        techStack: updates.techStack !== undefined ? updates.techStack : existing.techStack,
+        impactMetric: updates.impactMetric !== undefined ? updates.impactMetric : existing.impactMetric,
+        impactLabel: updates.impactLabel !== undefined ? updates.impactLabel : existing.impactLabel,
+        updatedAt: now,
+      },
+    });
+
+    return {
+      id: p.id,
+      slug: p.slug,
+      title: p.title,
+      name: p.title,
+      category: p.category,
+      type: p.type,
+      description: p.description,
+      image: p.image,
+      projectUrl: p.projectUrl,
+      features: p.features,
+      tags: p.tags,
+      displayOrder: p.displayOrder,
+      status: p.status as any,
+      techStack: p.techStack,
+      impactMetric: p.impactMetric,
+      impactLabel: p.impactLabel,
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+    };
+  } catch (error) {
+    console.error("Error updating portfolio project:", error);
+    return null;
+  }
+}
+
+export async function deletePortfolio(id: string): Promise<boolean> {
+  try {
+    await prisma.portfolioItem.delete({ where: { id } });
+    return true;
+  } catch (error) {
+    console.error("Error deleting portfolio project:", error);
+    return false;
+  }
+}
+

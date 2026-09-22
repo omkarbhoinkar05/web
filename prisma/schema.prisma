@@ -222,3 +222,29 @@ model BlogPost {
   @@index([category], map: "idx_blogs_category")
   @@map("web_blogs")
 }
+
+model PortfolioItem {
+  id           String   @id @db.VarChar(64)
+  slug         String   @unique @db.VarChar(191)
+  title        String   @db.VarChar(255)
+  category     String   @db.VarChar(100)
+  type         String   @db.VarChar(100)
+  description  String   @db.Text
+  image        String?  @db.VarChar(255)
+  projectUrl   String?  @map("project_url") @db.VarChar(255)
+  features     String   @db.Text
+  tags         String   @db.VarChar(255)
+  displayOrder Int      @default(0) @map("display_order")
+  status       String   @default("Active") @db.VarChar(50)
+  techStack    String?  @map("tech_stack") @db.VarChar(255)
+  impactMetric String?  @map("impact_metric") @db.VarChar(50)
+  impactLabel  String?  @map("impact_label") @db.VarChar(100)
+  createdAt    String   @map("created_at") @db.VarChar(64)
+  updatedAt    String   @map("updated_at") @db.VarChar(64)
+
+  @@index([status], map: "idx_portfolios_status")
+  @@index([category], map: "idx_portfolios_category")
+  @@index([displayOrder], map: "idx_portfolios_order")
+  @@map("web_portfolios")
+}
+

@@ -232,3 +232,23 @@ export const blogPostSchema = z.object({
 });
 
 export type BlogPostInput = z.infer<typeof blogPostSchema>;
+
+export const portfolioItemSchema = z.object({
+  title: z.string().trim().min(2, "Project title must be at least 2 characters"),
+  slug: z.string().trim().min(2, "Slug must be at least 2 characters").optional(),
+  category: z.string().trim().min(1, "Category is required"),
+  type: z.string().trim().min(1, "Project type is required"),
+  description: z.string().trim().min(5, "Description must be at least 5 characters"),
+  image: z.string().trim().optional().nullable(),
+  projectUrl: z.string().trim().optional().nullable(),
+  features: z.union([z.string(), z.array(z.string())]).default("Web App, Responsive UI"),
+  tags: z.union([z.string(), z.array(z.string())]).default("All Projects, Web App"),
+  displayOrder: z.coerce.number().int().default(0),
+  status: z.enum(["Active", "Inactive"]).default("Active"),
+  techStack: z.string().trim().optional().nullable(),
+  impactMetric: z.string().trim().optional().nullable(),
+  impactLabel: z.string().trim().optional().nullable(),
+});
+
+export type PortfolioItemInput = z.infer<typeof portfolioItemSchema>;
+
