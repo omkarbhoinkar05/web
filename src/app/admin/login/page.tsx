@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, Suspense } from "react";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -48,18 +49,25 @@ function LoginForm() {
   return (
     <div className="w-full max-w-md relative z-10">
       {/* Card Header Brand */}
-      <div className="text-center mb-8">
-        <div className="inline-flex w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 items-center justify-center text-slate-950 font-black text-3xl shadow-xl shadow-emerald-500/20 mb-4">
-          W
+      <div className="text-center mb-8 flex flex-col items-center">
+        <div className="w-16 h-16 rounded-2xl bg-white/10 backdrop-blur-md p-2 flex items-center justify-center shadow-xl shadow-emerald-500/20 mb-3 border border-white/20">
+          <Image
+            src="/logo-icon.png"
+            alt="KeyCodeWeb Logo"
+            width={56}
+            height={56}
+            className="w-full h-full object-contain"
+            priority
+          />
         </div>
         <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-          Web
+          KeyCodeWeb
         </h1>
         <p className="text-xs font-semibold text-emerald-400 uppercase tracking-widest mt-1">
           Business Command Center
         </p>
-        <p className="text-xs text-slate-400 mt-1">
-          Ideas • Innovation • Growth
+        <p className="text-xs text-slate-400 mt-1 font-medium">
+          Ideas • Code • Digital Growth
         </p>
       </div>
 

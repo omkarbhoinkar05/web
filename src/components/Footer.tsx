@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useScheduleCall } from "@/components/schedule/ScheduleCallContext";
@@ -278,31 +279,16 @@ export function Footer() {
             <Link
               href="/"
               onClick={(e) => handleLinkClick(e, "/")}
-              className="inline-flex items-center gap-3 group focus:outline-none"
+              className="inline-flex items-center group focus:outline-none"
               aria-label="KeyCodeWeb Homepage"
             >
-              <div className="w-10 h-10 flex items-center justify-center shrink-0">
-                <svg className="w-9 h-9" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="40" height="40" rx="10" fill="url(#footer_logo_gradient_white)" />
-                  {/* Modern Tech K Mark */}
-                  <path d="M12 10H16.5V30H12V10Z" fill="white" />
-                  <path d="M16 21.5L24.5 10H29L19.5 22.5L29 30H24.5L16 21.5Z" fill="white" />
-                  <defs>
-                    <linearGradient id="footer_logo_gradient_white" x1="10" y1="8" x2="32" y2="35" gradientUnits="userSpaceOnUse">
-                      <stop stopColor="#10b981" />
-                      <stop offset="1" stopColor="#059669" />
-                    </linearGradient>
-                  </defs>
-                </svg>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-black tracking-tight text-zinc-900 leading-none">
-                  KeyCodeWeb
-                </span>
-                <span className="text-[9px] font-bold tracking-[0.22em] text-zinc-400 uppercase mt-1">
-                  BUILDING A BRIGHTER WEB
-                </span>
-              </div>
+              <Image
+                src="/logo-trimmed.png"
+                alt="KeyCodeWeb - Ideas | Code | Digital Growth"
+                width={220}
+                height={51}
+                className="h-12 sm:h-14 w-auto object-contain transition-transform duration-200 group-hover:scale-[1.02]"
+              />
             </Link>
 
             {/* Tagline & Description */}

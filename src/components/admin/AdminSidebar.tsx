@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -280,16 +281,22 @@ export function AdminSidebar({ mobileOpen, setMobileOpen, user: propUser }: Admi
       >
         {/* Brand Header */}
         <div className="h-20 flex items-center justify-between px-6 border-b border-emerald-800/40 bg-[#032a20]">
-          <Link href={homeHref} className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-slate-950 font-black text-xl shadow-md shadow-emerald-500/20">
-              K
+          <Link href={homeHref} className="flex items-center gap-3 group">
+            <div className="w-10 h-10 rounded-xl bg-white/10 p-1 flex items-center justify-center shrink-0 border border-white/15 group-hover:border-emerald-400/50 shadow-md shadow-emerald-950/40 transition-colors">
+              <Image
+                src="/logo-icon.png"
+                alt="KeyCodeWeb Logo"
+                width={36}
+                height={36}
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
-              <span className="text-base font-black tracking-tight text-white block leading-tight">
+              <span className="text-base font-black tracking-tight text-white block leading-tight group-hover:text-emerald-300 transition-colors">
                 KeyCodeWeb
               </span>
               <span className="text-[10px] font-medium text-emerald-300/80 tracking-wider uppercase block">
-                Ideas | Innovation | Growth
+                Ideas • Code • Growth
               </span>
             </div>
           </Link>

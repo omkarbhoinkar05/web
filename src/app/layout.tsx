@@ -36,6 +36,15 @@ export const metadata: Metadata = {
     description:
       "We design and develop high-performance websites and digital experiences that help businesses stand out, grow and scale.",
   },
+  icons: {
+    icon: [
+      { url: "/icon.png", sizes: "256x256", type: "image/png" },
+      { url: "/logo-icon.png", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon.png", sizes: "256x256", type: "image/png" },
+    ],
+  },
 };
 
 import { HashScrollHandler } from "@/components/HashScrollHandler";
