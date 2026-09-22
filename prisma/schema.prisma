@@ -250,3 +250,24 @@ model PortfolioItem {
   @@map("web_portfolios")
 }
 
+model ServiceItem {
+  id               String   @id @db.VarChar(64)
+  slug             String   @unique @db.VarChar(191)
+  title            String   @db.VarChar(255)
+  shortDescription String   @map("short_description") @db.Text
+  description      String?  @db.LongText
+  features         String   @db.Text
+  image            String?  @db.VarChar(255)
+  icon             String?  @db.VarChar(50)
+  buttonText       String?  @default("Contact Now →") @map("button_text") @db.VarChar(100)
+  href             String?  @default("#contact") @db.VarChar(255)
+  displayOrder     Int      @default(0) @map("display_order")
+  status           String   @default("Active") @db.VarChar(50)
+  createdAt        String   @map("created_at") @db.VarChar(64)
+  updatedAt        String   @map("updated_at") @db.VarChar(64)
+
+  @@index([status], map: "idx_services_status")
+  @@index([displayOrder], map: "idx_services_order")
+  @@map("web_services")
+}
+

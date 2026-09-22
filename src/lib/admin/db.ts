@@ -18,6 +18,8 @@ import {
   BlogPost,
   PortfolioItem,
   PortfolioStatus,
+  ServiceItem,
+  ServiceStatus,
 } from "./types";
 
 export const INITIAL_SETTINGS: Settings = {
@@ -144,6 +146,11 @@ export async function seedDatabaseIfEmpty(): Promise<void> {
     const portfolioCount = await prisma.portfolioItem.count();
     if (portfolioCount === 0) {
       await seedPortfolios();
+    }
+
+    const serviceCount = await prisma.serviceItem.count();
+    if (serviceCount === 0) {
+      await seedServices();
     }
   } catch (err) {
     console.error("Database seeding check:", err);
@@ -2337,4 +2344,426 @@ export async function deletePortfolio(id: string): Promise<boolean> {
     return false;
   }
 }
+
+// ----------------------------------------------------
+// Services Management
+// ----------------------------------------------------
+
+export const INITIAL_SERVICES: Array<{
+  id: string;
+  slug: string;
+  title: string;
+  shortDescription: string;
+  description?: string;
+  features: string;
+  image?: string | null;
+  icon: string;
+  buttonText: string;
+  href: string;
+  displayOrder: number;
+  status: "Active" | "Inactive";
+}> = [
+  {
+    id: "serv-web-design",
+    slug: "web-design",
+    title: "Web Design",
+    shortDescription:
+      "Modern, responsive and user-friendly web designs that create a strong online presence.",
+    description:
+      "Bespoke, high-converting web designs and corporate digital interfaces engineered for maximum user engagement, brand authority, and seamless cross-device performance.",
+    features:
+      "Corporate Website, Business Website, Landing Page, Portfolio Website, UI/UX Design, Responsive Web Design, Website Redesign, Figma to Website",
+    image: null,
+    icon: "monitor",
+    buttonText: "Contact Now →",
+    href: "#contact",
+    displayOrder: 1,
+    status: "Active",
+  },
+  {
+    id: "serv-saas-app",
+    slug: "saas-app",
+    title: "SaaS App Development",
+    shortDescription:
+      "Scalable and secure SaaS solutions tailored for modern businesses.",
+    description:
+      "Scalable, multi-tenant cloud software platforms built with modern subscription billing, granular roles and permissions, high-performance APIs, and robust data isolation.",
+    features:
+      "SaaS Platform, Multi-Tenant SaaS, Subscription Management, User Management, Role & Permission System, Admin Dashboard, Analytics Dashboard, API Integration, Payment Integration",
+    image: null,
+    icon: "cloud",
+    buttonText: "Contact Now →",
+    href: "#contact",
+    displayOrder: 2,
+    status: "Active",
+  },
+  {
+    id: "serv-erp-software",
+    slug: "erp-software",
+    title: "ERP Software",
+    shortDescription:
+      "Complete ERP solutions to streamline your business operations.",
+    description:
+      "Centralized business operating engines uniting inventory, human resources, accounting, CRM, and real-time operational analytics into one cohesive system.",
+    features:
+      "HR & Employee Management, CRM, Inventory Management, Sales Management, Purchase Management, Accounting & Finance, Payroll, Project Management, Reports & Analytics, Admin / Super Admin Panel",
+    image: null,
+    icon: "erp",
+    buttonText: "Contact Now →",
+    href: "#contact",
+    displayOrder: 3,
+    status: "Active",
+  },
+  {
+    id: "serv-ecommerce",
+    slug: "ecommerce",
+    title: "E-Commerce",
+    shortDescription:
+      "Feature-rich e-commerce solutions to take your business online.",
+    description:
+      "Omnichannel digital storefronts, high-volume multi-vendor marketplaces, and secure multi-currency payment checkout architectures engineered for peak conversions.",
+    features:
+      "B2B E-Commerce, B2C E-Commerce, Multi-Vendor Marketplace, Product Management, Order Management, Payment Gateway, Shipping Integration, Coupon & Offers, Customer Dashboard, Seller Dashboard",
+    image: null,
+    icon: "cart",
+    buttonText: "Contact Now →",
+    href: "#contact",
+    displayOrder: 4,
+    status: "Active",
+  },
+  {
+    id: "serv-dynamic-website",
+    slug: "dynamic-website",
+    title: "Dynamic Website",
+    shortDescription:
+      "Powerful dynamic websites with flexible content management.",
+    description:
+      "Content-rich, dynamic web platforms with modular CMS control, live data feeds, interactive forms, and authenticated user access for full operational agility.",
+    features:
+      "CMS Website, News / Blog Website, Real Estate Website, Education Website, Booking Website, Directory Website, Membership Website, Content Management, Dynamic Forms, Admin Panel",
+    image: null,
+    icon: "window",
+    buttonText: "Contact Now →",
+    href: "#contact",
+    displayOrder: 5,
+    status: "Active",
+  },
+  {
+    id: "serv-custom-web-app",
+    slug: "custom-web-app",
+    title: "Custom Web App",
+    shortDescription:
+      "Tailored web applications to solve your unique business challenges.",
+    description:
+      "Mission-critical custom web portals and workflow automation tools tailored precisely to proprietary operational processes and third-party enterprise integrations.",
+    features:
+      "Business Web Applications, Customer Portals, Admin Panels, Custom Dashboards, Workflow Automation, API Development, Third-Party Integrations, OTP Integration, Payment Integration, WhatsApp Integration",
+    image: null,
+    icon: "code",
+    buttonText: "Contact Now →",
+    href: "#contact",
+    displayOrder: 6,
+    status: "Active",
+  },
+  {
+    id: "serv-hosting",
+    slug: "hosting",
+    title: "Hosting",
+    shortDescription:
+      "Reliable and secure hosting solutions to keep your business online 24/7.",
+    description:
+      "Enterprise cloud hosting, automated backups, zero-downtime server migrations, and robust DDoS protection for continuous uptime and lightning-fast page delivery.",
+    features:
+      "Web Hosting, Cloud Hosting, VPS Hosting, Managed Hosting, Domain Management, SSL Certificate, Business Email, Server Setup, Website Migration, Backup & Security, Performance Optimization",
+    image: null,
+    icon: "server",
+    buttonText: "Contact Now →",
+    href: "#contact",
+    displayOrder: 7,
+    status: "Active",
+  },
+];
+
+export async function seedServices(): Promise<void> {
+  try {
+    const now = new Date().toISOString();
+    for (const s of INITIAL_SERVICES) {
+      await prisma.serviceItem.upsert({
+        where: { slug: s.slug },
+        update: {},
+        create: {
+          id: s.id,
+          slug: s.slug,
+          title: s.title,
+          shortDescription: s.shortDescription,
+          description: s.description || null,
+          features: s.features,
+          image: s.image || null,
+          icon: s.icon || null,
+          buttonText: s.buttonText || "Contact Now →",
+          href: s.href || "#contact",
+          displayOrder: s.displayOrder,
+          status: s.status,
+          createdAt: now,
+          updatedAt: now,
+        },
+      });
+    }
+  } catch (err) {
+    console.error("Error seeding initial services:", err);
+  }
+}
+
+export interface ServiceFilters {
+  status?: string;
+  search?: string;
+  limit?: number;
+  skip?: number;
+}
+
+export async function getServices(
+  filters?: ServiceFilters
+): Promise<{ services: ServiceItem[]; total: number }> {
+  await seedDatabaseIfEmpty();
+
+  const where: any = {};
+
+  if (filters?.status && filters.status !== "All") {
+    where.status = filters.status;
+  }
+  if (filters?.search) {
+    const q = filters.search.trim();
+    where.OR = [
+      { title: { contains: q } },
+      { shortDescription: { contains: q } },
+      { description: { contains: q } },
+      { features: { contains: q } },
+    ];
+  }
+
+  const [services, total] = await Promise.all([
+    prisma.serviceItem.findMany({
+      where,
+      orderBy: [{ displayOrder: "asc" }, { createdAt: "desc" }],
+      take: filters?.limit,
+      skip: filters?.skip,
+    }),
+    prisma.serviceItem.count({ where }),
+  ]);
+
+  return {
+    services: services.map((s) => ({
+      id: s.id,
+      slug: s.slug,
+      title: s.title,
+      shortDescription: s.shortDescription,
+      description: s.description,
+      features: s.features,
+      image: s.image,
+      icon: s.icon,
+      buttonText: s.buttonText,
+      href: s.href,
+      displayOrder: s.displayOrder,
+      status: s.status as any,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    })),
+    total,
+  };
+}
+
+export async function getServiceById(id: string): Promise<ServiceItem | null> {
+  const s = await prisma.serviceItem.findUnique({ where: { id } });
+  if (!s) return null;
+  return {
+    id: s.id,
+    slug: s.slug,
+    title: s.title,
+    shortDescription: s.shortDescription,
+    description: s.description,
+    features: s.features,
+    image: s.image,
+    icon: s.icon,
+    buttonText: s.buttonText,
+    href: s.href,
+    displayOrder: s.displayOrder,
+    status: s.status as any,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+  };
+}
+
+export async function getServiceBySlug(slug: string): Promise<ServiceItem | null> {
+  const s = await prisma.serviceItem.findUnique({ where: { slug } });
+  if (!s) return null;
+  return {
+    id: s.id,
+    slug: s.slug,
+    title: s.title,
+    shortDescription: s.shortDescription,
+    description: s.description,
+    features: s.features,
+    image: s.image,
+    icon: s.icon,
+    buttonText: s.buttonText,
+    href: s.href,
+    displayOrder: s.displayOrder,
+    status: s.status as any,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+  };
+}
+
+export async function createService(data: {
+  title: string;
+  slug?: string;
+  shortDescription: string;
+  description?: string | null;
+  features: string | string[];
+  image?: string | null;
+  icon?: string | null;
+  buttonText?: string | null;
+  href?: string | null;
+  displayOrder?: number;
+  status?: "Active" | "Inactive";
+}): Promise<ServiceItem> {
+  const id = "serv-" + Date.now() + "-" + Math.random().toString(36).substring(2, 7);
+  let baseSlug = data.slug ? generateSlug(data.slug) : generateSlug(data.title);
+  if (!baseSlug) baseSlug = "service-" + Date.now();
+
+  let slug = baseSlug;
+  let counter = 1;
+  while (await prisma.serviceItem.findUnique({ where: { slug } })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  const featuresStr = Array.isArray(data.features) ? data.features.join(", ") : data.features;
+  const now = new Date().toISOString();
+
+  const s = await prisma.serviceItem.create({
+    data: {
+      id,
+      slug,
+      title: data.title,
+      shortDescription: data.shortDescription,
+      description: data.description || null,
+      features: featuresStr,
+      image: data.image || null,
+      icon: data.icon || null,
+      buttonText: data.buttonText || "Contact Now →",
+      href: data.href || "#contact",
+      displayOrder: data.displayOrder ?? 0,
+      status: data.status || "Active",
+      createdAt: now,
+      updatedAt: now,
+    },
+  });
+
+  return {
+    id: s.id,
+    slug: s.slug,
+    title: s.title,
+    shortDescription: s.shortDescription,
+    description: s.description,
+    features: s.features,
+    image: s.image,
+    icon: s.icon,
+    buttonText: s.buttonText,
+    href: s.href,
+    displayOrder: s.displayOrder,
+    status: s.status as any,
+    createdAt: s.createdAt,
+    updatedAt: s.updatedAt,
+  };
+}
+
+export async function updateService(
+  id: string,
+  updates: {
+    title?: string;
+    slug?: string;
+    shortDescription?: string;
+    description?: string | null;
+    features?: string | string[];
+    image?: string | null;
+    icon?: string | null;
+    buttonText?: string | null;
+    href?: string | null;
+    displayOrder?: number;
+    status?: "Active" | "Inactive";
+  }
+): Promise<ServiceItem | null> {
+  try {
+    const existing = await prisma.serviceItem.findUnique({ where: { id } });
+    if (!existing) return null;
+
+    let newSlug = existing.slug;
+    if (updates.slug && updates.slug !== existing.slug) {
+      const generated = generateSlug(updates.slug);
+      const conflict = await prisma.serviceItem.findFirst({
+        where: { slug: generated, NOT: { id } },
+      });
+      newSlug = conflict ? `${generated}-${Date.now().toString().slice(-4)}` : generated;
+    }
+
+    const featuresStr =
+      updates.features !== undefined
+        ? Array.isArray(updates.features)
+          ? updates.features.join(", ")
+          : updates.features
+        : existing.features;
+
+    const now = new Date().toISOString();
+
+    const s = await prisma.serviceItem.update({
+      where: { id },
+      data: {
+        title: updates.title ?? existing.title,
+        slug: newSlug,
+        shortDescription: updates.shortDescription ?? existing.shortDescription,
+        description: updates.description !== undefined ? updates.description : existing.description,
+        features: featuresStr,
+        image: updates.image !== undefined ? updates.image : existing.image,
+        icon: updates.icon !== undefined ? updates.icon : existing.icon,
+        buttonText: updates.buttonText !== undefined ? updates.buttonText : existing.buttonText,
+        href: updates.href !== undefined ? updates.href : existing.href,
+        displayOrder: updates.displayOrder !== undefined ? updates.displayOrder : existing.displayOrder,
+        status: updates.status ?? existing.status,
+        updatedAt: now,
+      },
+    });
+
+    return {
+      id: s.id,
+      slug: s.slug,
+      title: s.title,
+      shortDescription: s.shortDescription,
+      description: s.description,
+      features: s.features,
+      image: s.image,
+      icon: s.icon,
+      buttonText: s.buttonText,
+      href: s.href,
+      displayOrder: s.displayOrder,
+      status: s.status as any,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    };
+  } catch (error) {
+    console.error("Error updating service:", error);
+    throw error;
+  }
+}
+
+export async function deleteService(id: string): Promise<boolean> {
+  try {
+    await prisma.serviceItem.delete({ where: { id } });
+    return true;
+  } catch (error) {
+    console.error("Error deleting service:", error);
+    return false;
+  }
+}
+
 

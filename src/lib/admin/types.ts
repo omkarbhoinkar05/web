@@ -286,3 +286,22 @@ export interface PortfolioItem {
   updatedAt: string;
 }
 
+export type ServiceStatus = "Active" | "Inactive";
+
+export interface ServiceItem {
+  id: string;
+  slug: string;
+  title: string;
+  shortDescription: string;
+  description?: string | null;
+  features: string; // Comma-separated or checklist string
+  image?: string | null;
+  icon?: string | null;
+  buttonText?: string | null;
+  href?: string | null;
+  displayOrder: number;
+  status: ServiceStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+

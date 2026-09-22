@@ -182,6 +182,7 @@ export const PERMISSIONS: Record<AdminRole, string[]> = {
     "add_notes",
     "manage_blogs",
     "manage_portfolio",
+    "manage_services",
   ],
   Admin: [
     "view_leads",
@@ -202,6 +203,7 @@ export const PERMISSIONS: Record<AdminRole, string[]> = {
     "view_team",
     "manage_blogs",
     "manage_portfolio",
+    "manage_services",
     // Admin cannot create/delete team and cannot delete leads
   ],
   Sales: [

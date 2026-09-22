@@ -28,6 +28,7 @@ async function truncateAndSeed() {
       "web_settings",
       "web_blogs",
       "web_portfolios",
+      "web_services",
     ];
 
     for (const table of tables) {
@@ -456,7 +457,150 @@ Reduce intake form fields to the absolute minimum required to start a meaningful
       console.log("  ✓ Seeded portfolio: " + port.title);
     }
 
-    // 6. System Initial Notification
+    // 6. Seed Core Services
+    console.log("\n[6] Seeding core enterprise services...");
+    const initialServices = [
+      {
+        id: "serv-web-design",
+        slug: "web-design",
+        title: "Web Design",
+        shortDescription:
+          "Modern, responsive and user-friendly web designs that create a strong online presence.",
+        description:
+          "Bespoke, high-converting web designs and corporate digital interfaces engineered for maximum user engagement, brand authority, and seamless cross-device performance.",
+        features:
+          "Corporate Website, Business Website, Landing Page, Portfolio Website, UI/UX Design, Responsive Web Design, Website Redesign, Figma to Website",
+        image: null,
+        icon: "monitor",
+        buttonText: "Contact Now →",
+        href: "#contact",
+        displayOrder: 1,
+        status: "Active",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "serv-saas-app",
+        slug: "saas-app",
+        title: "SaaS App Development",
+        shortDescription:
+          "Scalable and secure SaaS solutions tailored for modern businesses.",
+        description:
+          "Scalable, multi-tenant cloud software platforms built with modern subscription billing, granular roles and permissions, high-performance APIs, and robust data isolation.",
+        features:
+          "SaaS Platform, Multi-Tenant SaaS, Subscription Management, User Management, Role & Permission System, Admin Dashboard, Analytics Dashboard, API Integration, Payment Integration",
+        image: null,
+        icon: "cloud",
+        buttonText: "Contact Now →",
+        href: "#contact",
+        displayOrder: 2,
+        status: "Active",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "serv-erp-software",
+        slug: "erp-software",
+        title: "ERP Software",
+        shortDescription:
+          "Complete ERP solutions to streamline your business operations.",
+        description:
+          "Centralized business operating engines uniting inventory, human resources, accounting, CRM, and real-time operational analytics into one cohesive system.",
+        features:
+          "HR & Employee Management, CRM, Inventory Management, Sales Management, Purchase Management, Accounting & Finance, Payroll, Project Management, Reports & Analytics, Admin / Super Admin Panel",
+        image: null,
+        icon: "erp",
+        buttonText: "Contact Now →",
+        href: "#contact",
+        displayOrder: 3,
+        status: "Active",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "serv-ecommerce",
+        slug: "ecommerce",
+        title: "E-Commerce",
+        shortDescription:
+          "Feature-rich e-commerce solutions to take your business online.",
+        description:
+          "Omnichannel digital storefronts, high-volume multi-vendor marketplaces, and secure multi-currency payment checkout architectures engineered for peak conversions.",
+        features:
+          "B2B E-Commerce, B2C E-Commerce, Multi-Vendor Marketplace, Product Management, Order Management, Payment Gateway, Shipping Integration, Coupon & Offers, Customer Dashboard, Seller Dashboard",
+        image: null,
+        icon: "cart",
+        buttonText: "Contact Now →",
+        href: "#contact",
+        displayOrder: 4,
+        status: "Active",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "serv-dynamic-website",
+        slug: "dynamic-website",
+        title: "Dynamic Website",
+        shortDescription:
+          "Powerful dynamic websites with flexible content management.",
+        description:
+          "Content-rich, dynamic web platforms with modular CMS control, live data feeds, interactive forms, and authenticated user access for full operational agility.",
+        features:
+          "CMS Website, News / Blog Website, Real Estate Website, Education Website, Booking Website, Directory Website, Membership Website, Content Management, Dynamic Forms, Admin Panel",
+        image: null,
+        icon: "window",
+        buttonText: "Contact Now →",
+        href: "#contact",
+        displayOrder: 5,
+        status: "Active",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "serv-custom-web-app",
+        slug: "custom-web-app",
+        title: "Custom Web App",
+        shortDescription:
+          "Tailored web applications to solve your unique business challenges.",
+        description:
+          "Mission-critical custom web portals and workflow automation tools tailored precisely to proprietary operational processes and third-party enterprise integrations.",
+        features:
+          "Business Web Applications, Customer Portals, Admin Panels, Custom Dashboards, Workflow Automation, API Development, Third-Party Integrations, OTP Integration, Payment Integration, WhatsApp Integration",
+        image: null,
+        icon: "code",
+        buttonText: "Contact Now →",
+        href: "#contact",
+        displayOrder: 6,
+        status: "Active",
+        createdAt: now,
+        updatedAt: now,
+      },
+      {
+        id: "serv-hosting",
+        slug: "hosting",
+        title: "Hosting",
+        shortDescription:
+          "Reliable and secure hosting solutions to keep your business online 24/7.",
+        description:
+          "Enterprise cloud hosting, automated backups, zero-downtime server migrations, and robust DDoS protection for continuous uptime and lightning-fast page delivery.",
+        features:
+          "Web Hosting, Cloud Hosting, VPS Hosting, Managed Hosting, Domain Management, SSL Certificate, Business Email, Server Setup, Website Migration, Backup & Security, Performance Optimization",
+        image: null,
+        icon: "server",
+        buttonText: "Contact Now →",
+        href: "#contact",
+        displayOrder: 7,
+        status: "Active",
+        createdAt: now,
+        updatedAt: now,
+      },
+    ];
+
+    for (const serv of initialServices) {
+      await prisma.serviceItem.create({ data: serv });
+      console.log("  ✓ Seeded service: " + serv.title);
+    }
+
+    // 7. System Initial Notification
     await prisma.notification.create({
       data: {
         id: "notif-init",

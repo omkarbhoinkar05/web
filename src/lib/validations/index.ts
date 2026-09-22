@@ -253,3 +253,19 @@ export const portfolioItemSchema = z.object({
 
 export type PortfolioItemInput = z.infer<typeof portfolioItemSchema>;
 
+export const serviceItemSchema = z.object({
+  title: z.string().trim().min(2, "Service title must be at least 2 characters"),
+  slug: z.string().trim().min(2, "Slug must be at least 2 characters").optional(),
+  shortDescription: z.string().trim().min(5, "Short description must be at least 5 characters"),
+  description: z.string().trim().optional().nullable(),
+  features: z.union([z.string(), z.array(z.string())]).default(""),
+  image: z.string().trim().optional().nullable(),
+  icon: z.string().trim().optional().nullable(),
+  buttonText: z.string().trim().default("Contact Now →"),
+  href: z.string().trim().default("#contact"),
+  displayOrder: z.coerce.number().int().default(0),
+  status: z.enum(["Active", "Inactive"]).default("Active"),
+});
+
+export type ServiceItemInput = z.infer<typeof serviceItemSchema>;
+

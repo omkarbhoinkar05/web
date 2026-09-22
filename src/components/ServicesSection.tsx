@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 
 interface ServiceItem {
@@ -14,200 +14,310 @@ interface ServiceItem {
   icon: React.ReactNode;
 }
 
+interface RawDbService {
+  id: string;
+  slug: string;
+  title: string;
+  shortDescription: string;
+  description?: string | null;
+  features: string;
+  image?: string | null;
+  icon?: string | null;
+  buttonText?: string | null;
+  href?: string | null;
+  displayOrder: number;
+  status: string;
+}
+
+function renderServiceIcon(iconKey?: string | null, slug?: string): React.ReactNode {
+  const key = (iconKey || slug || "").toLowerCase();
+
+  if (key === "monitor" || key.includes("web-design")) {
+    return (
+      <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="20" height="14" x="2" y="3" rx="2" />
+        <line x1="8" x2="16" y1="21" y2="21" />
+        <line x1="12" x2="12" y1="17" y2="21" />
+        <circle cx="6" cy="7" r="1" />
+        <circle cx="9" cy="7" r="1" />
+      </svg>
+    );
+  }
+
+  if (key === "cloud" || key.includes("saas")) {
+    return (
+      <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
+        <path d="M12 13h.01" />
+        <path d="M10 13a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1h-2a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1" />
+      </svg>
+    );
+  }
+
+  if (key === "erp" || key.includes("erp")) {
+    return (
+      <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="7" height="9" x="3" y="3" rx="1" />
+        <rect width="7" height="5" x="14" y="3" rx="1" />
+        <rect width="7" height="9" x="14" y="12" rx="1" />
+        <rect width="7" height="5" x="3" y="16" rx="1" />
+      </svg>
+    );
+  }
+
+  if (key === "cart" || key.includes("ecom") || key.includes("commerce")) {
+    return (
+      <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="8" cy="21" r="1" />
+        <circle cx="19" cy="21" r="1" />
+        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
+      </svg>
+    );
+  }
+
+  if (key === "window" || key.includes("dynamic")) {
+    return (
+      <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="18" height="18" x="3" y="3" rx="2" />
+        <path d="M3 9h18" />
+        <path d="M9 21V9" />
+      </svg>
+    );
+  }
+
+  if (key === "code" || key.includes("custom") || key.includes("app")) {
+    return (
+      <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 18 22 12 16 6" />
+        <polyline points="8 6 2 12 8 18" />
+        <line x1="14" x2="10" y1="4" y2="20" />
+      </svg>
+    );
+  }
+
+  if (key === "server" || key.includes("hosting")) {
+    return (
+      <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect width="20" height="8" x="2" y="2" rx="2" />
+        <rect width="20" height="8" x="2" y="14" rx="2" />
+        <line x1="6" x2="6.01" y1="6" y2="6" />
+        <line x1="6" x2="6.01" y1="18" y2="18" />
+      </svg>
+    );
+  }
+
+  // Generic fallback
+  return (
+    <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+    </svg>
+  );
+}
+
+function parseFeatures(features: string): string[] {
+  if (!features) return [];
+  if (features.startsWith("[") && features.endsWith("]")) {
+    try {
+      const parsed = JSON.parse(features);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // fallback
+    }
+  }
+  return features.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+// Initial Static Fallback to guarantee immediate zero-shift hydration
+const STATIC_FALLBACK_SERVICES: ServiceItem[] = [
+  {
+    id: "web-design",
+    number: "01",
+    title: "Web Design",
+    description: "Modern, responsive and user-friendly web designs that create a strong online presence.",
+    checklist: [
+      "Corporate Website",
+      "Business Website",
+      "Landing Page",
+      "Portfolio Website",
+      "UI/UX Design",
+      "Responsive Web Design",
+      "Website Redesign",
+      "Figma to Website",
+    ],
+    buttonText: "Contact Now →",
+    href: "#contact",
+    icon: renderServiceIcon("monitor", "web-design"),
+  },
+  {
+    id: "saas-app",
+    number: "02",
+    title: "SaaS App Development",
+    description: "Scalable and secure SaaS solutions tailored for modern businesses.",
+    checklist: [
+      "SaaS Platform",
+      "Multi-Tenant SaaS",
+      "Subscription Management",
+      "User Management",
+      "Role & Permission System",
+      "Admin Dashboard",
+      "Analytics Dashboard",
+      "API Integration",
+      "Payment Integration",
+    ],
+    buttonText: "Contact Now →",
+    href: "#contact",
+    icon: renderServiceIcon("cloud", "saas-app"),
+  },
+  {
+    id: "erp-software",
+    number: "03",
+    title: "ERP Software",
+    description: "Complete ERP solutions to streamline your business operations.",
+    checklist: [
+      "HR & Employee Management",
+      "CRM",
+      "Inventory Management",
+      "Sales Management",
+      "Purchase Management",
+      "Accounting & Finance",
+      "Payroll",
+      "Project Management",
+      "Reports & Analytics",
+      "Admin / Super Admin Panel",
+    ],
+    buttonText: "Contact Now →",
+    href: "#contact",
+    icon: renderServiceIcon("erp", "erp-software"),
+  },
+  {
+    id: "ecommerce",
+    number: "04",
+    title: "E-Commerce",
+    description: "Feature-rich e-commerce solutions to take your business online.",
+    checklist: [
+      "B2B E-Commerce",
+      "B2C E-Commerce",
+      "Multi-Vendor Marketplace",
+      "Product Management",
+      "Order Management",
+      "Payment Gateway",
+      "Shipping Integration",
+      "Coupon & Offers",
+      "Customer Dashboard",
+      "Seller Dashboard",
+    ],
+    buttonText: "Contact Now →",
+    href: "#contact",
+    icon: renderServiceIcon("cart", "ecommerce"),
+  },
+  {
+    id: "dynamic-website",
+    number: "05",
+    title: "Dynamic Website",
+    description: "Powerful dynamic websites with flexible content management.",
+    checklist: [
+      "CMS Website",
+      "News / Blog Website",
+      "Real Estate Website",
+      "Education Website",
+      "Booking Website",
+      "Directory Website",
+      "Membership Website",
+      "Content Management",
+      "Dynamic Forms",
+      "Admin Panel",
+    ],
+    buttonText: "Contact Now →",
+    href: "#contact",
+    icon: renderServiceIcon("window", "dynamic-website"),
+  },
+  {
+    id: "custom-web-app",
+    number: "06",
+    title: "Custom Web App",
+    description: "Tailored web applications to solve your unique business challenges.",
+    checklist: [
+      "Business Web Applications",
+      "Customer Portals",
+      "Admin Panels",
+      "Custom Dashboards",
+      "Workflow Automation",
+      "API Development",
+      "Third-Party Integrations",
+      "OTP Integration",
+      "Payment Integration",
+      "WhatsApp Integration",
+    ],
+    buttonText: "Contact Now →",
+    href: "#contact",
+    icon: renderServiceIcon("code", "custom-web-app"),
+  },
+  {
+    id: "hosting",
+    number: "07",
+    title: "Hosting",
+    description: "Reliable and secure hosting solutions to keep your business online 24/7.",
+    checklist: [
+      "Web Hosting",
+      "Cloud Hosting",
+      "VPS Hosting",
+      "Managed Hosting",
+      "Domain Management",
+      "SSL Certificate",
+      "Business Email",
+      "Server Setup",
+      "Website Migration",
+      "Backup & Security",
+      "Performance Optimization",
+    ],
+    buttonText: "Contact Now →",
+    href: "#contact",
+    icon: renderServiceIcon("server", "hosting"),
+  },
+];
+
 export function ServicesSection() {
-  const services: ServiceItem[] = [
-    {
-      id: "web-design",
-      number: "01",
-      title: "Web Design",
-      description: "Modern, responsive and user-friendly web designs that create a strong online presence.",
-      checklist: [
-        "Corporate Website",
-        "Business Website",
-        "Landing Page",
-        "Portfolio Website",
-        "UI/UX Design",
-        "Responsive Web Design",
-        "Website Redesign",
-        "Figma to Website",
-      ],
-      buttonText: "Contact Now →",
-      href: "#contact",
-      icon: (
-        <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect width="20" height="14" x="2" y="3" rx="2" />
-          <line x1="8" x2="16" y1="21" y2="21" />
-          <line x1="12" x2="12" y1="17" y2="21" />
-          <circle cx="6" cy="7" r="1" />
-          <circle cx="9" cy="7" r="1" />
-        </svg>
-      ),
-    },
-    {
-      id: "saas-app",
-      number: "02",
-      title: "SaaS App Development",
-      description: "Scalable and secure SaaS solutions tailored for modern businesses.",
-      checklist: [
-        "SaaS Platform",
-        "Multi-Tenant SaaS",
-        "Subscription Management",
-        "User Management",
-        "Role & Permission System",
-        "Admin Dashboard",
-        "Analytics Dashboard",
-        "API Integration",
-        "Payment Integration",
-      ],
-      buttonText: "Contact Now →",
-      href: "#contact",
-      icon: (
-        <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z" />
-          <path d="M12 13h.01" />
-          <path d="M10 13a1 1 0 0 0 1 1h2a1 1 0 0 0 1-1v-1a1 1 0 0 0-1-1h-2a1 1 0 0 1-1-1v-1a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1" />
-        </svg>
-      ),
-    },
-    {
-      id: "erp-software",
-      number: "03",
-      title: "ERP Software",
-      description: "Complete ERP solutions to streamline your business operations.",
-      checklist: [
-        "HR & Employee Management",
-        "CRM",
-        "Inventory Management",
-        "Sales Management",
-        "Purchase Management",
-        "Accounting & Finance",
-        "Payroll",
-        "Project Management",
-        "Reports & Analytics",
-        "Admin / Super Admin Panel",
-      ],
-      buttonText: "Contact Now →",
-      href: "#contact",
-      icon: (
-        <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect width="7" height="9" x="3" y="3" rx="1" />
-          <rect width="7" height="5" x="14" y="3" rx="1" />
-          <rect width="7" height="9" x="14" y="12" rx="1" />
-          <rect width="7" height="5" x="3" y="16" rx="1" />
-        </svg>
-      ),
-    },
-    {
-      id: "ecommerce",
-      number: "04",
-      title: "E-Commerce",
-      description: "Feature-rich e-commerce solutions to take your business online.",
-      checklist: [
-        "B2B E-Commerce",
-        "B2C E-Commerce",
-        "Multi-Vendor Marketplace",
-        "Product Management",
-        "Order Management",
-        "Payment Gateway",
-        "Shipping Integration",
-        "Coupon & Offers",
-        "Customer Dashboard",
-        "Seller Dashboard",
-      ],
-      buttonText: "Contact Now →",
-      href: "#contact",
-      icon: (
-        <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="8" cy="21" r="1" />
-          <circle cx="19" cy="21" r="1" />
-          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12" />
-        </svg>
-      ),
-    },
-    {
-      id: "dynamic-website",
-      number: "05",
-      title: "Dynamic Website",
-      description: "Powerful dynamic websites with flexible content management.",
-      checklist: [
-        "CMS Website",
-        "News / Blog Website",
-        "Real Estate Website",
-        "Education Website",
-        "Booking Website",
-        "Directory Website",
-        "Membership Website",
-        "Content Management",
-        "Dynamic Forms",
-        "Admin Panel",
-      ],
-      buttonText: "Contact Now →",
-      href: "#contact",
-      icon: (
-        <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect width="18" height="18" x="3" y="3" rx="2" />
-          <path d="M3 9h18" />
-          <path d="M9 21V9" />
-        </svg>
-      ),
-    },
-    {
-      id: "custom-web-app",
-      number: "06",
-      title: "Custom Web App",
-      description: "Tailored web applications to solve your unique business challenges.",
-      checklist: [
-        "Business Web Applications",
-        "Customer Portals",
-        "Admin Panels",
-        "Custom Dashboards",
-        "Workflow Automation",
-        "API Development",
-        "Third-Party Integrations",
-        "OTP Integration",
-        "Payment Integration",
-        "WhatsApp Integration",
-      ],
-      buttonText: "Contact Now →",
-      href: "#contact",
-      icon: (
-        <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="16 18 22 12 16 6" />
-          <polyline points="8 6 2 12 8 18" />
-          <line x1="14" x2="10" y1="4" y2="20" />
-        </svg>
-      ),
-    },
-    {
-      id: "hosting",
-      number: "07",
-      title: "Hosting",
-      description: "Reliable and secure hosting solutions to keep your business online 24/7.",
-      checklist: [
-        "Web Hosting",
-        "Cloud Hosting",
-        "VPS Hosting",
-        "Managed Hosting",
-        "Domain Management",
-        "SSL Certificate",
-        "Business Email",
-        "Server Setup",
-        "Website Migration",
-        "Backup & Security",
-        "Performance Optimization",
-      ],
-      buttonText: "Contact Now →",
-      href: "#contact",
-      icon: (
-        <svg className="w-6 h-6 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <rect width="20" height="8" x="2" y="2" rx="2" key="h1" />
-          <rect width="20" height="8" x="2" y="14" rx="2" key="h2" />
-          <line x1="6" x2="6.01" y1="6" y2="6" />
-          <line x1="6" x2="6.01" y1="18" y2="18" />
-        </svg>
-      ),
-    },
-  ];
+  const [services, setServices] = useState<ServiceItem[]>(STATIC_FALLBACK_SERVICES);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function loadServices() {
+      try {
+        const res = await fetch("/api/services");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && Array.isArray(data.services) && data.services.length > 0) {
+            const mapped: ServiceItem[] = data.services.map((item: RawDbService, idx: number) => {
+              const orderNum = String(item.displayOrder || idx + 1).padStart(2, "0");
+              const feats = parseFeatures(item.features);
+
+              return {
+                id: item.id || item.slug,
+                number: orderNum,
+                title: item.title,
+                description: item.shortDescription || item.description || "",
+                checklist: feats,
+                buttonText: item.buttonText || "Contact Now →",
+                href: item.href || "#contact",
+                icon: renderServiceIcon(item.icon, item.slug),
+              };
+            });
+
+            if (isMounted) {
+              setServices(mapped);
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch dynamic services, using static fallback:", err);
+      }
+    }
+
+    loadServices();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <section
@@ -264,9 +374,9 @@ export function ServicesSection() {
           </p>
         </div>
 
-        {/* Main Services Grid: 7 Service Cards + 1 Custom Requirement CTA Card */}
+        {/* Main Services Grid: Dynamic Service Cards + 1 Custom Requirement CTA Card */}
         <div className="mt-14 sm:mt-20 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
-          {/* 7 Standard Service Cards */}
+          {/* Dynamic Service Cards */}
           {services.map((service) => (
             <div
               key={service.id}
@@ -320,7 +430,7 @@ export function ServicesSection() {
             </div>
           ))}
 
-          {/* 8th Card: Custom Requirement CTA Card (Striking Dark Emerald Glass Hero) */}
+          {/* 8th Card: Custom Requirement CTA Card (Striking Dark Emerald Glass Hero) - PRESERVED 100% */}
           <div className="relative group flex flex-col justify-between h-full p-6 sm:p-7 rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-950 text-white border border-emerald-700/50 shadow-xl shadow-emerald-950/15 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl overflow-hidden">
             {/* Subtle corner abstract green graphic */}
             <div
