@@ -6,6 +6,11 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 import { getBlogPostBySlug, incrementBlogViews } from "@/lib/admin/db";
+import {
+  generateArticleSchema,
+  generateBreadcrumbSchema,
+  SITE_URL,
+} from "@/lib/seo/schema";
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -107,16 +112,37 @@ Reduce intake form fields to the absolute minimum required to start a meaningful
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const post = await getBlogPostBySlug(slug);
+  const canonicalUrl = `${SITE_URL}/blog/${slug}`;
 
   if (post) {
     return {
-      title: `${post.title} | Web Insights`,
+      title: {
+        absolute: `${post.title} | KeyCodeWeb Insights`,
+      },
       description: post.excerpt,
+      alternates: {
+        canonical: canonicalUrl,
+      },
       openGraph: {
-        title: post.title,
+        title: `${post.title} | KeyCodeWeb Insights`,
         description: post.excerpt,
+        url: canonicalUrl,
         type: "article",
-        siteName: "Web",
+        siteName: "KeyCodeWeb",
+        images: [
+          {
+            url: "/logo.png",
+            width: 1024,
+            height: 341,
+            alt: post.title,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: `${post.title} | KeyCodeWeb Insights`,
+        description: post.excerpt,
+        images: ["/logo.png"],
       },
     };
   }
@@ -124,13 +150,41 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const fallback = FALLBACK_POSTS_MAP[slug];
   if (fallback) {
     return {
-      title: `${fallback.title} | Web Insights`,
+      title: {
+        absolute: `${fallback.title} | KeyCodeWeb Insights`,
+      },
       description: fallback.excerpt,
+      alternates: {
+        canonical: canonicalUrl,
+      },
+      openGraph: {
+        title: `${fallback.title} | KeyCodeWeb Insights`,
+        description: fallback.excerpt,
+        url: canonicalUrl,
+        type: "article",
+        siteName: "KeyCodeWeb",
+        images: [
+          {
+            url: "/logo.png",
+            width: 1024,
+            height: 341,
+            alt: fallback.title,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: `${fallback.title} | KeyCodeWeb Insights`,
+        description: fallback.excerpt,
+        images: ["/logo.png"],
+      },
     };
   }
 
   return {
-    title: "Article Not Found | Web",
+    title: {
+      absolute: "Article Not Found | KeyCodeWeb",
+    },
   };
 }
 
@@ -180,8 +234,33 @@ export default async function BlogPostPage({ params }: PageProps) {
     notFound();
   }
 
+  const articleSchema = generateArticleSchema({
+    title,
+    description: excerpt,
+    slug,
+    datePublished: post?.createdAt || "2026-09-01",
+    authorName: author || "KeyCodeWeb Engineering Team",
+    category,
+    tags,
+  });
+
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Blog", url: "/blog" },
+    { name: title, url: `/blog/${slug}` },
+  ]);
+
   return (
     <div className="flex flex-col min-h-screen bg-white relative text-zinc-900">
+      {/* Schema.org Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <Navbar />
 
       <main className="flex-1 w-full pt-10 sm:pt-14 pb-20">

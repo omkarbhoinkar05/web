@@ -5,6 +5,11 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 import prisma from "@/lib/prisma";
+import {
+  generatePortfolioSchema,
+  generateBreadcrumbSchema,
+  SITE_URL,
+} from "@/lib/seo/schema";
 
 interface CaseStudyData {
   slug: string;
@@ -334,25 +339,56 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: CaseStudyPageProps) {
   const { slug } = await params;
-  let project = caseStudies[slug.toLowerCase()];
+  const normalizedSlug = slug.toLowerCase();
+  const canonicalUrl = `${SITE_URL}/portfolio/${normalizedSlug}`;
+
+  let title = "Case Study | KeyCodeWeb Portfolio";
+  let description = "Detailed client case study and project breakdown by KeyCodeWeb.";
+
+  let project = caseStudies[normalizedSlug];
   if (!project) {
     try {
-      const dbProject = await prisma.portfolioItem.findUnique({ where: { slug } });
+      const dbProject = await prisma.portfolioItem.findUnique({ where: { slug: normalizedSlug } });
       if (dbProject) {
-        return {
-          title: `${dbProject.title} Case Study | KeyCodeWeb`,
-          description: dbProject.description,
-        };
+        title = `${dbProject.title} Case Study | KeyCodeWeb Portfolio`;
+        description = dbProject.description;
       }
     } catch {}
-    return {
-      title: "Case Study | KeyCodeWeb",
-      description: "Detailed client case study and project breakdown.",
-    };
+  } else {
+    title = `${project.name} Case Study | KeyCodeWeb Portfolio`;
+    description = project.overview;
   }
+
   return {
-    title: `${project.name} Case Study | KeyCodeWeb`,
-    description: project.overview,
+    title: {
+      absolute: title,
+    },
+    description,
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonicalUrl,
+      siteName: "KeyCodeWeb",
+      locale: "en_US",
+      type: "website",
+      images: [
+        {
+          url: "/logo.png",
+          width: 1024,
+          height: 341,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ["/logo.png"],
+    },
   };
 }
 
@@ -410,8 +446,33 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
     notFound();
   }
 
+  const portfolioSchema = generatePortfolioSchema({
+    name: project.name,
+    description: project.overview,
+    slug: slug.toLowerCase(),
+    category: project.category,
+    client: project.client,
+    techStack: project.techStack,
+  });
+
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Portfolio", url: "/portfolio" },
+    { name: project.name, url: `/portfolio/${slug.toLowerCase()}` },
+  ]);
+
   return (
-    <div className="flex flex-col min-h-screen bg-white relative text-zinc-900">
+    <div className="flex flex-col min-h-screen bg-white relative text-zinc-900 selection:bg-emerald-500 selection:text-white">
+      {/* Schema.org Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(portfolioSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
       {/* Background Ambient Glow */}
       <div
         className="absolute top-0 inset-x-0 h-[600px] bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(16,185,129,0.12),rgba(255,255,255,0))] pointer-events-none -z-0"

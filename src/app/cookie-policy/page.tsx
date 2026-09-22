@@ -6,7 +6,9 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "Cookie Policy | KeyCodeWeb — Building a Brighter Web",
+  title: {
+    absolute: "Cookie Policy | KeyCodeWeb — Building a Brighter Web",
+  },
   description:
     "Understand how KeyCodeWeb uses cookies, local storage and technical session tokens to ensure fast, secure and reliable browsing.",
   alternates: {

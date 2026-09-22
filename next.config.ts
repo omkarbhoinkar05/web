@@ -63,14 +63,24 @@ const nextConfig: NextConfig = {
         permanent: true,
       },
       {
-        source: "/services",
-        destination: "/#services",
-        permanent: false,
+        source: "/service",
+        destination: "/services",
+        permanent: true,
       },
       {
-        source: "/service",
-        destination: "/#services",
-        permanent: false,
+        source: "/services/saas-development",
+        destination: "/services/saas-app",
+        permanent: true,
+      },
+      {
+        source: "/services/ecommerce-development",
+        destination: "/services/ecommerce",
+        permanent: true,
+      },
+      {
+        source: "/services/custom-web-application",
+        destination: "/services/custom-web-app",
+        permanent: true,
       },
       {
         source: "/process",

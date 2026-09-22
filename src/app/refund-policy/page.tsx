@@ -6,7 +6,9 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "Refund & Cancellation Policy | KeyCodeWeb — Building a Brighter Web",
+  title: {
+    absolute: "Refund & Cancellation Policy | KeyCodeWeb — Building a Brighter Web",
+  },
   description:
     "Review KeyCodeWeb's clear, transparent refund, milestone cancellation, and billing adjustment policies for software and web development services.",
   alternates: {

@@ -5,11 +5,41 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 import prisma from "@/lib/prisma";
+import { generateBreadcrumbSchema, SITE_URL } from "@/lib/seo/schema";
 
 export const metadata: Metadata = {
-  title: "Blog & Engineering Insights | Web",
+  title: {
+    absolute: "Engineering Blog & Web Insights | KeyCodeWeb",
+  },
   description:
-    "Explore practical engineering insights, web design trends, architecture deep dives, and modern full-stack development best practices from the Web engineering team.",
+    "Explore practical engineering insights, software architecture deep dives, web design trends, and modern full-stack development best practices from the KeyCodeWeb engineering team.",
+  alternates: {
+    canonical: "/blog",
+  },
+  openGraph: {
+    title: "Engineering Blog & Web Insights | KeyCodeWeb",
+    description:
+      "Explore practical engineering insights, software architecture deep dives, web design trends, and modern full-stack development best practices from the KeyCodeWeb engineering team.",
+    url: `${SITE_URL}/blog`,
+    siteName: "KeyCodeWeb",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/logo.png",
+        width: 1024,
+        height: 341,
+        alt: "KeyCodeWeb Engineering Blog & Web Insights",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Engineering Blog & Web Insights | KeyCodeWeb",
+    description:
+      "Explore practical engineering insights, software architecture deep dives, web design trends, and modern full-stack development best practices from the KeyCodeWeb engineering team.",
+    images: ["/logo.png"],
+  },
 };
 
 interface ArticleItem {
@@ -102,8 +132,18 @@ async function getPublishedArticles(): Promise<ArticleItem[]> {
 export default async function BlogPage() {
   const articles = await getPublishedArticles();
 
+  const breadcrumbSchema = generateBreadcrumbSchema([
+    { name: "Home", url: "/" },
+    { name: "Blog", url: "/blog" },
+  ]);
+
   return (
     <div className="flex flex-col min-h-screen bg-white relative text-zinc-900">
+      {/* Schema.org Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <Navbar />
 
       <main className="flex-1 w-full">

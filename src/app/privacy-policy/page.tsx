@@ -6,7 +6,9 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | KeyCodeWeb — Building a Brighter Web",
+  title: {
+    absolute: "Privacy Policy | KeyCodeWeb — Building a Brighter Web",
+  },
   description:
     "Learn how KeyCodeWeb collects, utilizes, protects and manages client and visitor data in compliance with modern privacy standards.",
   alternates: {

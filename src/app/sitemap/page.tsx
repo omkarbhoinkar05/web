@@ -6,8 +6,13 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "Sitemap | KeyCodeWeb",
+  title: {
+    absolute: "Sitemap & Capabilities | KeyCodeWeb",
+  },
   description: "Complete navigation index of all pages, features and sections on KeyCodeWeb.",
+  alternates: {
+    canonical: "/sitemap",
+  },
 };
 
 export default function SitemapPage() {
@@ -16,6 +21,7 @@ export default function SitemapPage() {
       title: "Core Pages",
       links: [
         { name: "Home", href: "/" },
+        { name: "All Services", href: "/services" },
         { name: "About Us", href: "/about-us" },
         { name: "Our Portfolio", href: "/portfolio" },
         { name: "Careers (Join Us)", href: "/careers" },
@@ -36,14 +42,13 @@ export default function SitemapPage() {
     {
       title: "Services & Capabilities",
       links: [
-        { name: "Web Design & UI/UX", href: "/#services" },
-        { name: "SaaS Application Development", href: "/#services" },
-        { name: "Custom ERP Software", href: "/#services" },
-        { name: "E-Commerce Platforms", href: "/#services" },
-        { name: "Dynamic Web Applications", href: "/#services" },
-        { name: "Custom Web Solutions", href: "/#services" },
-        { name: "Hosting & Cloud Deployment", href: "/#services" },
-        { name: "Maintenance & SLA Support", href: "/#services" },
+        { name: "Web Design & UI/UX", href: "/services/web-design" },
+        { name: "SaaS Application Development", href: "/services/saas-app" },
+        { name: "Custom ERP Software", href: "/services/erp-software" },
+        { name: "E-Commerce Platforms", href: "/services/ecommerce" },
+        { name: "Dynamic Web Applications", href: "/services/dynamic-website" },
+        { name: "Custom Web Solutions", href: "/services/custom-web-app" },
+        { name: "Hosting & Cloud Deployment", href: "/services/hosting" },
       ],
     },
     {

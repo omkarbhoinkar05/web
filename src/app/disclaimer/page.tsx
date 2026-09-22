@@ -6,7 +6,9 @@ import { Footer } from "@/components/Footer";
 import { FloatingActions } from "@/components/FloatingActions";
 
 export const metadata: Metadata = {
-  title: "Disclaimer | KeyCodeWeb — Building a Brighter Web",
+  title: {
+    absolute: "Disclaimer | KeyCodeWeb — Building a Brighter Web",
+  },
   description:
     "Read the legal disclaimer, liability limitations, and case study notices regarding information presented by KeyCodeWeb.",
   alternates: {
