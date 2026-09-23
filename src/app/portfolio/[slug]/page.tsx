@@ -26,6 +26,7 @@ interface CaseStudyData {
   metrics: { value: string; label: string }[];
   techStack: string[];
   features: { title: string; desc: string }[];
+  image?: string | null;
 }
 
 const caseStudies: Record<string, CaseStudyData> = {
@@ -410,6 +411,7 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
           fallback?.features?.[idx]?.desc ||
           "Bespoke implementation tailored for high conversion, robust reliability, and enterprise compliance.",
       })),
+      image: dbProject.image || null,
     };
   } else if (fallback) {
     // If not in DB, check if DB has records. If DB has records, this item was deleted from DB!
@@ -474,12 +476,28 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
             {/* Left Header Info (col 8) */}
             <div className="lg:col-span-8">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/90 shadow-xs mb-4">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[11px] font-extrabold tracking-[0.2em] uppercase text-emerald-800">
-                  {project.category} CASE STUDY
-                </span>
+              <div className="flex flex-wrap items-center gap-3 mb-4">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/90 shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-[11px] font-extrabold tracking-[0.2em] uppercase text-emerald-800">
+                    {project.category} CASE STUDY
+                  </span>
+                </div>
               </div>
+
+              {project.image && (
+                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-zinc-950 border border-zinc-800 flex items-center justify-center p-3.5 shadow-lg relative overflow-hidden mb-6">
+                  <div
+                    className="absolute inset-0 bg-cover bg-center blur-2xl opacity-25 scale-125 pointer-events-none"
+                    style={{ backgroundImage: `url(${project.image})` }}
+                  />
+                  <img
+                    src={project.image}
+                    alt={project.name}
+                    className="relative z-10 max-w-full max-h-full object-contain drop-shadow-md"
+                  />
+                </div>
+              )}
 
               <h1 className="text-3xl sm:text-5xl font-black text-zinc-950 tracking-tight leading-tight">
                 {project.name} — <br />

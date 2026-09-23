@@ -493,11 +493,16 @@ export default function PortfolioPage() {
                 ? p.tags.split(",").map((s: string) => s.trim()).filter(Boolean)
                 : ["All Projects"],
               mockup: p.image ? (
-                <div className="w-full h-48 rounded-t-2xl bg-zinc-950 overflow-hidden relative group/mockup border-b border-zinc-800">
+                <div className="w-full h-48 rounded-t-2xl bg-zinc-950 overflow-hidden relative group/mockup border-b border-zinc-800 flex items-center justify-center p-4">
+                  {/* Subtle ambient blurred glow behind */}
+                  <div
+                    className="absolute inset-0 bg-cover bg-center blur-2xl opacity-25 scale-125 pointer-events-none"
+                    style={{ backgroundImage: `url(${p.image})` }}
+                  />
                   <img
                     src={p.image}
                     alt={p.title || p.name}
-                    className="w-full h-full object-cover object-top transition-transform duration-300 group-hover/mockup:scale-105"
+                    className="relative z-10 max-h-full max-w-full object-contain object-center transition-transform duration-300 group-hover/mockup:scale-105 drop-shadow-md"
                   />
                 </div>
               ) : (

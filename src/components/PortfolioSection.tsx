@@ -69,11 +69,16 @@ function renderProjectMockup(project: ProjectItem) {
   // If a custom image is uploaded via Admin, display it seamlessly
   if (project.image) {
     return (
-      <div className="w-full h-44 rounded-t-2xl bg-zinc-950 overflow-hidden relative group/mockup border-b border-zinc-800">
+      <div className="w-full h-44 rounded-t-2xl bg-zinc-950 overflow-hidden relative group/mockup border-b border-zinc-800 flex items-center justify-center p-3.5">
+        {/* Subtle ambient blurred background */}
+        <div
+          className="absolute inset-0 bg-cover bg-center blur-2xl opacity-25 scale-125 pointer-events-none"
+          style={{ backgroundImage: `url(${project.image})` }}
+        />
         <img
           src={project.image}
           alt={project.name}
-          className="w-full h-full object-cover object-top transition-transform duration-300 group-hover/mockup:scale-105"
+          className="relative z-10 max-h-full max-w-full object-contain object-center transition-transform duration-300 group-hover/mockup:scale-105 drop-shadow-md"
           onError={(e) => {
             // Hide image and let fallback show if broken
             (e.target as HTMLElement).style.display = "none";

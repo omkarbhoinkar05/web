@@ -554,11 +554,11 @@ export default function AdminPortfolioPage() {
                     {/* Thumbnail / Image Preview */}
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       {project.image ? (
-                        <div className="w-12 h-8 rounded-lg overflow-hidden border border-slate-200 bg-slate-100 shrink-0">
+                        <div className="w-12 h-8 rounded-lg overflow-hidden border border-slate-200 bg-zinc-950 shrink-0 flex items-center justify-center p-0.5">
                           <img
                             src={project.image}
                             alt={project.title}
-                            className="w-full h-full object-cover"
+                            className="max-w-full max-h-full object-contain"
                           />
                         </div>
                       ) : (
@@ -801,8 +801,8 @@ export default function AdminPortfolioPage() {
 
                 <div className="flex flex-col sm:flex-row items-center gap-3">
                   {imagePreview ? (
-                    <div className="relative w-28 h-20 rounded-xl overflow-hidden border border-slate-300 bg-zinc-950 shrink-0 shadow-xs">
-                      <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                    <div className="relative w-28 h-20 rounded-xl overflow-hidden border border-slate-300 bg-zinc-950 shrink-0 shadow-xs flex items-center justify-center p-1.5">
+                      <img src={imagePreview} alt="Preview" className="max-w-full max-h-full object-contain" />
                       <button
                         type="button"
                         onClick={() => {
