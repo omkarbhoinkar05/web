@@ -324,7 +324,9 @@ export function PortfolioSection() {
     let isMounted = true;
     async function loadPortfolio() {
       try {
-        const res = await fetch("/api/portfolio?home=true");
+        const res = await fetch(`/api/portfolio?home=true&_t=${Date.now()}`, {
+          cache: "no-store",
+        });
         if (res.ok) {
           const data = await res.json();
           if (data.success && Array.isArray(data.projects)) {

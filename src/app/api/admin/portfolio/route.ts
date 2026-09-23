@@ -1,8 +1,17 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { getAdminSession, hasPermission } from "@/lib/admin/auth";
 import { getPortfolios, createPortfolio } from "@/lib/admin/db";
 import { portfolioItemSchema } from "@/lib/validations";
 import prisma from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  "Pragma": "no-cache",
+  "Expires": "0",
+};
 
 export async function GET(request: Request) {
   const session = await getAdminSession();
@@ -44,14 +53,17 @@ export async function GET(request: Request) {
     categories: allCategories.map((c) => c.category),
   };
 
-  return NextResponse.json({
-    success: true,
-    projects: portfolios,
-    total,
-    page,
-    limit,
-    stats,
-  });
+  return NextResponse.json(
+    {
+      success: true,
+      projects: portfolios,
+      total,
+      page,
+      limit,
+      stats,
+    },
+    { headers: NO_CACHE_HEADERS }
+  );
 }
 
 export async function POST(request: Request) {
@@ -71,7 +83,7 @@ export async function POST(request: Request) {
     if (!parseResult.success) {
       return NextResponse.json(
         { success: false, errors: parseResult.error.flatten().fieldErrors },
-        { status: 400 }
+        { status: 400, headers: NO_CACHE_HEADERS }
       );
     }
 
@@ -94,17 +106,30 @@ export async function POST(request: Request) {
       impactLabel: data.impactLabel,
     });
 
-    return NextResponse.json({
-      success: true,
-      message: "Portfolio project created successfully",
-      project: newProject,
-    });
+    // Revalidate frontend pages
+    try {
+      revalidatePath("/");
+      revalidatePath("/portfolio");
+      revalidatePath(`/portfolio/${newProject.slug}`);
+      revalidatePath("/api/portfolio");
+    } catch (revErr) {
+      console.warn("Revalidation warning:", revErr);
+    }
+
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Portfolio project created successfully",
+        project: newProject,
+      },
+      { headers: NO_CACHE_HEADERS }
+    );
   } catch (error: any) {
     console.error("POST /api/admin/portfolio error:", error);
     const isQuotaError = error.message?.includes("Only 4 portfolio projects");
     return NextResponse.json(
       { success: false, error: error.message || "Failed to create portfolio project" },
-      { status: isQuotaError ? 400 : 500 }
+      { status: isQuotaError ? 400 : 500, headers: NO_CACHE_HEADERS }
     );
   }
 }

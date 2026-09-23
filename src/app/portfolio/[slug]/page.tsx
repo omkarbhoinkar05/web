@@ -288,53 +288,13 @@ const caseStudies: Record<string, CaseStudyData> = {
       },
     ],
   },
-  dineflow: {
-    slug: "dineflow",
-    name: "DineFlow",
-    category: "Hospitality",
-    type: "Restaurant Cloud POS & Kitchen Order System",
-    tagline: "Accelerating table turnaround and kitchen fulfillment with touchless QR menus and live KDS.",
-    overview:
-      "DineFlow connects restaurant dining rooms, bars, and kitchen line cooks through real-time touchless order orchestration, reducing wait times and eliminating ordering errors.",
-    client: "DineFlow Hospitality Suite",
-    duration: "8 Weeks",
-    deliverables: ["QR Dine-In Ordering", "Kitchen Display System (KDS)", "Waiter Mobile App", "Manager Dashboard"],
-    challenge:
-      "Staff shortages led to long wait times for menus and checks, while printed paper tickets in the kitchen resulted in misplaced orders and food waste.",
-    solution:
-      "Built a seamless mobile web QR ordering experience with instant table-side digital payment and real-time synchronized kitchen ticket displays (KDS).",
-    metrics: [
-      { value: "3.2x", label: "Faster Table Turnaround" },
-      { value: "-80%", label: "Kitchen Order Errors" },
-      { value: "+22%", label: "Average Check Size Increase" },
-      { value: "100%", label: "Paper Ticket Elimination" },
-    ],
-    techStack: ["Next.js 16", "Socket.io", "Stripe Terminal", "Tailwind CSS", "Node.js"],
-    features: [
-      {
-        title: "Touchless QR Menu & Instant Bill Pay",
-        desc: "Guests scan, order, split bills, and pay with Apple Pay or Google Pay directly from their smartphone.",
-      },
-      {
-        title: "Color-Coded Kitchen Display (KDS)",
-        desc: "Cooking line orders update with preparation timers and priority alerts for expedited fulfillment.",
-      },
-      {
-        title: "Dynamic Menu Stock Management",
-        desc: "Sold-out items automatically disappear from digital menus instantly across all dining tables.",
-      },
-    ],
-  },
 };
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface CaseStudyPageProps {
   params: Promise<{ slug: string }>;
-}
-
-export function generateStaticParams() {
-  return Object.keys(caseStudies).map((slug) => ({
-    slug,
-  }));
 }
 
 export async function generateMetadata({ params }: CaseStudyPageProps) {
@@ -345,19 +305,19 @@ export async function generateMetadata({ params }: CaseStudyPageProps) {
   let title = "Case Study | KeyCodeWeb Portfolio";
   let description = "Detailed client case study and project breakdown by KeyCodeWeb.";
 
-  let project = caseStudies[normalizedSlug];
-  if (!project) {
-    try {
-      const dbProject = await prisma.portfolioItem.findUnique({ where: { slug: normalizedSlug } });
-      if (dbProject) {
-        title = `${dbProject.title} Case Study | KeyCodeWeb Portfolio`;
-        description = dbProject.description;
+  try {
+    const dbProject = await prisma.portfolioItem.findUnique({ where: { slug: normalizedSlug } });
+    if (dbProject && dbProject.status === "Active") {
+      title = `${dbProject.title} Case Study | KeyCodeWeb Portfolio`;
+      description = dbProject.description;
+    } else {
+      const fallback = caseStudies[normalizedSlug];
+      if (fallback) {
+        title = `${fallback.name} Case Study | KeyCodeWeb Portfolio`;
+        description = fallback.overview;
       }
-    } catch {}
-  } else {
-    title = `${project.name} Case Study | KeyCodeWeb Portfolio`;
-    description = project.overview;
-  }
+    }
+  } catch {}
 
   return {
     title: {
@@ -394,52 +354,70 @@ export async function generateMetadata({ params }: CaseStudyPageProps) {
 
 export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
   const { slug } = await params;
-  let project = caseStudies[slug.toLowerCase()];
+  const normalizedSlug = slug.toLowerCase();
 
-  if (!project) {
-    try {
-      const dbProject = await prisma.portfolioItem.findUnique({ where: { slug } });
-      if (dbProject) {
-        project = {
-          slug: dbProject.slug,
-          name: dbProject.title,
-          category: dbProject.category,
-          type: dbProject.type,
-          tagline: `Engineered with high performance and bespoke digital architecture for ${dbProject.category}.`,
-          overview: dbProject.description,
-          client: `${dbProject.title} Global`,
-          duration: "8-10 Weeks",
-          deliverables: dbProject.features
-            ? dbProject.features.split(",").map((s) => s.trim()).filter(Boolean)
-            : ["Web Application", "Admin Panel", "API Integration"],
-          challenge:
-            "Scaling operational velocity, managing real-time data flow, and delivering frictionless, conversion-engineered digital user experiences.",
-          solution:
-            "We engineered a modern cloud-native solution with edge optimization, responsive UI components, and reliable backend infrastructure.",
-          metrics: [
-            {
-              value: dbProject.impactMetric || "+100%",
-              label: dbProject.impactLabel || "Operational Efficiency",
-            },
-            { value: "99.99%", label: "Platform SLA Uptime" },
-            { value: "0.2s", label: "Average Interaction Speed" },
-            { value: "4.9/5", label: "Client Satisfaction" },
-          ],
-          techStack: dbProject.techStack
-            ? dbProject.techStack.split(",").map((s) => s.trim()).filter(Boolean)
-            : ["Next.js 16", "TypeScript", "Tailwind CSS"],
-          features: (dbProject.features
-            ? dbProject.features.split(",").map((s) => s.trim()).filter(Boolean)
-            : ["High-speed UI", "Secure Database", "Custom Workflows"]
-          ).map((f) => ({
-            title: f,
-            desc: "Bespoke implementation tailored for high conversion, robust reliability, and enterprise compliance.",
-          })),
-        };
-      }
-    } catch (err) {
-      console.error("Failed to load project from DB:", err);
+  let dbProject = null;
+  try {
+    dbProject = await prisma.portfolioItem.findUnique({ where: { slug: normalizedSlug } });
+  } catch (err) {
+    console.error("Failed to load project from DB:", err);
+  }
+
+  // If project exists in DB but is inactive, return 404
+  if (dbProject && dbProject.status !== "Active") {
+    notFound();
+  }
+
+  const fallback = caseStudies[normalizedSlug];
+  let project: CaseStudyData | null = null;
+
+  if (dbProject) {
+    const rawFeatures = dbProject.features
+      ? dbProject.features.split(",").map((s) => s.trim()).filter(Boolean)
+      : fallback?.deliverables || ["Web Application", "Admin Panel", "API Integration"];
+
+    project = {
+      slug: dbProject.slug,
+      name: dbProject.title,
+      category: dbProject.category,
+      type: dbProject.type,
+      tagline: fallback?.tagline || `Engineered with high performance and bespoke digital architecture for ${dbProject.category}.`,
+      overview: dbProject.description || fallback?.overview || "",
+      client: fallback?.client || `${dbProject.title} Global`,
+      duration: fallback?.duration || "8-10 Weeks",
+      deliverables: rawFeatures,
+      challenge:
+        fallback?.challenge ||
+        "Scaling operational velocity, managing real-time data flow, and delivering frictionless, conversion-engineered digital user experiences.",
+      solution:
+        fallback?.solution ||
+        "We engineered a modern cloud-native solution with edge optimization, responsive UI components, and reliable backend infrastructure.",
+      metrics: fallback?.metrics || [
+        {
+          value: dbProject.impactMetric || "+100%",
+          label: dbProject.impactLabel || "Operational Efficiency",
+        },
+        { value: "99.99%", label: "Platform SLA Uptime" },
+        { value: "0.2s", label: "Average Interaction Speed" },
+        { value: "4.9/5", label: "Client Satisfaction" },
+      ],
+      techStack: dbProject.techStack
+        ? dbProject.techStack.split(",").map((s) => s.trim()).filter(Boolean)
+        : fallback?.techStack || ["Next.js 16", "TypeScript", "Tailwind CSS"],
+      features: rawFeatures.map((f, idx) => ({
+        title: f,
+        desc:
+          fallback?.features?.[idx]?.desc ||
+          "Bespoke implementation tailored for high conversion, robust reliability, and enterprise compliance.",
+      })),
+    };
+  } else if (fallback) {
+    // If not in DB, check if DB has records. If DB has records, this item was deleted from DB!
+    const count = await prisma.portfolioItem.count().catch(() => 0);
+    if (count > 0) {
+      notFound();
     }
+    project = fallback;
   }
 
   if (!project) {

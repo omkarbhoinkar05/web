@@ -21,7 +21,7 @@ interface ProjectItem {
   mockup: React.ReactNode;
 }
 
-const filterCategories = [
+const baseFilterCategories = [
   "All Projects",
   "Web Design",
   "SaaS App",
@@ -441,59 +441,6 @@ const staticProjects: ProjectItem[] = [
       </div>
     ),
   },
-  {
-    id: "dineflow",
-    slug: "dineflow",
-    name: "DineFlow",
-    category: "Hospitality",
-    type: "Restaurant Cloud POS & KDS",
-    description:
-      "End-to-end restaurant automation suite with contactless QR menus, kitchen display system (KDS), delivery aggregator sync, and table inventory.",
-    features: ["QR Menu & Pay", "Kitchen Display (KDS)", "Table Turnover", "Delivery Sync"],
-    techStack: ["Next.js 16", "Socket.io", "Stripe Terminal", "Tailwind CSS"],
-    impactMetric: "3.2x",
-    impactLabel: "Faster Table Turns",
-    tags: ["All Projects", "Web App", "E-Commerce", "Dynamic Website"],
-    mockup: (
-      <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
-        <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
-            <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
-            <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
-          </div>
-          <span className="px-2 py-0.5 rounded-md bg-zinc-900 text-[10px] font-mono text-zinc-400 border border-zinc-800">
-            dineflow.pos/kitchen-kds
-          </span>
-          <span className="text-[10px] font-mono text-emerald-400 font-bold">KITCHEN LIVE</span>
-        </div>
-
-        <div className="my-auto py-1 grid grid-cols-2 gap-2">
-          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-emerald-500/30 flex flex-col text-left">
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] font-bold text-emerald-400">TABLE 08</span>
-              <span className="text-[9px] font-mono text-zinc-400">04:12 min</span>
-            </div>
-            <span className="text-xs font-bold text-white mt-1 truncate">2x Truffle Burger</span>
-            <span className="text-[9px] text-zinc-400">Extra sauce • Medium</span>
-          </div>
-          <div className="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800 flex flex-col text-left">
-            <div className="flex items-center justify-between">
-              <span className="text-[9px] font-bold text-teal-400">DELIVERY #402</span>
-              <span className="text-[9px] font-mono text-zinc-400">01:45 min</span>
-            </div>
-            <span className="text-xs font-bold text-white mt-1 truncate">1x Artisan Pizza</span>
-            <span className="text-[9px] text-zinc-400">Packaged • DoorDash</span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between text-[10px] text-zinc-400 pt-1.5 border-t border-zinc-900">
-          <span>Avg Prep Time: <strong className="text-emerald-300">7.5 mins</strong></span>
-          <span className="text-emerald-400 font-mono font-semibold">Cloud Sync</span>
-        </div>
-      </div>
-    ),
-  },
 ];
 
 export default function PortfolioPage() {
@@ -504,12 +451,21 @@ export default function PortfolioPage() {
   const [navVisible, setNavVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
+  // Dynamic filter categories derived from both base presets and any category present in active projects
+  const filterCategories = useMemo(() => {
+    const cats = new Set<string>(baseFilterCategories);
+    projects.forEach((p) => {
+      if (p.category) cats.add(p.category);
+    });
+    return Array.from(cats);
+  }, [projects]);
+
   useEffect(() => {
     let isMounted = true;
-    fetch("/api/portfolio")
+    fetch(`/api/portfolio?_t=${Date.now()}`, { cache: "no-store" })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
-        if (isMounted && data?.success && Array.isArray(data.projects) && data.projects.length > 0) {
+        if (isMounted && data?.success && Array.isArray(data.projects)) {
           const dynamicList: ProjectItem[] = data.projects.map((p: any) => {
             const existingStatic = staticProjects.find((s) => s.slug === p.slug);
             return {
@@ -540,7 +496,7 @@ export default function PortfolioPage() {
                 <div className="w-full h-48 rounded-t-2xl bg-zinc-950 overflow-hidden relative group/mockup border-b border-zinc-800">
                   <img
                     src={p.image}
-                    alt={p.title}
+                    alt={p.title || p.name}
                     className="w-full h-full object-cover object-top transition-transform duration-300 group-hover/mockup:scale-105"
                   />
                 </div>
@@ -630,7 +586,7 @@ export default function PortfolioPage() {
 
       return matchesFilter && matchesSearch;
     });
-  }, [activeFilter, searchQuery]);
+  }, [projects, activeFilter, searchQuery]);
 
   return (
     <div className="flex flex-col min-h-screen bg-white relative text-zinc-900">

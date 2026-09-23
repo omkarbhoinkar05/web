@@ -1,6 +1,15 @@
 import { NextResponse } from "next/server";
 import { getPortfolios, getPortfolioBySlug } from "@/lib/admin/db";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
+const NO_CACHE_HEADERS = {
+  "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+  "Pragma": "no-cache",
+  "Expires": "0",
+};
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,9 +25,12 @@ export async function GET(request: Request) {
     if (slug) {
       const project = await getPortfolioBySlug(slug);
       if (!project || project.status !== "Active") {
-        return NextResponse.json({ success: false, error: "Project not found" }, { status: 404 });
+        return NextResponse.json(
+          { success: false, error: "Project not found" },
+          { status: 404, headers: NO_CACHE_HEADERS }
+        );
       }
-      return NextResponse.json({ success: true, project });
+      return NextResponse.json({ success: true, project }, { headers: NO_CACHE_HEADERS });
     }
 
     // Public endpoint strictly returns Active projects only.
@@ -32,19 +44,22 @@ export async function GET(request: Request) {
       skip: home ? 0 : skip,
     });
 
-    return NextResponse.json({
-      success: true,
-      count: portfolios.length,
-      total,
-      page,
-      limit,
-      projects: portfolios,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        count: portfolios.length,
+        total,
+        page,
+        limit,
+        projects: portfolios,
+      },
+      { headers: NO_CACHE_HEADERS }
+    );
   } catch (error) {
     console.error("GET /api/portfolio error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch portfolio projects" },
-      { status: 500 }
+      { status: 500, headers: NO_CACHE_HEADERS }
     );
   }
 }
