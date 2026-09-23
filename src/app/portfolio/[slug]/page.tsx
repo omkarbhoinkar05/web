@@ -27,6 +27,7 @@ interface CaseStudyData {
   techStack: string[];
   features: { title: string; desc: string }[];
   image?: string | null;
+  projectUrl?: string | null;
 }
 
 const caseStudies: Record<string, CaseStudyData> = {
@@ -412,6 +413,7 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
           "Bespoke implementation tailored for high conversion, robust reliability, and enterprise compliance.",
       })),
       image: dbProject.image || null,
+      projectUrl: (dbProject.projectUrl && !dbProject.projectUrl.startsWith("disabled:")) ? dbProject.projectUrl : (fallback?.projectUrl || null),
     };
   } else if (fallback) {
     // If not in DB, check if DB has records. If DB has records, this item was deleted from DB!
@@ -485,19 +487,30 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
                 </div>
               </div>
 
-              {project.image && (
-                <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-zinc-950 border border-zinc-800 flex items-center justify-center p-3.5 shadow-lg relative overflow-hidden mb-6">
+              {project.image && (() => {
+                const isWhiteBg = project.image.includes("bg=white");
+                return (
                   <div
-                    className="absolute inset-0 bg-cover bg-center blur-2xl opacity-25 scale-125 pointer-events-none"
-                    style={{ backgroundImage: `url(${project.image})` }}
-                  />
-                  <img
-                    src={project.image}
-                    alt={project.name}
-                    className="relative z-10 max-w-full max-h-full object-contain drop-shadow-md"
-                  />
-                </div>
-              )}
+                    className={`w-24 h-24 sm:w-28 sm:h-28 rounded-3xl ${
+                      isWhiteBg
+                        ? "bg-white border-zinc-200 shadow-md"
+                        : "bg-zinc-950 border-zinc-800 shadow-lg"
+                    } border flex items-center justify-center p-3.5 relative overflow-hidden mb-6`}
+                  >
+                    <div
+                      className={`absolute inset-0 bg-cover bg-center blur-2xl ${
+                        isWhiteBg ? "opacity-15" : "opacity-25"
+                      } scale-125 pointer-events-none`}
+                      style={{ backgroundImage: `url(${project.image})` }}
+                    />
+                    <img
+                      src={project.image}
+                      alt={project.name}
+                      className="relative z-10 max-w-full max-h-full object-contain drop-shadow-md"
+                    />
+                  </div>
+                );
+              })()}
 
               <h1 className="text-3xl sm:text-5xl font-black text-zinc-950 tracking-tight leading-tight">
                 {project.name} — <br />
@@ -541,6 +554,21 @@ export default async function CaseStudyPage({ params }: CaseStudyPageProps) {
               </ul>
 
               <div className="mt-6 pt-5 border-t border-zinc-200/80">
+                {project.projectUrl && (
+                  <a
+                    href={project.projectUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full mb-2.5 inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 shadow-md shadow-emerald-600/20 transition-all duration-200"
+                  >
+                    <span>Visit Live Website</span>
+                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                      <polyline points="15 3 21 3 21 9" />
+                      <line x1="10" y1="14" x2="21" y2="3" />
+                    </svg>
+                  </a>
+                )}
                 <Link
                   href="/#contact"
                   className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-md shadow-emerald-500/25 transition-all duration-200"

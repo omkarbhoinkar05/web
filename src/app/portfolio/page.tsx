@@ -18,6 +18,7 @@ interface ProjectItem {
   impactMetric: string;
   impactLabel: string;
   tags: string[];
+  projectUrl?: string | null;
   mockup: React.ReactNode;
 }
 
@@ -475,6 +476,7 @@ export default function PortfolioPage() {
               category: p.category,
               type: p.type,
               description: p.description,
+              projectUrl: p.projectUrl?.startsWith("disabled:") ? null : (p.projectUrl || existingStatic?.projectUrl || null),
               features: Array.isArray(p.features)
                 ? p.features
                 : p.features
@@ -487,25 +489,40 @@ export default function PortfolioPage() {
                 : ["Next.js 16", "TypeScript", "Tailwind CSS"],
               impactMetric: p.impactMetric || "+100%",
               impactLabel: p.impactLabel || "Efficiency",
-              tags: Array.isArray(p.tags)
+              tags: (Array.isArray(p.tags)
                 ? p.tags
                 : p.tags
                 ? p.tags.split(",").map((s: string) => s.trim()).filter(Boolean)
-                : ["All Projects"],
-              mockup: p.image ? (
-                <div className="w-full h-48 rounded-t-2xl bg-zinc-950 overflow-hidden relative group/mockup border-b border-zinc-800 flex items-center justify-center p-4">
-                  {/* Subtle ambient blurred glow behind */}
+                : ["All Projects"]
+              ).filter((t: string) => t !== "bg-white" && t !== "bg-black"),
+              mockup: p.image ? (() => {
+                const isWhiteBg = Boolean(
+                  p.image?.includes("bg=white") ||
+                  (typeof p.tags === "string" ? p.tags.includes("bg-white") : Array.isArray(p.tags) && p.tags.includes("bg-white"))
+                );
+                return (
                   <div
-                    className="absolute inset-0 bg-cover bg-center blur-2xl opacity-25 scale-125 pointer-events-none"
-                    style={{ backgroundImage: `url(${p.image})` }}
-                  />
-                  <img
-                    src={p.image}
-                    alt={p.title || p.name}
-                    className="relative z-10 max-h-full max-w-full object-contain object-center transition-transform duration-300 group-hover/mockup:scale-105 drop-shadow-md"
-                  />
-                </div>
-              ) : (
+                    className={`w-full h-48 rounded-t-2xl ${
+                      isWhiteBg
+                        ? "bg-white border-b border-zinc-200"
+                        : "bg-zinc-950 border-b border-zinc-800"
+                    } overflow-hidden relative group/mockup flex items-center justify-center p-4`}
+                  >
+                    {/* Subtle ambient blurred glow behind */}
+                    <div
+                      className={`absolute inset-0 bg-cover bg-center blur-2xl ${
+                        isWhiteBg ? "opacity-15" : "opacity-25"
+                      } scale-125 pointer-events-none`}
+                      style={{ backgroundImage: `url(${p.image})` }}
+                    />
+                    <img
+                      src={p.image}
+                      alt={p.title || p.name}
+                      className="relative z-10 max-h-full max-w-full object-contain object-center transition-transform duration-300 group-hover/mockup:scale-105 drop-shadow-md"
+                    />
+                  </div>
+                );
+              })() : (
                 existingStatic?.mockup || (
                   <div className="w-full h-48 rounded-t-2xl bg-zinc-950 p-3 flex flex-col justify-between border-b border-zinc-800 overflow-hidden relative group/mockup">
                     <div className="flex items-center justify-between pb-2 border-b border-zinc-800/90">
@@ -877,14 +894,30 @@ export default function PortfolioPage() {
                     </div>
 
                     {/* Action Button */}
-                    <div className="mt-6 pt-3 border-t border-zinc-100">
+                    <div className="mt-6 pt-3 border-t border-zinc-100 flex items-center gap-2">
                       <Link
                         href={`/portfolio/${project.slug}`}
-                        className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-emerald-600 hover:text-white border border-emerald-200/80 hover:border-transparent shadow-2xs hover:shadow-md hover:shadow-emerald-500/20 transition-all duration-300 group/btn"
+                        className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 transition-all duration-200 group/btn"
                       >
-                        <span>View Detailed Case Study</span>
+                        <span>Case Study</span>
                         <span className="transition-transform duration-200 group-hover/btn:translate-x-1">→</span>
                       </Link>
+                      {project.projectUrl && (
+                        <a
+                          href={project.projectUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-xs shadow-emerald-500/20 transition-all duration-200"
+                          title="Open Live Project in New Tab"
+                        >
+                          <span>Live Site</span>
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
+                        </a>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -932,10 +965,26 @@ export default function PortfolioPage() {
                     </div>
                   </div>
 
-                  <div className="shrink-0 w-full md:w-auto">
+                  <div className="shrink-0 w-full md:w-auto flex flex-col sm:flex-row items-center gap-2">
+                    {project.projectUrl && (
+                      <a
+                        href={project.projectUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-full text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all"
+                        title="Open Live Project in New Tab"
+                      >
+                        <span>Open Project</span>
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                          <polyline points="15 3 21 3 21 9" />
+                          <line x1="10" y1="14" x2="21" y2="3" />
+                        </svg>
+                      </a>
+                    )}
                     <Link
                       href={`/portfolio/${project.slug}`}
-                      className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-full text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-md shadow-emerald-500/20 transition-all duration-200"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-md shadow-emerald-500/20 transition-all duration-200"
                     >
                       <span>View Case Study</span>
                       <span>→</span>

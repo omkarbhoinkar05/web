@@ -60,6 +60,7 @@ export default function AdminPortfolioPage() {
   const [formDescription, setFormDescription] = useState("");
   const [formImage, setFormImage] = useState<string>("");
   const [formProjectUrl, setFormProjectUrl] = useState("");
+  const [formAllowLiveLink, setFormAllowLiveLink] = useState(true);
   const [formFeatures, setFormFeatures] = useState("");
   const [formTags, setFormTags] = useState("");
   const [formDisplayOrder, setFormDisplayOrder] = useState<number>(0);
@@ -69,9 +70,10 @@ export default function AdminPortfolioPage() {
   const [formImpactMetric, setFormImpactMetric] = useState("");
   const [formImpactLabel, setFormImpactLabel] = useState("");
 
-  // Image Upload Handling
+  // Image Upload & Canvas Handling
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [formLogoBg, setFormLogoBg] = useState<"black" | "white">("black");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchPortfolios = useCallback(async () => {
@@ -109,7 +111,9 @@ export default function AdminPortfolioPage() {
     setFormDescription("");
     setFormImage("");
     setImagePreview("");
+    setFormLogoBg("black");
     setFormProjectUrl("");
+    setFormAllowLiveLink(true);
     setFormFeatures("Web App, Payment Integration, Admin Panel");
     setFormTags("All Projects, Web App, Dynamic Website");
     setFormDisplayOrder(projects.length + 1);
@@ -130,11 +134,32 @@ export default function AdminPortfolioPage() {
     setFormCategory(project.category);
     setFormType(project.type);
     setFormDescription(project.description);
-    setFormImage(project.image || "");
-    setImagePreview(project.image || "");
-    setFormProjectUrl(project.projectUrl || "");
+
+    const rawImg = project.image || "";
+    const isWhite = Boolean(
+      rawImg.includes("bg=white") ||
+      (project.tags && project.tags.includes("bg-white"))
+    );
+    setFormLogoBg(isWhite ? "white" : "black");
+    const cleanImg = rawImg.replace(/[?&]bg=(white|black)/, "").replace(/\?$/, "");
+    setFormImage(cleanImg);
+    setImagePreview(cleanImg);
+
+    const rawUrl = project.projectUrl || "";
+    const isLocked = rawUrl.startsWith("disabled:");
+    setFormAllowLiveLink(!isLocked && Boolean(rawUrl.trim()));
+    const cleanUrl = isLocked ? rawUrl.replace(/^disabled:/, "") : rawUrl;
+    setFormProjectUrl(cleanUrl);
+
     setFormFeatures(project.features);
-    setFormTags(project.tags);
+
+    const cleanTags = (project.tags || "")
+      .split(",")
+      .map((t) => t.trim())
+      .filter((t) => t && t !== "bg-white" && t !== "bg-black")
+      .join(", ");
+    setFormTags(cleanTags);
+
     setFormDisplayOrder(project.displayOrder);
     setFormStatus(project.status);
     setFormShowOnHome(project.showOnHome ?? false);
@@ -201,16 +226,39 @@ export default function AdminPortfolioPage() {
     setFormError("");
 
     try {
+      let finalImage: string | null = formImage.trim() ? formImage.trim() : null;
+      if (finalImage) {
+        finalImage = finalImage.replace(/[?&]bg=(white|black)/, "").replace(/\?$/, "");
+        if (formLogoBg === "white") {
+          finalImage = finalImage.includes("?") ? `${finalImage}&bg=white` : `${finalImage}?bg=white`;
+        }
+      }
+
+      let finalTags = formTags.trim();
+      finalTags = finalTags
+        .split(",")
+        .map((t) => t.trim())
+        .filter((t) => t && t !== "bg-white" && t !== "bg-black")
+        .join(", ");
+      if (formLogoBg === "white") {
+        finalTags = finalTags ? `${finalTags}, bg-white` : "bg-white";
+      }
+
+      let finalUrl: string | null = null;
+      if (formProjectUrl.trim()) {
+        finalUrl = formAllowLiveLink ? formProjectUrl.trim() : `disabled:${formProjectUrl.trim()}`;
+      }
+
       const payload = {
         title: formTitle.trim(),
         slug: formSlug.trim(),
         category: formCategory.trim(),
         type: formType.trim(),
         description: formDescription.trim(),
-        image: formImage.trim() ? formImage.trim() : null,
-        projectUrl: formProjectUrl.trim() ? formProjectUrl.trim() : null,
+        image: finalImage,
+        projectUrl: finalUrl,
         features: formFeatures.trim(),
-        tags: formTags.trim(),
+        tags: finalTags,
         displayOrder: Number(formDisplayOrder) || 0,
         status: formStatus,
         showOnHome: formShowOnHome,
@@ -554,7 +602,13 @@ export default function AdminPortfolioPage() {
                     {/* Thumbnail / Image Preview */}
                     <td className="py-3.5 px-4 whitespace-nowrap">
                       {project.image ? (
-                        <div className="w-12 h-8 rounded-lg overflow-hidden border border-slate-200 bg-zinc-950 shrink-0 flex items-center justify-center p-0.5">
+                        <div
+                          className={`w-12 h-8 rounded-lg overflow-hidden border ${
+                            project.image.includes("bg=white") || project.tags?.includes("bg-white")
+                              ? "bg-white border-slate-300"
+                              : "bg-zinc-950 border-slate-800"
+                          } shrink-0 flex items-center justify-center p-0.5`}
+                        >
                           <img
                             src={project.image}
                             alt={project.title}
@@ -576,8 +630,26 @@ export default function AdminPortfolioPage() {
                     {/* Title & Slug */}
                     <td className="py-3.5 px-4">
                       <div className="font-bold text-slate-900 text-sm">{project.title}</div>
-                      <div className="text-[11px] font-mono text-slate-400 flex items-center gap-1 mt-0.5">
+                      <div className="text-[11px] font-mono text-slate-400 flex items-center gap-2 mt-0.5">
                         <span>/portfolio/{project.slug}</span>
+                        {project.projectUrl ? (
+                          project.projectUrl.startsWith("disabled:") ? (
+                            <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded font-sans font-semibold inline-flex items-center gap-0.5" title="Live Project Link is Locked by Admin">
+                              🔒 Link Locked
+                            </span>
+                          ) : (
+                            <a
+                              href={project.projectUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-emerald-700 hover:text-emerald-800 bg-emerald-50 border border-emerald-200 px-1.5 py-0.2 rounded font-sans font-semibold inline-flex items-center gap-0.5"
+                              title="Live URL Active - Open Project"
+                            >
+                              <span>Live Site</span>
+                              <span>↗</span>
+                            </a>
+                          )
+                        ) : null}
                       </div>
                     </td>
 
@@ -761,37 +833,102 @@ export default function AdminPortfolioPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">
-                    Project Type Label *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formType}
-                    onChange={(e) => setFormType(e.target.value)}
-                    placeholder="e.g. Online Learning Platform, Multi-Vendor Marketplace"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-hidden"
-                  />
+              <div>
+                <label className="block font-bold text-slate-700 uppercase mb-1">
+                  Project Type Label *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formType}
+                  onChange={(e) => setFormType(e.target.value)}
+                  placeholder="e.g. Online Learning Platform, Multi-Vendor Marketplace"
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-hidden"
+                />
+              </div>
+
+              {/* Project Live URL & Open Access Control */}
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div>
+                    <label className="block font-bold text-slate-800 text-[11px] uppercase tracking-wide">
+                      Live Project Open Control (प्रोजेक्ट ओपन बटन अनुमति)
+                    </label>
+                    <p className="text-[10px] text-slate-500">
+                      Decide whether visitors can click &ldquo;Open Project / Live Site&rdquo; to launch the live website
+                    </p>
+                  </div>
+
+                  {/* Toggle: Allowed vs Locked */}
+                  <div className="inline-flex items-center p-1 rounded-xl bg-slate-200/70 border border-slate-300/80 gap-1 self-start sm:self-auto shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setFormAllowLiveLink(true)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        formAllowLiveLink
+                          ? "bg-emerald-600 text-white shadow-xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-white inline-block" />
+                      <span>Allow Open</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormAllowLiveLink(false)}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        !formAllowLiveLink
+                          ? "bg-slate-700 text-white shadow-xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <span className="w-2 h-2 rounded-full bg-rose-400 inline-block" />
+                      <span>Locked (Hidden)</span>
+                    </button>
+                  </div>
                 </div>
 
-                <div>
-                  <label className="block font-bold text-slate-700 uppercase mb-1">
-                    Project Demo / Live URL
-                  </label>
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-700 uppercase">
+                      Live Website URL
+                    </span>
+                    {formProjectUrl && formAllowLiveLink && (
+                      <a
+                        href={formProjectUrl.startsWith("http") ? formProjectUrl : `https://${formProjectUrl}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[11px] font-bold text-emerald-600 hover:text-emerald-700 inline-flex items-center gap-1"
+                      >
+                        <span>Test Link</span>
+                        <span>↗</span>
+                      </a>
+                    )}
+                  </div>
+
                   <input
                     type="url"
+                    disabled={!formAllowLiveLink}
                     value={formProjectUrl}
                     onChange={(e) => setFormProjectUrl(e.target.value)}
                     placeholder="https://example.com"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-emerald-500 outline-hidden"
+                    className={`w-full p-2.5 rounded-xl border font-mono text-[11px] outline-hidden transition-all ${
+                      formAllowLiveLink
+                        ? "bg-white border-slate-200 focus:border-emerald-500 text-slate-900"
+                        : "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed"
+                    }`}
                   />
+
+                  <p className="text-[10px] text-slate-400">
+                    {formAllowLiveLink
+                      ? "When allowed, visitors will see an 'Open Project ↗' / 'Live Site' button on portfolio cards and case study."
+                      : "🔒 Project opening is locked. Users can only read the case study and cannot open the external website."}
+                  </p>
                 </div>
               </div>
 
               {/* Project Card Image Upload & Preview */}
-              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-2.5">
+              <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3">
                 <div className="flex items-center justify-between">
                   <label className="block font-bold text-slate-700 uppercase">
                     Project Mockup / Preview Image
@@ -801,7 +938,13 @@ export default function AdminPortfolioPage() {
 
                 <div className="flex flex-col sm:flex-row items-center gap-3">
                   {imagePreview ? (
-                    <div className="relative w-28 h-20 rounded-xl overflow-hidden border border-slate-300 bg-zinc-950 shrink-0 shadow-xs flex items-center justify-center p-1.5">
+                    <div
+                      className={`relative w-28 h-20 rounded-xl overflow-hidden border ${
+                        formLogoBg === "white"
+                          ? "bg-white border-slate-300 shadow-xs"
+                          : "bg-zinc-950 border-slate-800 shadow-xs"
+                      } shrink-0 flex items-center justify-center p-1.5 transition-colors`}
+                    >
                       <img src={imagePreview} alt="Preview" className="max-w-full max-h-full object-contain" />
                       <button
                         type="button"
@@ -809,7 +952,7 @@ export default function AdminPortfolioPage() {
                           setImagePreview("");
                           setFormImage("");
                         }}
-                        className="absolute top-1 right-1 bg-rose-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold"
+                        className="absolute top-1 right-1 bg-rose-600 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold cursor-pointer"
                         title="Remove image"
                       >
                         ✕
@@ -857,12 +1000,52 @@ export default function AdminPortfolioPage() {
                       type="text"
                       value={formImage}
                       onChange={(e) => {
-                        setFormImage(e.target.value);
-                        setImagePreview(e.target.value);
+                        const val = e.target.value;
+                        setFormImage(val);
+                        setImagePreview(val);
                       }}
                       placeholder="/uploads/portfolio/... or https://..."
                       className="w-full p-2 bg-white border border-slate-200 rounded-xl focus:border-emerald-500 outline-hidden font-mono text-[11px]"
                     />
+                  </div>
+                </div>
+
+                {/* Logo Background Theme Manual Selector */}
+                <div className="pt-2.5 border-t border-slate-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div>
+                    <label className="block font-bold text-slate-800 text-[11px] uppercase tracking-wide">
+                      Logo Background Canvas (बैकग्राउंड कलर)
+                    </label>
+                    <p className="text-[10px] text-slate-500">
+                      Select canvas color for maximum logo visibility &amp; contrast
+                    </p>
+                  </div>
+
+                  <div className="inline-flex items-center p-1 rounded-xl bg-slate-200/80 border border-slate-300/80 gap-1 self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setFormLogoBg("black")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        formLogoBg === "black"
+                          ? "bg-zinc-950 text-white shadow-xs"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full bg-zinc-900 border border-zinc-700 inline-block" />
+                      <span>Black (Dark)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormLogoBg("white")}
+                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                        formLogoBg === "white"
+                          ? "bg-white text-zinc-950 shadow-xs border border-slate-300"
+                          : "text-slate-600 hover:text-slate-900"
+                      }`}
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full bg-white border border-slate-400 inline-block" />
+                      <span>White (Light)</span>
+                    </button>
                   </div>
                 </div>
               </div>

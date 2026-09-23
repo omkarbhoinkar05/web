@@ -68,11 +68,24 @@ const STATIC_FALLBACK_PROJECTS: ProjectItem[] = [
 function renderProjectMockup(project: ProjectItem) {
   // If a custom image is uploaded via Admin, display it seamlessly
   if (project.image) {
+    const isWhiteBg = Boolean(
+      project.image.includes("bg=white") ||
+      (Array.isArray(project.tags) && project.tags.includes("bg-white"))
+    );
+
     return (
-      <div className="w-full h-44 rounded-t-2xl bg-zinc-950 overflow-hidden relative group/mockup border-b border-zinc-800 flex items-center justify-center p-3.5">
+      <div
+        className={`w-full h-44 rounded-t-2xl ${
+          isWhiteBg
+            ? "bg-white border-b border-zinc-200"
+            : "bg-zinc-950 border-b border-zinc-800"
+        } overflow-hidden relative group/mockup flex items-center justify-center p-3.5`}
+      >
         {/* Subtle ambient blurred background */}
         <div
-          className="absolute inset-0 bg-cover bg-center blur-2xl opacity-25 scale-125 pointer-events-none"
+          className={`absolute inset-0 bg-cover bg-center blur-2xl ${
+            isWhiteBg ? "opacity-15" : "opacity-25"
+          } scale-125 pointer-events-none`}
           style={{ backgroundImage: `url(${project.image})` }}
         />
         <img
@@ -354,7 +367,7 @@ export function PortfolioSection() {
                   ? p.tags.split(",").map((s: string) => s.trim()).filter(Boolean)
                   : ["All Projects"],
                 image: p.image || null,
-                projectUrl: p.projectUrl || null,
+                projectUrl: p.projectUrl?.startsWith("disabled:") ? null : (p.projectUrl || null),
                 displayOrder: p.displayOrder,
               }));
               setProjects(mapped);
@@ -570,15 +583,31 @@ export function PortfolioSection() {
                   </div>
                 </div>
 
-                {/* View Case Study Button (Full-width inside card) */}
-                <div className="mt-6 pt-2">
+                {/* View Case Study & Live Site Buttons */}
+                <div className="mt-6 pt-2 flex items-center gap-2">
                   <Link
                     href={`/portfolio/${project.slug}`}
-                    className="w-full inline-flex items-center justify-center gap-2 px-5 py-3 rounded-full text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-emerald-600 hover:text-white border border-emerald-200/80 hover:border-transparent shadow-2xs hover:shadow-md hover:shadow-emerald-500/20 transition-all duration-300 group/btn"
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 transition-all duration-200 group/btn"
                   >
-                    <span>View Case Study</span>
+                    <span>Case Study</span>
                     <span className="transition-transform duration-200 group-hover/btn:translate-x-1">→</span>
                   </Link>
+                  {project.projectUrl && (
+                    <a
+                      href={project.projectUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-full text-xs font-bold text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 shadow-xs shadow-emerald-500/20 transition-all duration-200"
+                      title="Open Live Project in New Tab"
+                    >
+                      <span>Live Site</span>
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                        <polyline points="15 3 21 3 21 9" />
+                        <line x1="10" y1="14" x2="21" y2="3" />
+                      </svg>
+                    </a>
+                  )}
                 </div>
               </div>
             </div>

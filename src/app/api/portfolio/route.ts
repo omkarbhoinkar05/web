@@ -30,7 +30,11 @@ export async function GET(request: Request) {
           { status: 404, headers: NO_CACHE_HEADERS }
         );
       }
-      return NextResponse.json({ success: true, project }, { headers: NO_CACHE_HEADERS });
+      const sanitizedProject = {
+        ...project,
+        projectUrl: project.projectUrl?.startsWith("disabled:") ? null : project.projectUrl,
+      };
+      return NextResponse.json({ success: true, project: sanitizedProject }, { headers: NO_CACHE_HEADERS });
     }
 
     // Public endpoint strictly returns Active projects only.
@@ -44,14 +48,19 @@ export async function GET(request: Request) {
       skip: home ? 0 : skip,
     });
 
+    const sanitizedPortfolios = portfolios.map((p) => ({
+      ...p,
+      projectUrl: p.projectUrl?.startsWith("disabled:") ? null : p.projectUrl,
+    }));
+
     return NextResponse.json(
       {
         success: true,
-        count: portfolios.length,
+        count: sanitizedPortfolios.length,
         total,
         page,
         limit,
-        projects: portfolios,
+        projects: sanitizedPortfolios,
       },
       { headers: NO_CACHE_HEADERS }
     );
