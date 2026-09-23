@@ -4,10 +4,19 @@ import path from "path";
 import { getAdminSession, hasPermission } from "@/lib/admin/auth";
 
 function sanitizeFilename(filename: string): string {
-  return filename
+  const base = path.basename(filename);
+  return base
     .replace(/[^a-zA-Z0-9._-]/g, "_")
     .replace(/\.{2,}/g, ".")
     .substring(0, 80);
+}
+
+function sanitizeSvg(content: string): string {
+  return content
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/\s+on\w+\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+)/gi, "")
+    .replace(/(href|xlink:href|src|data)\s*=\s*(?:'javascript:[^']*'|"javascript:[^"]*"|javascript:[^\s>]+)/gi, "")
+    .replace(/<foreignObject\b[^<]*(?:(?!<\/foreignObject>)<[^<]*)*<\/foreignObject>/gi, "");
 }
 
 const ALLOWED_EXTENSIONS = [".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif"];
@@ -86,7 +95,20 @@ export async function POST(request: Request) {
     const storagePath = path.join(uploadDir, uniqueFileName);
 
     const arrayBuffer = await file.arrayBuffer();
-    fs.writeFileSync(storagePath, Buffer.from(arrayBuffer));
+    let fileBuffer = Buffer.from(arrayBuffer);
+
+    if (extension === ".svg") {
+      const svgText = fileBuffer.toString("utf-8");
+      if (!svgText.includes("<svg")) {
+        return NextResponse.json(
+          { success: false, error: "Invalid SVG format." },
+          { status: 400 }
+        );
+      }
+      fileBuffer = Buffer.from(sanitizeSvg(svgText), "utf-8");
+    }
+
+    fs.writeFileSync(storagePath, fileBuffer);
 
     const publicUrl = `/uploads/services/${uniqueFileName}`;
 

@@ -14,7 +14,8 @@ export async function GET() {
   }
 
   const team = await getTeam();
-  return NextResponse.json({ success: true, count: team.length, team });
+  const safeTeam = team.map(({ password: _p, ...rest }) => rest);
+  return NextResponse.json({ success: true, count: safeTeam.length, team: safeTeam });
 }
 
 export async function POST(request: Request) {
@@ -52,7 +53,8 @@ export async function POST(request: Request) {
       status: status || "Active",
     });
 
-    return NextResponse.json({ success: true, message: "Team member added", member });
+    const { password: _p, ...safeMember } = member;
+    return NextResponse.json({ success: true, message: "Team member added", member: safeMember });
   } catch (error) {
     console.error("POST team error:", error);
     return NextResponse.json({ success: false, error: "Failed to add team member" }, { status: 500 });
@@ -81,7 +83,8 @@ export async function PUT(request: Request) {
       return NextResponse.json({ success: false, error: "Team member not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, message: "Team member updated", member: updated });
+    const { password: _p, ...safeUpdated } = updated;
+    return NextResponse.json({ success: true, message: "Team member updated", member: safeUpdated });
   } catch {
     return NextResponse.json({ success: false, error: "Failed to update team member" }, { status: 500 });
   }

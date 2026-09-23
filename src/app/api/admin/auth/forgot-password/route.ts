@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       message: "Verification code generated successfully. Valid for 15 minutes.",
-      otp: resetData.otp, // Displayed in local demo alert banner so user can easily test
+      ...(process.env.NODE_ENV !== "production" ? { otp: resetData.otp } : {}),
       expiresAt: resetData.expiresAt,
     });
   } catch (error) {

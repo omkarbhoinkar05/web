@@ -2,6 +2,24 @@ import { z } from "zod";
 
 export const indianMobileRegex = /^(?:\+91|91)?[6-9]\d{9}$/;
 
+/**
+ * Strips HTML tags, script blocks, and dangerous attributes to prevent Stored XSS
+ */
+export function sanitizeText(val: string): string {
+  if (!val || typeof val !== "string") return val;
+  return val
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "")
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, "")
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "")
+    .replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, "")
+    .replace(/<embed\b[^<]*(?:(?!<\/embed>)<[^<]*)*<\/embed>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/javascript:/gi, "")
+    .replace(/vbscript:/gi, "")
+    .replace(/on\w+\s*=/gi, "")
+    .trim();
+}
+
 // ----------------------------------------------------
 // Public Forms Validation Schemas
 // ----------------------------------------------------
@@ -10,9 +28,14 @@ export const contactSchema = z.object({
   fullName: z
     .string()
     .trim()
-    .min(2, "Full name is required (minimum 2 characters)")
-    .max(100, "Full name must be under 100 characters"),
-  service: z.string().trim().min(1, "Please select a service"),
+    .transform(sanitizeText)
+    .refine((v) => v.length >= 2, { message: "Full name is required (minimum 2 characters)" })
+    .refine((v) => v.length <= 100, { message: "Full name must be under 100 characters" }),
+  service: z
+    .string()
+    .trim()
+    .transform(sanitizeText)
+    .refine((v) => v.length >= 1, { message: "Please select a service" }),
   email: z.string().trim().email("Please enter a valid email address"),
   mobile: z
     .string()
@@ -21,12 +44,13 @@ export const contactSchema = z.object({
     .refine((v) => indianMobileRegex.test(v), {
       message: "Please enter a valid 10-digit mobile number",
     }),
-  budget: z.string().trim().optional().default("Not specified"),
+  budget: z.string().trim().transform(sanitizeText).optional().default("Not specified"),
   message: z
     .string()
     .trim()
-    .min(10, "Message must be at least 10 characters describing your inquiry")
-    .max(3000, "Message cannot exceed 3000 characters"),
+    .transform(sanitizeText)
+    .refine((v) => v.length >= 10, { message: "Message must be at least 10 characters describing your inquiry" })
+    .refine((v) => v.length <= 3000, { message: "Message cannot exceed 3000 characters" }),
 });
 
 export type ContactInput = z.infer<typeof contactSchema>;
@@ -35,8 +59,9 @@ export const scheduleCallSchema = z.object({
   fullName: z
     .string()
     .trim()
-    .min(2, "Full name is required (minimum 2 characters)")
-    .max(100, "Full name must be under 100 characters"),
+    .transform(sanitizeText)
+    .refine((v) => v.length >= 2, { message: "Full name is required (minimum 2 characters)" })
+    .refine((v) => v.length <= 100, { message: "Full name must be under 100 characters" }),
   email: z.string().trim().email("Please enter a valid email address"),
   mobileNumber: z
     .string()
@@ -58,9 +83,9 @@ export const scheduleCallSchema = z.object({
       { message: "Scheduled date cannot be in the past" }
     ),
   time: z.string().trim().min(1, "Please select a time slot"),
-  timezone: z.string().trim().default("IST (GMT+5:30)"),
-  meetingType: z.string().trim().default("Video Call (Google Meet)"),
-  message: z.string().trim().optional(),
+  timezone: z.string().trim().transform(sanitizeText).default("IST (GMT+5:30)"),
+  meetingType: z.string().trim().transform(sanitizeText).default("Video Call (Google Meet)"),
+  message: z.string().trim().transform(sanitizeText).optional(),
 });
 
 export type ScheduleCallInput = z.infer<typeof scheduleCallSchema>;
@@ -69,8 +94,9 @@ export const careerSchema = z.object({
   fullName: z
     .string()
     .trim()
-    .min(2, "Full name is required (minimum 2 characters)")
-    .max(100, "Full name must be under 100 characters"),
+    .transform(sanitizeText)
+    .refine((v) => v.length >= 2, { message: "Full name is required (minimum 2 characters)" })
+    .refine((v) => v.length <= 100, { message: "Full name must be under 100 characters" }),
   email: z.string().trim().email("Please enter a valid email address"),
   mobile: z
     .string()
@@ -82,8 +108,9 @@ export const careerSchema = z.object({
   message: z
     .string()
     .trim()
-    .min(10, "Please enter at least 10 characters introducing yourself")
-    .max(3000, "Message cannot exceed 3000 characters"),
+    .transform(sanitizeText)
+    .refine((v) => v.length >= 10, { message: "Please enter at least 10 characters introducing yourself" })
+    .refine((v) => v.length <= 3000, { message: "Message cannot exceed 3000 characters" }),
 });
 
 export type CareerInput = z.infer<typeof careerSchema>;
@@ -126,35 +153,43 @@ export const adminRoleEnum = z.enum([
 ]);
 
 export const leadCreateSchema = z.object({
-  fullName: z.string().trim().min(2, "Name is required (minimum 2 characters)"),
+  fullName: z
+    .string()
+    .trim()
+    .transform(sanitizeText)
+    .refine((v) => v.length >= 2, { message: "Name is required (minimum 2 characters)" }),
   email: z.string().trim().email("Invalid email").or(z.literal("")).default(""),
   mobile: z.string().trim().min(10, "Mobile must be at least 10 digits"),
-  service: z.string().trim().min(1, "Service is required"),
-  budget: z.string().trim().optional().default("Not specified"),
+  service: z
+    .string()
+    .trim()
+    .transform(sanitizeText)
+    .refine((v) => v.length >= 1, { message: "Service is required" }),
+  budget: z.string().trim().transform(sanitizeText).optional().default("Not specified"),
   source: leadSourceEnum.default("Direct Inbound"),
   status: leadStatusEnum.default("NEW"),
   priority: leadPriorityEnum.default("Medium"),
   assignedTo: z.string().trim().default("Unassigned"),
-  notes: z.string().trim().optional().default(""),
+  notes: z.string().trim().transform(sanitizeText).optional().default(""),
   nextFollowUp: z.string().trim().optional(),
 });
 
 export type LeadCreateInput = z.infer<typeof leadCreateSchema>;
 
 export const leadUpdateSchema = z.object({
-  fullName: z.string().trim().min(2).optional(),
+  fullName: z.string().trim().transform(sanitizeText).optional(),
   email: z.string().trim().email().or(z.literal("")).optional(),
   mobile: z.string().trim().min(10).optional(),
-  service: z.string().trim().min(1).optional(),
-  budget: z.string().trim().optional(),
+  service: z.string().trim().transform(sanitizeText).optional(),
+  budget: z.string().trim().transform(sanitizeText).optional(),
   source: leadSourceEnum.optional(),
   status: leadStatusEnum.optional(),
   priority: leadPriorityEnum.optional(),
   assignedTo: z.string().trim().optional(),
-  notes: z.string().trim().optional(),
+  notes: z.string().trim().transform(sanitizeText).optional(),
   lastContact: z.string().trim().optional(),
   nextFollowUp: z.string().trim().optional(),
-  closingNote: z.string().trim().optional(),
+  closingNote: z.string().trim().transform(sanitizeText).optional(),
   lostReason: z
     .enum([
       "Budget",
@@ -176,7 +211,12 @@ export const followUpSchema = z.object({
   type: z.enum(["Call", "WhatsApp", "Email", "Meeting", "Quotation", "Other"]).default("Call"),
   assignedTo: z.string().trim().default("Unassigned"),
   status: z.enum(["Overdue", "Today", "Upcoming", "Completed"]).default("Upcoming"),
-  notes: z.string().trim().min(1, "Follow-up note is required").default("Follow-up touchpoint"),
+  notes: z
+    .string()
+    .trim()
+    .transform(sanitizeText)
+    .refine((v) => v.length >= 1, { message: "Follow-up note is required" })
+    .default("Follow-up touchpoint"),
 });
 
 export type FollowUpInput = z.infer<typeof followUpSchema>;

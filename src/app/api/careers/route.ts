@@ -3,9 +3,11 @@ import fs from "fs";
 import path from "path";
 import { createCareerApplication } from "@/lib/admin/db";
 import { careerSchema } from "@/lib/validations";
+import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 function sanitizeFilename(filename: string): string {
-  return filename
+  const base = path.basename(filename);
+  return base
     .replace(/[^a-zA-Z0-9._-]/g, "_")
     .replace(/\.{2,}/g, ".")
     .substring(0, 100);
@@ -23,6 +25,24 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export async function POST(request: Request) {
   try {
+    const ip = getClientIp(request);
+    const rateCheck = checkRateLimit(`careers:${ip}`, 5, 15 * 60 * 1000);
+
+    if (!rateCheck.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: `Too many job applications submitted. Please try again in ${rateCheck.retryAfterSec} seconds.`,
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": rateCheck.retryAfterSec.toString(),
+          },
+        }
+      );
+    }
+
     const formData = await request.formData();
 
     const rawData = {
